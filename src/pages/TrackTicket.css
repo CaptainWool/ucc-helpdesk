@@ -1,0 +1,237 @@
+.track-container {
+    padding: 2rem 1.5rem 4rem;
+    max-width: 900px;
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.track-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.track-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+    color: #0f172a;
+}
+
+.track-header p {
+    color: #64748b;
+    font-size: 1.05rem;
+}
+
+.track-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.search-card {
+    padding: 2.5rem;
+    background: white;
+    border-radius: 2rem;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.04);
+}
+
+.track-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.track-form>div {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.track-form input {
+    border-radius: 1rem;
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+}
+
+.track-btn {
+    min-width: 140px;
+    border-radius: 1rem;
+    padding: 0.875rem 1.5rem;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: #fef2f2;
+    color: #ef4444;
+    padding: 1.125rem 1.25rem;
+    border-radius: 1.25rem;
+    border: 1px solid #fecaca;
+    font-weight: 500;
+    animation: shake 0.4s ease-out;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+.result-card {
+    border-left: 4px solid #3b82f6;
+    background: white;
+    border-radius: 2rem;
+    border: 1px solid #f1f5f9;
+    border-left: 4px solid #3b82f6;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.04);
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 1.5rem;
+}
+
+.result-header h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+}
+
+.timestamp {
+    font-size: 0.875rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.125rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.status-open {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+}
+
+.status-resolved {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+}
+
+.status-in-progress {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+}
+
+.detail-row {
+    margin-bottom: 1.25rem;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-row .label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.detail-row .value {
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+
+.description-text {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    color: #0f172a;
+    line-height: 1.7;
+    border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 640px) {
+    .track-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .track-header h1 {
+        font-size: 2rem;
+    }
+}
+
+.attachment-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #eff6ff;
+    border-radius: 0.75rem;
+    transition: all 0.2s;
+}
+
+.attachment-link:hover {
+    background: #dbeafe;
+    color: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}

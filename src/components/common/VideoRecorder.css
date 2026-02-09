@@ -1,0 +1,152 @@
+.video-recorder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.video-recorder-modal {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    width: 90%;
+    max-width: 650px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.recording-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #fef2f2;
+    padding: 0.4rem 0.75rem;
+    border-radius: 99px;
+    border: 1px solid #fee2e2;
+}
+
+.pulse-dot.red {
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    box-shadow: 0 0 0 rgba(239, 68, 68, 1);
+    animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.timer-text {
+    font-family: monospace;
+    font-weight: 700;
+    color: #ef4444;
+    font-size: 0.9rem;
+}
+
+.video-preview-area {
+    width: 100%;
+    height: 350px;
+    background: #f8fafc;
+    border: 2px dashed #e2e8f0;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.recording-active-view {
+    text-align: center;
+}
+
+.recording-info h4 {
+    margin: 1rem 0 0.5rem;
+    color: var(--text-main);
+}
+
+.recording-info p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.timer-large {
+    font-size: 3rem;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    color: var(--primary);
+    margin-top: 1rem;
+    letter-spacing: -0.05em;
+}
+
+.preview-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+.placeholder-preview {
+    text-align: center;
+    color: #94a3b8;
+}
+
+.controls-area {
+    display: flex;
+    justify-content: center;
+}
+
+.stop-btn {
+    animation: pulse-btn 2s infinite;
+}
+
+@keyframes pulse-btn {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
