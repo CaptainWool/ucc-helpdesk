@@ -128,7 +128,11 @@ const initDb = async () => {
             ['max_open_tickets', 100],
             ['ai_sensitivity', 0.7],
             ['sla_peak_mode', false],
-            ['sms_notifications_enabled', true]
+            ['sms_notifications_enabled', true],
+            ['global_announcement', { enabled: false, message: '', type: 'info' }],
+            ['resource_limits', { max_size_mb: 5, allowed_types: ['image/jpeg', 'image/png', 'application/pdf'] }],
+            ['housekeeping_rules', { enabled: false, auto_close_resolved_days: 30 }],
+            ['command_center_password', 'israel@40']
         ];
 
         for (const [key, val] of settingsToSeed) {

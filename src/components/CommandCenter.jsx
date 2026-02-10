@@ -273,8 +273,11 @@ const CommandCenter = () => {
                             <input
                                 type="number"
                                 className="small-input"
-                                value={settings.housekeeping_rules.auto_close_resolved_days}
-                                onChange={(e) => updateSetting('housekeeping_rules', { ...settings.housekeeping_rules, auto_close_resolved_days: parseInt(e.target.value) })}
+                                value={settings.housekeeping_rules?.auto_close_resolved_days || 30}
+                                onChange={(e) => updateSetting('housekeeping_rules', {
+                                    ...(settings.housekeeping_rules || { enabled: false, auto_close_resolved_days: 30 }),
+                                    auto_close_resolved_days: parseInt(e.target.value) || 30
+                                })}
                             />
                             <span>days</span>
                         </div>
@@ -297,8 +300,8 @@ const CommandCenter = () => {
                         <Input
                             type="number"
                             label="Max File Size (MB)"
-                            value={resourceDraft.max_size_mb}
-                            onChange={(e) => setResourceDraft(prev => ({ ...prev, max_size_mb: parseInt(e.target.value) }))}
+                            value={resourceDraft?.max_size_mb || 5}
+                            onChange={(e) => setResourceDraft(prev => ({ ...prev, max_size_mb: parseInt(e.target.value) || 5 }))}
                         />
 
                         <div className="type-group">
@@ -308,11 +311,12 @@ const CommandCenter = () => {
                                     <label key={type} className="checkbox-item">
                                         <input
                                             type="checkbox"
-                                            checked={resourceDraft.allowed_types.includes(type)}
+                                            checked={resourceDraft?.allowed_types?.includes(type) || false}
                                             onChange={(e) => {
+                                                const currentTypes = resourceDraft?.allowed_types || [];
                                                 const types = e.target.checked
-                                                    ? [...resourceDraft.allowed_types, type]
-                                                    : resourceDraft.allowed_types.filter(t => t !== type);
+                                                    ? [...currentTypes, type]
+                                                    : currentTypes.filter(t => t !== type);
                                                 setResourceDraft(prev => ({ ...prev, allowed_types: types }));
                                             }}
                                         />
