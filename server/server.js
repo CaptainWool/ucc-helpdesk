@@ -123,8 +123,8 @@ const initDb = async () => {
         const settingsToSeed = [
             ['maintenance_mode', false],
             ['submissions_locked', false],
-            ['showHeaderSubmit', false],
-            ['showHeaderFAQ', false],
+            ['showHeaderSubmit', true],
+            ['showHeaderFAQ', true],
             ['max_open_tickets', 100],
             ['ai_sensitivity', 0.7],
             ['sla_peak_mode', false]
