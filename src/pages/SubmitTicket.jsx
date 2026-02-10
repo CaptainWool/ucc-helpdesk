@@ -125,7 +125,7 @@ const SubmitTicket = () => {
             setIsSuccess(true);
         } catch (error) {
             console.error('Error submitting ticket:', error);
-            alert(`Failed to submit ticket: ${error.message || 'Unknown error'} `);
+            alert(`Failed to submit ticket: ${error.message || error.error || 'Unknown error'} `);
         } finally {
             setIsSubmitting(false);
         }
