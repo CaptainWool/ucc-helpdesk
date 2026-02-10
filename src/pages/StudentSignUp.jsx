@@ -85,10 +85,10 @@ const StudentSignUp = () => {
             return;
         }
 
-        // Validate Password Complexity (Min 8 chars, 1 Upper, 1 Lower, 1 Number, 1 Special)
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        // Validate Password Complexity (Min 8 chars, 1 Upper, 1 Lower, 1 Special - Numbers exempt)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
         if (!passwordRegex.test(formData.password)) {
-            setError('Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.');
+            setError('Password must be at least 8 characters long and contain uppercase, lowercase, and special characters.');
             return;
         }
 
@@ -258,31 +258,63 @@ const StudentSignUp = () => {
                         autoComplete="email"
                     />
 
-                    <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        label="Create Password"
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={handleChange}
-                        icon={<Lock size={18} />}
-                        required
-                        autoComplete="new-password"
-                    />
+                    <div className="password-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="input-with-strength">
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                label="Create Password"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={handleChange}
+                                icon={<Lock size={18} />}
+                                required
+                                autoComplete="new-password"
+                            />
+                            {formData.password && (
+                                <div className="strength-meter" style={{ marginTop: '0.5rem' }}>
+                                    <div className="strength-bar-container" style={{ height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' }}>
+                                        <div
+                                            className="strength-bar"
+                                            style={{
+                                                height: '100%',
+                                                width: `${(
+                                                    (formData.password.length >= 8 ? 20 : 0) +
+                                                    (/[A-Z]/.test(formData.password) ? 20 : 0) +
+                                                    (/[a-z]/.test(formData.password) ? 20 : 0) +
+                                                    (/[0-9]/.test(formData.password) ? 20 : 0) +
+                                                    (/[@$!%*?&#]/.test(formData.password) ? 20 : 0)
+                                                )}%`,
+                                                background: formData.password.length < 8 ? '#ef4444' :
+                                                    (formData.password.length < 10 ? '#f59e0b' : '#10b981'),
+                                                transition: 'width 0.3s ease'
+                                            }}
+                                        />
+                                    </div>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                                        Strength: {
+                                            formData.password.length < 8 ? 'Very Weak' :
+                                                (formData.password.length < 10 ? 'Medium' : 'Strong')
+                                        }
+                                    </span>
+                                </div>
+                            )}
+                        </div>
 
-                    <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type="password"
-                        label="Confirm Password"
-                        placeholder="••••••••"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        icon={<Lock size={18} />}
-                        required
-                        autoComplete="new-password"
-                    />
+                        <Input
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            label="Confirm Password"
+                            placeholder="••••••••"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            icon={<Lock size={18} />}
+                            required
+                            autoComplete="new-password"
+                        />
+                    </div>
 
                     <Button type="submit" className="login-btn" disabled={loading} size="lg">
                         {loading ? 'Creating Account...' : 'Sign Up'}

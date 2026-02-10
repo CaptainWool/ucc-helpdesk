@@ -306,18 +306,23 @@ app.get('/', (req, res) => {
 app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
     const { email, password, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise } = req.body;
 
-    // Server-side password complexity check
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    // Server-side password complexity check (Exempting numbers)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
     if (!passwordRegex.test(password)) {
         return res.status(400).json({
             error: 'Password requirements not met',
-            message: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.'
+            message: 'Password must be at least 8 characters long and contain uppercase, lowercase, and special characters.'
         });
     }
 
     const avatar_url = req.file ? `/uploads/avatars/${req.file.filename}` : null;
 
     try {
+        // Check if user already exists
+        const userExists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (userExists.rows.length > 0) {
+            return res.status(400).json({ error: 'This email is already registered. Please login or use a different email.' });
+        }
         // SECURITY: Role assignment restriction
         let finalRole = role || 'student';
 
