@@ -13,15 +13,15 @@ const StudentLogin = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { signIn, studentLogin, user, loading: authLoading } = useAuth();
+    const { signIn, signOut, studentLogin, user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
     const from = location.state?.from?.pathname || '/dashboard';
 
-    // Auto-redirect if already logged in
+    // Auto-redirect if already logged in as student
     React.useEffect(() => {
-        if (user && !authLoading) {
+        if (user && !authLoading && user.role === 'student') {
             navigate(from, { replace: true });
         }
     }, [user, authLoading, navigate, from]);
@@ -39,13 +39,22 @@ const StudentLogin = () => {
         }
 
         try {
-            const { error: loginError } = await signIn({ email, password });
+            const { data, error: loginError } = await signIn({ email, password });
 
             if (loginError) {
                 setError(loginError.message || 'Invalid credentials');
                 setLoading(false);
             } else {
-                navigate(from, { replace: true });
+                // Check if the user is actually a student
+                const loggedInUser = data.user || data;
+                if (loggedInUser.role !== 'student') {
+                    // This is an admin/agent account, kick them out of this portal
+                    await signOut();
+                    setError('Staff/Admin accounts must use the Coordinator Login portal.');
+                    setLoading(false);
+                } else {
+                    navigate(from, { replace: true });
+                }
             }
         } catch (err) {
             console.error('Unexpected login error:', err);
