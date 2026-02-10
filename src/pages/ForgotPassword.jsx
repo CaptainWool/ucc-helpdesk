@@ -30,10 +30,10 @@ const ForgotPassword = () => {
             return setError('Passwords do not match');
         }
 
-        // Validate Password Complexity (Min 8 chars, 1 Upper, 1 Lower, 1 Special - Numbers exempt)
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        // Validate Password Complexity (Min 8 chars, 1 Upper, 1 Lower, 1 Number, 1 Special)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
         if (!passwordRegex.test(newPassword)) {
-            return setError('Password must be at least 8 characters long and contain uppercase, lowercase, and special characters.');
+            return setError('Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.');
         }
 
         setLoading(true);
