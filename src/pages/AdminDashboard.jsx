@@ -532,7 +532,7 @@ const AdminDashboard = () => {
                                     <tbody>
                                         {filteredTickets.length > 0 ? (
                                             filteredTickets.map(ticket => {
-                                                const sla = getSLAStatus(ticket.created_at, ticket.status);
+                                                const sla = getSLAStatus(ticket.sla_deadline, ticket.status);
                                                 const text = sla.label;
                                                 const color = sla.class;
                                                 return (
