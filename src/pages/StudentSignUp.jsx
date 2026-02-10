@@ -48,6 +48,21 @@ const StudentSignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        // Manual validation for all fields including avatar
+        if (!avatar) {
+            setError('Profile picture is required.');
+            return;
+        }
+
+        const requiredFields = ['fullName', 'studentId', 'phoneNumber', 'level', 'programme', 'email', 'password'];
+        const missingFields = requiredFields.filter(field => !formData[field]);
+
+        if (missingFields.length > 0) {
+            setError('All fields are required.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -125,7 +140,7 @@ const StudentSignUp = () => {
                             size="sm"
                             onClick={() => document.getElementById('avatar-input').click()}
                         >
-                            Upload Profile Picture
+                            Upload Profile Picture <span style={{ color: 'red' }}>*</span>
                         </Button>
                     </div>
 
