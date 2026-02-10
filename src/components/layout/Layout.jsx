@@ -82,15 +82,7 @@ const Layout = () => {
                                 <Link to="/admin" className="nav-link">Admin</Link>
                             )}
 
-                            {/* Submit Ticket - For Students */}
-                            {profile?.role === 'student' && (
-                                <Link to="/submit-ticket" className="nav-link">{t('nav_submit')}</Link>
-                            )}
-
-                            {/* FAQ - For Students */}
-                            {profile?.role === 'student' && (
-                                <Link to="/faq" className="nav-link">FAQ</Link>
-                            )}
+                            {/* Submit Ticket and FAQ removed as per request */}
 
                             {/* Language Toggle */}
                             <select

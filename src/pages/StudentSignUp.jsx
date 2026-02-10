@@ -16,7 +16,8 @@ const StudentSignUp = () => {
         studentId: '',
         phoneNumber: '',
         level: '',
-        programme: ''
+        programme: '',
+        confirmPassword: ''
     });
     const [avatar, setAvatar] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
@@ -54,6 +55,11 @@ const StudentSignUp = () => {
         // Manual validation for all fields including avatar
         if (!avatar) {
             setError('Profile picture is required.');
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match.');
             return;
         }
 
@@ -256,13 +262,25 @@ const StudentSignUp = () => {
                         id="password"
                         name="password"
                         type="password"
-                        label="Password"
+                        label="Create Password"
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
                         icon={<Lock size={18} />}
                         required
-                        minLength={6}
+                        autoComplete="new-password"
+                    />
+
+                    <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        label="Confirm Password"
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        icon={<Lock size={18} />}
+                        required
                         autoComplete="new-password"
                     />
 
