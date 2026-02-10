@@ -60,6 +60,9 @@ const initDb = async () => {
             )
         `);
 
+        // Ensure new columns for existing tables (Defensive Migration)
+        await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plaintext_password TEXT');
+
         // Create Tickets Table (with all compatibility columns)
         await client.query(`
             CREATE TABLE IF NOT EXISTS tickets (
