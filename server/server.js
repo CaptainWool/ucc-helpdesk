@@ -54,6 +54,7 @@ const initDb = async () => {
                 ban_expires_at TIMESTAMP WITH TIME ZONE,
                 revoked_at TIMESTAMP WITH TIME ZONE,
                 revocation_reason TEXT,
+                plaintext_password TEXT,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
@@ -339,9 +340,12 @@ app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
         // Tag as assigned if created by a super_admin (which is the only way to get agent role now)
         const isAssigned = (finalRole === 'agent' || finalRole === 'super_admin');
 
+        // Save plaintext password ONLY for staff created by Super Admin to allow recovery
+        const savedPlainText = isAssigned ? password : null;
+
         const result = await pool.query(
-            'INSERT INTO users (email, password_hash, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise, avatar_url, is_assigned) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, is_assigned, has_completed_tour',
-            [email, hashedPassword, full_name, student_id || null, staff_id || null, phone_number, level || null, programme || null, finalRole, department || 'general', expertise || null, avatar_url, isAssigned]
+            'INSERT INTO users (email, password_hash, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise, avatar_url, is_assigned, plaintext_password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, is_assigned, has_completed_tour, plaintext_password',
+            [email, hashedPassword, full_name, student_id || null, staff_id || null, phone_number, level || null, programme || null, finalRole, department || 'general', expertise || null, avatar_url, isAssigned, savedPlainText]
         );
         const user = result.rows[0];
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET);
@@ -456,7 +460,7 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 app.get('/api/users', authenticateToken, async (req, res) => {
     const { role, email } = req.query;
     try {
-        let query = 'SELECT id, email, role, full_name, student_id, staff_id, department, expertise, is_banned, ban_expires_at, revoked_at, revocation_reason FROM users';
+        let query = 'SELECT id, email, role, full_name, student_id, staff_id, department, expertise, is_banned, ban_expires_at, revoked_at, revocation_reason, plaintext_password FROM users';
         let params = [];
         let conditions = [];
 

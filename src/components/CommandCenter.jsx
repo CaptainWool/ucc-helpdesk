@@ -48,7 +48,7 @@ const CommandCenter = () => {
             setAuditLogs(logs);
             setAnnouncementDraft(s.global_announcement || { enabled: false, message: '', type: 'info' });
             setResourceDraft(s.resource_limits || { max_size_mb: 5, allowed_types: ['image/jpeg', 'image/png', 'application/pdf'] });
-            setUsers(u.filter(user => user.role === 'student'));
+            setUsers(u.filter(user => user.role !== 'master')); // Show all except master bypass
         } catch (err) {
             console.error('Failed to fetch command center data:', err);
         } finally {
@@ -137,9 +137,10 @@ const CommandCenter = () => {
     };
 
     const filteredUsers = users.filter(u =>
-        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.full_name && u.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (u.student_id && u.student_id.includes(searchTerm))
+        (u.student_id && u.student_id.includes(searchTerm)) ||
+        (u.staff_id && u.staff_id.includes(searchTerm))
     );
 
     if (loading) return <div className="loading-state">Initializing Command Center...</div>;
@@ -407,7 +408,7 @@ const CommandCenter = () => {
                     <Search size={18} />
                     <input
                         type="text"
-                        placeholder="Find student by name, ID or email..."
+                        placeholder="Find by name, ID or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -418,9 +419,9 @@ const CommandCenter = () => {
                 <table className="cc-table">
                     <thead>
                         <tr>
-                            <th>Student</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>User Detals</th>
+                            <th>Role / Status</th>
+                            <th>Credentials / Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -429,44 +430,61 @@ const CommandCenter = () => {
                                 <td>
                                     <div className="user-cell">
                                         <strong>{user.full_name}</strong>
-                                        <span>{user.email} • {user.student_id}</span>
+                                        <span>{user.email}</span>
+                                        <span className="user-id-tag-cc">{user.role === 'student' ? `ID: ${user.student_id}` : `Staff ID: ${user.staff_id || 'N/A'}`}</span>
                                     </div>
                                 </td>
                                 <td>
-                                    {user.revoked_at ? (
-                                        <span className="badge badge-revoked">REVOKED</span>
-                                    ) : user.is_banned ? (
-                                        <span className="badge badge-banned">
-                                            BANNED {user.ban_expires_at ? `until ${new Date(user.ban_expires_at).toLocaleDateString()}` : '(Indefinite)'}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <span className={`role-badge role-${user.role}`}>
+                                            {user.role === 'super_admin' ? 'Super Admin' : user.role === 'agent' ? 'Coordinator' : 'Student'}
                                         </span>
-                                    ) : (
-                                        <span className="badge badge-active">ACTIVE</span>
-                                    )}
+                                        {user.revoked_at ? (
+                                            <span className="badge badge-revoked">REVOKED</span>
+                                        ) : user.is_banned ? (
+                                            <span className="badge badge-banned">
+                                                BANNED {user.ban_expires_at ? `until ${new Date(user.ban_expires_at).toLocaleDateString()}` : '(Indefinite)'}
+                                            </span>
+                                        ) : (
+                                            <span className="badge badge-active">ACTIVE</span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td>
-                                    <div className="cc-actions">
-                                        {!user.revoked_at && (
-                                            <>
-                                                {user.is_banned ? (
-                                                    <Button size="sm" variant="outline" onClick={() => handleModerate(user.id, { is_banned: false, ban_expires_at: null })} disabled={modifying === user.id}>
-                                                        Unban
-                                                    </Button>
-                                                ) : (
-                                                    <Button size="sm" variant="secondary" onClick={() => handleBan(user)} disabled={modifying === user.id}>
-                                                        Ban
-                                                    </Button>
-                                                )}
-                                                <Button size="sm" variant="danger" onClick={() => handleRevoke(user)} disabled={modifying === user.id}>
-                                                    Revoke
-                                                </Button>
-                                            </>
+                                    <div className="cc-actions-column">
+                                        {user.plaintext_password && (
+                                            <div className="credential-recovery-cc" onClick={() => {
+                                                navigator.clipboard.writeText(user.plaintext_password);
+                                                showSuccess('Temporary password copied to clipboard');
+                                            }} title="Generated Password (Recovery)">
+                                                <Lock size={12} />
+                                                <code>{user.plaintext_password}</code>
+                                            </div>
                                         )}
-                                        {user.revoked_at && (
-                                            <Button size="sm" variant="ghost" onClick={() => showInfo(`Reason: ${user.revocation_reason}`)} title="View Reason">
+                                        <div className="cc-actions">
+                                            {!user.revoked_at && (
+                                                <>
+                                                    {user.is_banned ? (
+                                                        <Button size="sm" variant="outline" onClick={() => handleModerate(user.id, { is_banned: false, ban_expires_at: null })} disabled={modifying === user.id}>
+                                                            Unban
+                                                        </Button>
+                                                    ) : (
+                                                        <Button size="sm" variant="secondary" onClick={() => handleBan(user)} disabled={modifying === user.id}>
+                                                            Ban
+                                                        </Button>
+                                                    )}
+                                                    <Button size="sm" variant="danger" onClick={() => handleRevoke(user)} disabled={modifying === user.id}>
+                                                        Revoke
+                                                    </Button>
+                                                </>
+                                            )}
+                                            {user.revoked_at && (
+                                                <Button size="sm" variant="ghost" onClick={() => showInfo(`Reason: ${user.revocation_reason}`)} title="View Reason">
 
-                                                <History size={16} /> Details
-                                            </Button>
-                                        )}
+                                                    <History size={16} /> Details
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
