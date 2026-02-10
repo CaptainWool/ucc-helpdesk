@@ -5,6 +5,7 @@ import { Send, CheckCircle, AlertCircle, Sparkles, X, Lock, ShieldAlert, Users, 
 import { api } from '../lib/api';
 import { sendTicketEmail } from '../lib/email';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { findDeflectionAI } from '../lib/ai';
 import { useSettings } from '../contexts/SettingsContext';
 import { FAQS } from '../lib/constants';
@@ -18,6 +19,7 @@ import './SubmitTicket.css';
 const SubmitTicket = () => {
     const { user, profile } = useAuth();
     const { settings } = useSettings();
+    const { showSuccess, showError } = useToast();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const initialType = searchParams.get('type') || 'portal';
@@ -120,12 +122,13 @@ const SubmitTicket = () => {
 
             if (data) {
                 sendTicketEmail({ ...data, ...formData }).catch(console.error);
+                showSuccess('Ticket submitted successfully!', 5000);
             }
 
             setIsSuccess(true);
         } catch (error) {
             console.error('Error submitting ticket:', error);
-            alert(`Failed to submit ticket: ${error.message || error.error || 'Unknown error'} `);
+            showError(`Failed to submit ticket: ${error.message || error.error || 'Unknown error'}`);
         } finally {
             setIsSubmitting(false);
         }

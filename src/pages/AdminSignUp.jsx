@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, AlertTriangle, User, ShieldCheck, Send } from 'lucide-react';
+import { Lock, Mail, AlertTriangle, User, ShieldCheck, Send, CheckCircle, Copy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
@@ -22,8 +23,10 @@ const AdminSignUp = () => {
     const [generated, setGenerated] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const { signUp } = useAuth();
+    const { showSuccess, showError } = useToast();
     const navigate = useNavigate();
 
     const generateCredentials = () => {
@@ -87,10 +90,11 @@ const AdminSignUp = () => {
 
             if (signUpError) {
                 setError(signUpError.message || 'Registration failed');
+                showError(signUpError.message || 'Registration failed');
                 setLoading(false);
             } else {
-                alert(`Account created successfully!\n\nEmail: ${formData.email}\nPassword: ${formData.password}\n\nPlease save these credentials for the staff member.`);
-                navigate('/admin');
+                showSuccess('Staff account created successfully!');
+                setIsSuccess(true);
             }
         } catch (err) {
             console.error('Unexpected admin signup error:', err);
@@ -99,6 +103,52 @@ const AdminSignUp = () => {
         }
     };
 
+    if (isSuccess) {
+        return (
+            <div className="login-container">
+                <Card className="login-card" style={{ maxWidth: '500px', textAlign: 'center' }}>
+                    <div className="login-header">
+                        <div className="login-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
+                            <CheckCircle size={48} />
+                        </div>
+                        <h1>Staff Created!</h1>
+                        <p>The account for <strong>{formData.fullName}</strong> is ready.</p>
+                    </div>
+
+                    <div style={{ margin: '2rem 0', padding: '1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', textAlign: 'left' }}>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Login Email</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <code style={{ flexGrow: 1, background: 'white', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#0f172a' }}>{formData.email}</code>
+                                <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(formData.email)}>
+                                    <Copy size={16} />
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Temporary Password</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <code style={{ flexGrow: 1, background: 'white', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#0f172a' }}>{formData.password}</code>
+                                <Button size="sm" variant="ghost" onClick={() => navigator.clipboard.writeText(formData.password)}>
+                                    <Copy size={16} />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '2rem' }}>
+                        Please share these credentials with the staff member securely.
+                        They can change their password after logging in.
+                    </p>
+
+                    <Button onClick={() => navigate('/admin')} style={{ width: '100%' }} size="lg">
+                        Go to Dashboard
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
     return (
         <div className="login-container">
             <Card className="login-card" style={{ maxWidth: '600px' }}>

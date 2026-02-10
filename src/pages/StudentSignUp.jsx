@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, AlertTriangle, User, Hash, Send } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
@@ -23,6 +24,7 @@ const StudentSignUp = () => {
     const [loading, setLoading] = useState(false);
 
     const { signUp } = useAuth();
+    const { showSuccess, showError } = useToast();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -86,9 +88,10 @@ const StudentSignUp = () => {
 
             if (signUpError) {
                 setError(signUpError.message || 'Registration failed');
+                showError(signUpError.message || 'Registration failed');
                 setLoading(false);
             } else {
-                alert('Account created! Please log in.');
+                showSuccess('Account created successfully! Please log in.', 5000);
                 navigate('/student-login');
             }
         } catch (err) {

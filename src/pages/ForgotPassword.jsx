@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, ShieldCheck, Lock, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { api } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
@@ -15,6 +16,7 @@ const ForgotPassword = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+    const { showSuccess, showError, showWarning } = useToast();
 
     const navigate = useNavigate();
 
@@ -24,6 +26,7 @@ const ForgotPassword = () => {
         setSuccess('');
 
         if (newPassword !== confirmPassword) {
+            showWarning('Passwords do not match');
             return setError('Passwords do not match');
         }
 
@@ -39,13 +42,16 @@ const ForgotPassword = () => {
                 student_id: studentId,
                 new_password: newPassword
             });
+            showSuccess(res.message || 'Password reset successful!');
             setSuccess(res.message);
             // Clear form
             setEmail('');
             setStudentId('');
             setNewPassword('');
             setConfirmPassword('');
+            setTimeout(() => navigate('/student-login'), 3000);
         } catch (err) {
+            showError(err.error || 'Failed to reset password. Please check your details.');
             setError(err.error || 'Failed to reset password. Please check your details.');
         } finally {
             setLoading(false);

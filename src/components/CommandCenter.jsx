@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, ShieldAlert, UserMinus, Search, Ban, History, Info, Bell, Users, Sparkles } from 'lucide-react';
 import { api } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import Card from './common/Card';
 import Input from './common/Input';
 import './CommandCenter.css';
 
 const CommandCenter = () => {
+    const { showSuccess, showError, showWarning } = useToast();
     const [settings, setSettings] = useState({
         submissions_locked: false,
         maintenance_mode: false,
@@ -58,10 +60,10 @@ const CommandCenter = () => {
         if (!confirm('Run manual cleanup now? This will close all resolved tickets according to your threshold.')) return;
         try {
             const res = await api.system.cleanupTickets();
-            alert(res.message);
+            showSuccess(res.message || 'Cleanup completed successfully');
             fetchData();
         } catch (err) {
-            alert('Cleanup failed');
+            showError('Cleanup failed');
         }
     };
 
@@ -69,8 +71,9 @@ const CommandCenter = () => {
         const correctPIN = settings.command_center_password || 'israel@40';
         if (passwordAttempt === correctPIN) {
             setIsUnlocked(true);
+            showSuccess('Access Granted: Command Center Unlocked');
         } else {
-            alert('Access Denied: Incorrect PIN');
+            showError('Access Denied: Incorrect PIN');
         }
     };
 
@@ -85,8 +88,9 @@ const CommandCenter = () => {
         try {
             await api.system.updateSettings(key, value);
             setSettings(prev => ({ ...prev, [key]: value }));
+            showSuccess(`System setting updated`);
         } catch (err) {
-            alert('Failed to update system setting');
+            showError('Failed to update system setting');
         }
     };
 
@@ -100,9 +104,10 @@ const CommandCenter = () => {
         setModifying(userId);
         try {
             await api.system.moderateUser(userId, data);
+            showSuccess('User status updated');
             await fetchData(); // Refresh list
         } catch (err) {
-            alert('Failed to update user status');
+            showError('Failed to update user status');
         } finally {
             setModifying(null);
         }
@@ -457,7 +462,8 @@ const CommandCenter = () => {
                                             </>
                                         )}
                                         {user.revoked_at && (
-                                            <Button size="sm" variant="ghost" onClick={() => alert(`Reason: ${user.revocation_reason}`)} title="View Reason">
+                                            <Button size="sm" variant="ghost" onClick={() => showInfo(`Reason: ${user.revocation_reason}`)} title="View Reason">
+
                                                 <History size={16} /> Details
                                             </Button>
                                         )}

@@ -181,6 +181,7 @@ export const AuthProvider = ({ children }) => {
                 setOriginalUser(null);
             }
         },
+        refreshProfile: checkAuth,
         user,
         profile,
         loading,

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye, HelpCircle, CheckCircle, Clock, ExternalLink } from 'lucide-react';
 import { api } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import Card from './common/Card';
 import './KnowledgeBaseManager.css';
 
 const KnowledgeBaseManager = () => {
+    const { showSuccess, showError } = useToast();
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -52,9 +54,10 @@ const KnowledgeBaseManager = () => {
             setEditingArticle(null);
             setFormData({ question: '', answer: '', category: 'General', status: 'published' });
             fetchArticles();
+            showSuccess(`Article ${editingArticle ? 'updated' : 'created'} successfully`);
         } catch (error) {
             console.error('Error saving article:', error);
-            alert('Failed to save article');
+            showError('Failed to save article');
         }
     };
 
@@ -62,6 +65,7 @@ const KnowledgeBaseManager = () => {
         if (!window.confirm('Delete this article?')) return;
         try {
             await api.faq.delete(id);
+            showSuccess('Article deleted successfully');
             fetchArticles();
         } catch (error) {
             console.error('Error deleting article:', error);

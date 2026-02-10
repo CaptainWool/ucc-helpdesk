@@ -3,9 +3,11 @@ import { Brain, TrendingUp, Zap, AlertTriangle, Sparkles, ArrowUp, ArrowDown } f
 import Card from './common/Card';
 import { generatePredictiveInsights } from '../lib/ai';
 import { api } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import './PredictiveInsights.css';
 
 const PredictiveInsights = () => {
+    const { showSuccess, showError } = useToast();
     const [insights, setInsights] = useState(null);
     const [loading, setLoading] = useState(false);
     const [recentTickets, setRecentTickets] = useState([]);
@@ -35,7 +37,7 @@ const PredictiveInsights = () => {
             setInsights(result);
         } catch (error) {
             console.error('Failed to generate insights:', error);
-            alert('Failed to generate insights. Please try again.');
+            showError('Failed to generate insights. Please try again.');
         } finally {
             setLoading(false);
         }

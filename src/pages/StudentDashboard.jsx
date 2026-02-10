@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api, BASE_URL } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { generateDataExport } from '../lib/compliance';
 import PrivacyCenter from '../components/PrivacyCenter'; // Added PrivacyCenter import
 import Card from '../components/common/Card';
@@ -28,6 +29,7 @@ import './StudentDashboard.css';
 
 const StudentDashboard = () => {
     const { user, profile } = useAuth();
+    const { showInfo } = useToast();
     const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -126,7 +128,7 @@ const StudentDashboard = () => {
 
     const handleDeleteAccount = () => {
         if (confirm("Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.")) {
-            alert("Account deletion request submitted. An admin will process this within 7 days.");
+            showInfo("Account deletion request submitted. An admin will process this within 7 days.");
             // In a real app, call api.users.delete(user.id)
         }
     };

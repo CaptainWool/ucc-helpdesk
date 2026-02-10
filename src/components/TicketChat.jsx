@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, Shield, Sparkles, Video, Trash2, Mic } from 'lucide-react';
 import { api } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import { generateSmartReplyAI, analyzeResponseQuality } from '../lib/ai';
 import { requestNotificationPermission, sendNotification } from '../lib/notifications';
@@ -9,6 +10,7 @@ import VideoRecorder from './common/VideoRecorder';
 import './TicketChat.css';
 
 const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
+    const { showSuccess, showError, showInfo, showWarning } = useToast();
     // ... states ...
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
@@ -160,7 +162,7 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
             scrollToBottom();
         } catch (error) {
             console.error('Error sending message:', error);
-            alert('Failed to send message');
+            showError('Failed to send message');
         }
     };
 
@@ -178,11 +180,12 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
             const reply = await generateSmartReplyAI(ticketContext, messages);
             if (reply) {
                 setNewMessage(reply);
+                showSuccess('AI reply generated', 3000);
             } else {
-                alert("AI Reply failed. This usually means the API Key is invalid or has reached its quota.");
+                showWarning("AI Reply failed. This usually means the API Key is invalid or has reached its quota.");
             }
         } catch (error) {
-            alert(`AI Error: ${error.message || "An unexpected error occurred"}`);
+            showError(`AI Error: ${error.message || "An unexpected error occurred"}`);
         }
         setIsGenerating(false);
     };

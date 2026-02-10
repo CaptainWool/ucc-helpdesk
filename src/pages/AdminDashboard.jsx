@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, GraduationCap, CheckCircle, ExternalLink, LogOut, Sparkles, Eye, User, LayoutDashboard, Users, Shield, Terminal, Settings, Download, BarChart2, Trash2, BookOpen } from 'lucide-react';
 import { api, BASE_URL } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { analyzeTicketAI } from '../lib/ai';
 import { useSettings } from '../contexts/SettingsContext';
 import Button from '../components/common/Button';
@@ -41,6 +42,7 @@ const AdminDashboard = () => {
 
     const { user, profile, signOut, impersonateUser } = useAuth();
     const { settings, updateSetting } = useSettings();
+    const { showSuccess, showError, showInfo } = useToast();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -103,10 +105,11 @@ const AdminDashboard = () => {
     const handleResolve = async (id) => {
         try {
             await api.tickets.update(id, { status: 'Resolved' });
+            showSuccess('Ticket status updated to Resolved');
             fetchTickets();
         } catch (error) {
             console.error('Error updating ticket:', error);
-            alert('Failed to update ticket status');
+            showError('Failed to update ticket status');
         }
     };
 
@@ -114,43 +117,47 @@ const AdminDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this ticket?')) return;
         try {
             await api.tickets.delete(id);
+            showSuccess('Ticket deleted successfully');
             if (selectedTicket?.id === id) {
                 setSelectedTicket(null);
             }
             fetchTickets();
         } catch (error) {
             console.error('Error deleting ticket:', error);
-            alert(`Failed to delete ticket: ${error.message || error.error || 'Server error'}`);
+            showError(`Failed to delete ticket: ${error.message || error.error || 'Server error'}`);
         }
     };
 
     const handleAssign = async (ticketId, agentEmail = user.email) => {
         try {
             await api.tickets.update(ticketId, { assigned_to_email: agentEmail });
+            showSuccess(`Ticket assigned to ${agentEmail}`);
             fetchTickets();
         } catch (error) {
             console.error('Error assigning ticket:', error);
-            alert('Failed to assign ticket');
+            showError('Failed to assign ticket');
         }
     };
 
     const handlePriorityChange = async (ticketId, newPriority) => {
         try {
             await api.tickets.update(ticketId, { priority: newPriority });
+            showSuccess(`Ticket priority updated to ${newPriority}`);
             fetchTickets();
         } catch (error) {
             console.error('Error updating priority:', error);
-            alert('Failed to update priority');
+            showError('Failed to update priority');
         }
     };
 
     const handleDepartmentChange = async (agentId, department) => {
         try {
             await api.auth.updateUser(agentId, { department });
+            showSuccess(`Department updated to ${department}`);
             fetchAgents();
         } catch (error) {
             console.error('Error updating department:', error);
-            alert('Failed to update department');
+            showError('Failed to update department');
         }
     };
 
@@ -174,7 +181,7 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error('AI Analysis failed:', error);
-            alert(`AI Analysis Error: ${error.message || "Could not complete analysis"}`);
+            showError(`AI Analysis Error: ${error.message || "Could not complete analysis"}`);
         } finally {
             setAnalyzing(false);
         }
@@ -245,10 +252,10 @@ const AdminDashboard = () => {
             }
             setSelectedTicketIds([]);
             fetchTickets();
-            alert('Selected tickets deleted successfully');
+            showSuccess('Selected tickets deleted successfully');
         } catch (err) {
             console.error('Bulk delete error:', err);
-            alert(`Failed to delete tickets: ${err.message || 'Check your permissions.'}`);
+            showError(`Failed to delete tickets: ${err.message || 'Check your permissions.'}`);
             fetchTickets(); // Refresh anyway to show what's left
         } finally {
             setIsBulkUpdating(false);

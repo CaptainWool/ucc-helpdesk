@@ -4,27 +4,30 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: transparent;
+    pointer-events: none;
+    /* Let clicks pass through to background */
     display: flex;
-    align-items: center;
+    align-items: flex-end;
+    /* Move to bottom */
     justify-content: center;
+    padding-bottom: 2rem;
     z-index: 9999;
 }
 
 .tour-modal {
     width: 100%;
     max-width: 450px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 24px;
-    padding: 2.5rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     position: relative;
+    pointer-events: auto;
+    /* Re-enable clicks for modal */
     text-align: center;
-    transform: translateY(0);
-    animation: tour-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: tour-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes tour-slide-up {
@@ -133,6 +136,39 @@
     box-shadow: 0 10px 15px -3px rgba(3, 105, 161, 0.3);
 }
 
+/* Content Transitions */
+.tour-body.transition-in {
+    animation: tour-body-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tour-body.transition-out {
+    animation: tour-body-out 0.2s ease-in forwards;
+}
+
+@keyframes tour-body-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes tour-body-out {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(1.05) translateY(-10px);
+    }
+}
+
 /* Glassmorphism Class Reused */
 .glass-morphism {
     background: rgba(255, 255, 255, 0.85);
@@ -170,6 +206,43 @@
 
 .fade-in {
     animation: tour-fade-in 0.3s ease-out;
+}
+
+/* Spotlight Highlight */
+.tour-highlight {
+    position: relative;
+    z-index: 10005 !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tour-highlight::after {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    right: -12px;
+    bottom: -12px;
+    border: 3px solid var(--primary);
+    border-radius: inherit;
+    /* Massive shadow creates the spotlight by dimming the entire screen */
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65), 0 0 30px var(--primary);
+    animation: tour-pulse 2.5s infinite;
+    z-index: 10006;
+    pointer-events: none;
+}
+
+@keyframes tour-pulse {
+    0% {
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65), 0 0 0 0 rgba(14, 165, 233, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65), 0 0 0 20px rgba(14, 165, 233, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65), 0 0 0 0 rgba(14, 165, 233, 0);
+    }
 }
 
 @keyframes tour-fade-in {

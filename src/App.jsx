@@ -6,6 +6,7 @@ import Layout from './components/layout/Layout';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 // Eager load core pages for instant performance
 import Home from './pages/Home';
@@ -35,46 +36,47 @@ function App() {
         <ThemeProvider>
             <LanguageProvider>
                 <SettingsProvider>
-                    <AuthProvider>
-                        <BrowserRouter>
-                            <Suspense fallback={<LoadingFallback />}>
-                                <Routes>
-                                    <Route path="/" element={<Layout />}>
-                                        { /* ... routes ... */}
-                                        <Route index element={<Home />} />
-                                        <Route path="dashboard" element={
-                                            <ProtectedRoute>
-                                                <StudentDashboard />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="submit-ticket" element={
-                                            <ProtectedRoute requiredRole="student">
-                                                <SubmitTicket />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="track-ticket" element={<TrackTicket />} />
-                                        <Route path="faq" element={<FAQ />} />
-                                        <Route path="privacy" element={<PrivacyPolicy />} />
-                                        <Route path="terms" element={<TermsOfService />} />
-                                        <Route path="student-login" element={<StudentLogin />} />
-                                        <Route path="student-signup" element={<StudentSignUp />} />
-                                        <Route path="forgot-password" element={<ForgotPassword />} />
-                                        <Route path="login" element={<Login />} />
-                                        <Route path="admin-signup" element={
-                                            <ProtectedRoute requiredRole="super_admin">
-                                                <AdminSignUp />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="admin" element={
-                                            <ProtectedRoute adminOnly={true}>
-                                                <AdminDashboard />
-                                            </ProtectedRoute>
-                                        } />
-                                    </Route>
-                                </Routes>
-                            </Suspense>
-                        </BrowserRouter>
-                    </AuthProvider>
+                    <ToastProvider>
+                        <AuthProvider>
+                            <BrowserRouter>
+                                <Suspense fallback={<LoadingFallback />}>
+                                    <Routes>
+                                        <Route path="/" element={<Layout />}>
+                                            <Route index element={<Home />} />
+                                            <Route path="dashboard" element={
+                                                <ProtectedRoute>
+                                                    <StudentDashboard />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="submit-ticket" element={
+                                                <ProtectedRoute requiredRole="student">
+                                                    <SubmitTicket />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="track-ticket" element={<TrackTicket />} />
+                                            <Route path="faq" element={<FAQ />} />
+                                            <Route path="privacy" element={<PrivacyPolicy />} />
+                                            <Route path="terms" element={<TermsOfService />} />
+                                            <Route path="student-login" element={<StudentLogin />} />
+                                            <Route path="student-signup" element={<StudentSignUp />} />
+                                            <Route path="forgot-password" element={<ForgotPassword />} />
+                                            <Route path="login" element={<Login />} />
+                                            <Route path="admin-signup" element={
+                                                <ProtectedRoute requiredRole="super_admin">
+                                                    <AdminSignUp />
+                                                </ProtectedRoute>
+                                            } />
+                                            <Route path="admin" element={
+                                                <ProtectedRoute adminOnly={true}>
+                                                    <AdminDashboard />
+                                                </ProtectedRoute>
+                                            } />
+                                        </Route>
+                                    </Routes>
+                                </Suspense>
+                            </BrowserRouter>
+                        </AuthProvider>
+                    </ToastProvider>
                 </SettingsProvider>
             </LanguageProvider>
         </ThemeProvider>

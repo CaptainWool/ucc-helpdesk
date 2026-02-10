@@ -6,9 +6,10 @@ import Button from './Button';
 import './OnboardingTour.css';
 
 const OnboardingTour = ({ role = 'student', onComplete }) => {
-    const { user, profile } = useAuth();
+    const { user, profile, refreshProfile } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     // Steps configuration based on role
     const steps = role === 'student' ? [
@@ -106,7 +107,11 @@ const OnboardingTour = ({ role = 'student', onComplete }) => {
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
-            setCurrentStep(prev => prev + 1);
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setCurrentStep(prev => prev + 1);
+                setIsTransitioning(false);
+            }, 300);
         } else {
             completeTour();
         }
@@ -114,16 +119,20 @@ const OnboardingTour = ({ role = 'student', onComplete }) => {
 
     const handlePrev = () => {
         if (currentStep > 0) {
-            setCurrentStep(prev => prev - 1);
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setCurrentStep(prev => prev - 1);
+                setIsTransitioning(false);
+            }, 300);
         }
     };
 
     const completeTour = async () => {
         setIsVisible(false);
         try {
-            // Update the profile in the DB so they don't see it again
             if (user && profile) {
                 await api.auth.updateUser(user.id, { has_completed_tour: true });
+                if (refreshProfile) await refreshProfile();
             }
         } catch (error) {
             console.error('Error saving tour status:', error);
@@ -148,7 +157,7 @@ const OnboardingTour = ({ role = 'student', onComplete }) => {
                     ))}
                 </div>
 
-                <div className="tour-body">
+                <div className={`tour-body ${isTransitioning ? 'transition-out' : 'transition-in'}`}>
                     <div className="tour-icon-container">
                         {currentStepData.icon}
                     </div>

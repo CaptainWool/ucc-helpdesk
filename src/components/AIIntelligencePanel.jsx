@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useToast } from '../contexts/ToastContext';
 import { Sparkles, Brain, MessageSquare, TrendingUp, Lightbulb, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
 import Card from './common/Card';
 import Button from './common/Button';
@@ -11,6 +12,7 @@ import {
 import './AIIntelligencePanel.css';
 
 const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
+    const { showSuccess, showError, showWarning } = useToast();
     const [activeFeature, setActiveFeature] = useState(null);
     const [loading, setLoading] = useState(false);
     const [summary, setSummary] = useState(null);
@@ -27,7 +29,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
             setSummary(result);
         } catch (error) {
             console.error('Summarization failed:', error);
-            alert('Failed to generate summary. Please try again.');
+            showError('Failed to generate summary. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -41,7 +43,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
             setSuggestions(result);
         } catch (error) {
             console.error('Suggestions failed:', error);
-            alert('Failed to get suggestions. Please try again.');
+            showError('Failed to get suggestions. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -49,7 +51,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
 
     const handleAnalyzeTone = async () => {
         if (!draftMessage.trim()) {
-            alert('Please enter a message to analyze');
+            showWarning('Please enter a message to analyze');
             return;
         }
         setLoading(true);
@@ -59,7 +61,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
             setToneAnalysis(result);
         } catch (error) {
             console.error('Tone analysis failed:', error);
-            alert('Failed to analyze tone. Please try again.');
+            showError('Failed to analyze tone. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -73,7 +75,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
             setActionItems(result);
         } catch (error) {
             console.error('Action extraction failed:', error);
-            alert('Failed to extract action items. Please try again.');
+            showError('Failed to extract action items. Please try again.');
         } finally {
             setLoading(false);
         }

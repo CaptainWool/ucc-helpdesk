@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Loader, AlertCircle, CheckCircle, Clock, Star } from 'lucide-react';
 import { api } from '../lib/api';
+import { useToast } from '../contexts/ToastContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
@@ -10,6 +11,7 @@ import { requestNotificationPermission, sendNotification } from '../lib/notifica
 import './TrackTicket.css';
 
 const TrackTicket = () => {
+    const { showSuccess, showError, showWarning } = useToast();
     const [searchParams] = useSearchParams();
     const [ticketId, setTicketId] = useState(searchParams.get('id') || '');
     const [ticket, setTicket] = useState(null);
@@ -99,7 +101,7 @@ const TrackTicket = () => {
 
     const handleSubmitFeedback = async () => {
         if (rating === 0) {
-            alert("Please select a star rating.");
+            showWarning("Please select a star rating.");
             return;
         }
         setSubmittingFeedback(true);
@@ -109,9 +111,10 @@ const TrackTicket = () => {
                 feedback_comment: feedback
             });
             setFeedbackSubmitted(true);
+            showSuccess("Thank you for your feedback!");
         } catch (error) {
             console.error("Error submitting feedback:", error);
-            alert("Failed to submit feedback.");
+            showError("Failed to submit feedback.");
         } finally {
             setSubmittingFeedback(false);
         }
