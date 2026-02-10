@@ -63,6 +63,13 @@ const StudentSignUp = () => {
             return;
         }
 
+        // Validate Email Format
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (!emailRegex.test(formData.email)) {
+            setError('Please enter a valid email address (e.g., student@ucc.edu.gh).');
+            return;
+        }
+
         setLoading(true);
 
         try {
