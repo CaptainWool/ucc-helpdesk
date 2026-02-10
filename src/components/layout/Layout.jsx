@@ -82,11 +82,13 @@ const Layout = () => {
                                 <Link to="/admin" className="nav-link">Admin</Link>
                             )}
 
-                            {settings.showHeaderSubmit && profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
+                            {/* Submit Ticket - Restricted to Admins/Agents */}
+                            {profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
                                 <Link to="/submit-ticket" className="nav-link">{t('nav_submit')}</Link>
                             )}
 
-                            {settings.showHeaderFAQ && profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
+                            {/* FAQ - Restricted to Admins/Agents */}
+                            {profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
                                 <Link to="/faq" className="nav-link">FAQ</Link>
                             )}
 
