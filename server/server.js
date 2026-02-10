@@ -456,16 +456,26 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
     const { email, student_id, new_password } = req.body;
     try {
-        // Verify user exists and student_id matches
+        // Verify user exists
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = result.rows[0];
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'No account found with this email address.' });
         }
 
+        // Verify student_id matches the email
         if (user.student_id !== student_id) {
-            return res.status(401).json({ error: 'Student ID does not match our records' });
+            return res.status(401).json({ error: 'The email and Student ID do not match our records. Please verify your information.' });
+        }
+
+        // Apply student password policy (numbers optional)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        if (!passwordRegex.test(new_password)) {
+            return res.status(400).json({
+                error: 'Password requirements not met',
+                message: 'Password must be at least 8 characters long and contain uppercase, lowercase, and special characters.'
+            });
         }
 
         // Hash and update password
