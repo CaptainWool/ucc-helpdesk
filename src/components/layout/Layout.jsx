@@ -82,11 +82,11 @@ const Layout = () => {
                                 <Link to="/admin" className="nav-link">Admin</Link>
                             )}
 
-                            {settings.showHeaderSubmit && (!profile || profile?.role === 'student') && (
+                            {settings.showHeaderSubmit && profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
                                 <Link to="/submit-ticket" className="nav-link">{t('nav_submit')}</Link>
                             )}
 
-                            {settings.showHeaderFAQ && (
+                            {settings.showHeaderFAQ && profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
                                 <Link to="/faq" className="nav-link">FAQ</Link>
                             )}
 
