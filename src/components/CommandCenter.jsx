@@ -357,6 +357,39 @@ const CommandCenter = () => {
                 <h3><Bell size={20} /> Global Announcement</h3>
                 <p className="section-desc">Broadcast a message to all students in the portal.</p>
 
+                <div className="announcement-presets" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '100%', marginBottom: '0.25rem', fontWeight: 'bold' }}>Quick Draft Presets:</span>
+                    {[
+                        { label: 'Fee Deadline', msg: '⚠️ Fee Deadline: Final date for Semester 1 fee clearance is Friday, Feb 20th.', type: 'warning' },
+                        { label: 'Registration', msg: '📅 Course Registration: Undergraduate registration closes this Sunday at midnight.', type: 'info' },
+                        { label: 'Security', msg: '🔒 Security Alert: UCC will never ask for your password. Stay alert to phishing scams.', type: 'danger' },
+                        { label: 'Results', msg: '📄 Results Out: First-semester results for Level 400 students are now live on the portal.', type: 'info' },
+                        { label: 'General', msg: '🎓 Welcome Back: We wish all CoDE students a successful and productive semester!', type: 'info' }
+                    ].map((p, i) => (
+                        <button
+                            key={i}
+                            className="preset-pill"
+                            style={{
+                                fontSize: '0.7rem',
+                                padding: '0.25rem 0.6rem',
+                                borderRadius: '12px',
+                                border: '1px solid var(--border)',
+                                background: 'white',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                color: 'var(--text-main)',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                            onClick={() => setAnnouncementDraft({ enabled: true, message: p.msg, type: p.type })}
+                            onMouseOver={(e) => { e.target.style.borderColor = 'var(--primary)'; e.target.style.background = '#f8fafc'; }}
+                            onMouseOut={(e) => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'white'; }}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="announcement-form">
                     <div className="form-row">
                         <div className="toggle-group">
