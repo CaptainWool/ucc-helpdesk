@@ -306,13 +306,28 @@ app.get('/', (req, res) => {
 app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
     const { email, password, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise } = req.body;
 
-    // Server-side password complexity check (Full requirements for admin/agent accounts)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-    if (!passwordRegex.test(password)) {
-        return res.status(400).json({
-            error: 'Password requirements not met',
-            message: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.'
-        });
+    // Determine the role early to apply appropriate password policy
+    let finalRole = role || 'student';
+
+    // Server-side password complexity check - Different policies for students vs staff
+    if (finalRole === 'student') {
+        // Student policy: 8 chars, uppercase, lowercase, special (numbers optional)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                error: 'Password requirements not met',
+                message: 'Password must be at least 8 characters long and contain uppercase, lowercase, and special characters.'
+            });
+        }
+    } else {
+        // Admin/Agent policy: 8 chars, uppercase, lowercase, numbers, special (strict)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                error: 'Password requirements not met',
+                message: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.'
+            });
+        }
     }
 
     const avatar_url = req.file ? `/uploads/avatars/${req.file.filename}` : null;
@@ -323,8 +338,7 @@ app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
         if (userExists.rows.length > 0) {
             return res.status(400).json({ error: 'This email is already registered. Please login or use a different email.' });
         }
-        // SECURITY: Role assignment restriction
-        let finalRole = role || 'student';
+        // SECURITY: Role assignment restriction - use finalRole determined above
 
         // If a privileged role is requested, it MUST be by an authenticated super_admin
         if (finalRole === 'agent' || finalRole === 'super_admin') {
