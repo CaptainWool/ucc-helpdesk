@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- Optional link to registered user
     email TEXT NOT NULL, -- For anonymous or registered users
     student_id TEXT,
+    phone_number TEXT,
     full_name TEXT NOT NULL,
     subject TEXT NOT NULL,
     description TEXT NOT NULL,

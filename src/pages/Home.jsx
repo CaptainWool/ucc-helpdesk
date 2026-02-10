@@ -5,11 +5,13 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useSettings } from '../contexts/SettingsContext';
 import './Home.css';
 
 const Home = () => {
     const { t } = useLanguage();
     const { user, profile } = useAuth();
+    const { settings } = useSettings();
     const isAdmin = profile?.role === 'agent' || profile?.role === 'super_admin';
     const isStudent = profile?.role === 'student';
 
@@ -33,19 +35,13 @@ const Home = () => {
                                         Manage Dashboard <ChevronRight size={20} />
                                     </Button>
                                 </Link>
-                            ) : isStudent ? (
-                                <Link to="/dashboard">
-                                    <Button size="lg" className="hero-cta">
-                                        Student Dashboard <ChevronRight size={20} />
-                                    </Button>
-                                </Link>
-                            ) : (
+                            ) : (isStudent || !user) && settings.showHeaderSubmit ? (
                                 <Link to="/submit-ticket">
                                     <Button size="lg" className="hero-cta">
                                         {t('btn_submit')} <ChevronRight size={20} />
                                     </Button>
                                 </Link>
-                            )}
+                            ) : null}
                             <a href="#how-it-works" className="secondary-link">How it works</a>
                         </div>
 
@@ -140,11 +136,13 @@ const Home = () => {
                             <h2 style={{ margin: 0 }}>Have a quick question?</h2>
                             <p style={{ opacity: 0.9, marginTop: '0.5rem' }}>Check our frequently asked questions for immediate answers.</p>
                         </div>
-                        <Link to="/faq">
-                            <Button variant="secondary" size="lg" style={{ background: 'white', color: 'var(--primary)' }}>
-                                Visit FAQ Center
-                            </Button>
-                        </Link>
+                        {settings.showHeaderFAQ && (
+                            <Link to="/faq">
+                                <Button variant="secondary" size="lg" style={{ background: 'white', color: 'var(--primary)' }}>
+                                    Visit FAQ Center
+                                </Button>
+                            </Link>
+                        )}
                     </Card>
                 </div>
             </section>

@@ -82,12 +82,13 @@ const Layout = () => {
                                 <Link to="/admin" className="nav-link">Admin</Link>
                             )}
 
-                            {/* Submit Ticket - only for students and non-logged-in users */}
                             {settings.showHeaderSubmit && (!profile || profile?.role === 'student') && (
                                 <Link to="/submit-ticket" className="nav-link">{t('nav_submit')}</Link>
                             )}
 
-                            {settings.showHeaderFAQ && <Link to="/faq" className="nav-link">FAQ</Link>}
+                            {settings.showHeaderFAQ && (
+                                <Link to="/faq" className="nav-link">FAQ</Link>
+                            )}
 
                             {/* Language Toggle */}
                             <select
