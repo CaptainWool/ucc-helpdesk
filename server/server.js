@@ -19,7 +19,134 @@ app.use('/uploads', express.static('uploads'));
 // Database Connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
 });
+
+// --- Auto-Initialize Database Schema ---
+const initDb = async () => {
+    console.log('Checking database schema synchronization...');
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Ensure Extensions
+        await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+
+        // Create Users Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'agent', 'super_admin')),
+                full_name TEXT,
+                student_id TEXT,
+                staff_id TEXT,
+                phone_number TEXT,
+                level TEXT,
+                programme TEXT,
+                avatar_url TEXT,
+                department VARCHAR(50) DEFAULT 'general',
+                expertise TEXT,
+                is_assigned BOOLEAN DEFAULT false,
+                has_completed_tour BOOLEAN DEFAULT false,
+                is_banned BOOLEAN DEFAULT false,
+                ban_expires_at TIMESTAMP WITH TIME ZONE,
+                revoked_at TIMESTAMP WITH TIME ZONE,
+                revocation_reason TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create Tickets Table (with all compatibility columns)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS tickets (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                email TEXT NOT NULL,
+                student_id TEXT,
+                student_id_ref UUID,
+                phone_number TEXT,
+                full_name TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                description TEXT NOT NULL,
+                type VARCHAR(20) NOT NULL CHECK (type IN ('portal', 'fees', 'academic', 'other')),
+                status VARCHAR(20) DEFAULT 'Open' CHECK (status IN ('Open', 'In Progress', 'Resolved', 'Closed')),
+                priority VARCHAR(10) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Urgent')),
+                attachment_url TEXT,
+                assigned_to_email TEXT,
+                rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+                feedback_comment TEXT,
+                sla_deadline TIMESTAMP WITH TIME ZONE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMP WITH TIME ZONE
+            )
+        `);
+
+        // Create Messages Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
+                sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                sender_role VARCHAR(20) NOT NULL CHECK (sender_role IN ('student', 'admin', 'agent')),
+                content TEXT NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create Settings Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key TEXT PRIMARY KEY,
+                value JSONB NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create Audit Logs Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+                action TEXT NOT NULL,
+                target_type TEXT,
+                target_id TEXT,
+                details JSONB,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Seed Initial Settings
+        const settingsToSeed = [
+            ['maintenance_mode', false],
+            ['submissions_locked', false],
+            ['showHeaderSubmit', true],
+            ['showHeaderFAQ', true],
+            ['max_open_tickets', 100],
+            ['ai_sensitivity', 0.7],
+            ['sla_peak_mode', false]
+        ];
+
+        for (const [key, val] of settingsToSeed) {
+            await client.query(
+                'INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
+                [key, JSON.stringify(val)]
+            );
+        }
+
+        await client.query('COMMIT');
+        console.log('✅ Database synchronized successfully!');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('❌ Database synchronization failed:', err);
+        // Don't exit process, let the app try to run, but log heavily
+    } finally {
+        client.release();
+    }
+};
 
 // Auth Middleware
 const authenticateToken = (req, res, next) => {
@@ -711,6 +838,8 @@ app.get('/api/public/settings', async (req, res) => {
     }
 });
 
-const server = app.listen(port, () => {
+const server = app.listen(port, async () => {
     console.log(`Server running on port ${port}`);
+    // Auto-initialize DB on startup
+    await initDb();
 });

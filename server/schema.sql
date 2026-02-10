@@ -54,8 +54,37 @@ CREATE TABLE IF NOT EXISTS tickets (
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
-    sender_id UUID REFERENCES users(id) ON DELETE SET NULL, -- specific sender if logged in
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
     sender_role VARCHAR(20) NOT NULL CHECK (sender_role IN ('student', 'admin', 'agent')),
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- System Settings Table
+CREATE TABLE IF NOT EXISTS system_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Audit Logs Table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action TEXT NOT NULL,
+    target_type TEXT,
+    target_id TEXT,
+    details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed Initial Settings
+INSERT INTO system_settings (key, value) VALUES 
+('maintenance_mode', 'false'),
+('submissions_locked', 'false'),
+('showHeaderSubmit', 'true'),
+('showHeaderFAQ', 'true'),
+('max_open_tickets', '50'),
+('ai_sensitivity', '0.7'),
+('sla_peak_mode', 'false')
+ON CONFLICT (key) DO NOTHING;
