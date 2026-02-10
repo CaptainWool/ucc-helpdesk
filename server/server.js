@@ -127,7 +127,8 @@ const initDb = async () => {
             ['showHeaderFAQ', true],
             ['max_open_tickets', 100],
             ['ai_sensitivity', 0.7],
-            ['sla_peak_mode', false]
+            ['sla_peak_mode', false],
+            ['sms_notifications_enabled', true]
         ];
 
         for (const [key, val] of settingsToSeed) {
@@ -174,6 +175,44 @@ const initDb = async () => {
         // Don't exit process, let the app try to run, but log heavily
     } finally {
         client.release();
+    }
+};
+
+// SMS Utility (Arkesel V2)
+const sendSMS = async (phoneNumber, message) => {
+    try {
+        const apiKey = process.env.ARKESEL_API_KEY;
+        const senderId = process.env.ARKESEL_SENDER_ID || 'UCCHelpdesk';
+
+        if (!apiKey) {
+            console.warn('⚠️ Arkesel API Key missing. Skipping SMS.');
+            return;
+        }
+
+        // Clean phone number (Arkesel prefers 233 format)
+        let formattedNumber = phoneNumber.replace(/[^0-9]/g, '');
+        if (formattedNumber.startsWith('0')) {
+            formattedNumber = '233' + formattedNumber.substring(1);
+        }
+
+        const response = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': apiKey
+            },
+            body: JSON.stringify({
+                sender: senderId,
+                recipients: [formattedNumber],
+                message: message
+            })
+        });
+
+        const data = await response.json();
+        console.log(`📱 SMS Status to ${formattedNumber}:`, data.status || data.message || 'Sent');
+        return data;
+    } catch (err) {
+        console.error('❌ SMS Sending failed:', err.message);
     }
 };
 
@@ -717,6 +756,13 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
             'INSERT INTO tickets (full_name, email, student_id, phone_number, subject, description, type, priority, user_id, sla_deadline, attachment_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
             [full_name, email, student_id, phone_number, subject, description, type, finalPriority, user_id, sla_deadline, attachment_url]
         );
+
+        // SMS Notification for new ticket
+        if (settings.sms_notifications_enabled && phone_number) {
+            const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
+            sendSMS(phone_number, smsMessage);
+        }
+
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
@@ -779,7 +825,15 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
         }
 
         const result = await pool.query(`UPDATE tickets SET ${setClause}, updated_at = NOW() WHERE id = $1 RETURNING *`, [id, ...validValues]);
-        res.json(result.rows[0]);
+        const updatedTicket = result.rows[0];
+
+        // SMS Notification for resolution
+        if (settings.sms_notifications_enabled && updates.status === 'Resolved' && updatedTicket.phone_number) {
+            const smsMessage = `Great news ${updatedTicket.full_name}! Your ticket "${updatedTicket.subject}" has been RESOLVED. Please log in to check the solution.`;
+            sendSMS(updatedTicket.phone_number, smsMessage);
+        }
+
+        res.json(updatedTicket);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Update failed' });
