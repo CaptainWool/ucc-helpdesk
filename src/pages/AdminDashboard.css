@@ -442,13 +442,26 @@
 .modal-content {
     background: white;
     width: 100%;
-    max-width: 900px;
-    max-height: 90vh;
-    border-radius: 20px;
+    max-width: 850px;
+    max-height: 92vh;
+    border-radius: 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-header {
@@ -478,24 +491,73 @@
 
 .ticket-meta-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
     background: #f8fafc;
-    padding: 1.25rem;
+    padding: 1.5rem;
     border-radius: 12px;
+    border: 1px solid #e2e8f0;
 }
 
-.meta-item {
+.meta-card {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.meta-item label {
-    font-size: 0.75rem;
+.meta-card label {
+    font-size: 0.7rem;
     font-weight: 700;
     color: var(--dash-text-muted);
     text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.meta-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--dash-text);
+}
+
+.description-text {
+    background: white;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #374151;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    width: fit-content;
+    transition: all 0.2s;
+}
+
+.attachment-link:hover {
+    background: #dbeafe;
+}
+
+.modal-chat-section {
+    border-top: 2px solid #f1f5f9;
+    padding-top: 1.5rem;
+}
+
+.modal-priority-select {
+    width: 100%;
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 0.875rem;
 }
 
 /* Team View */

@@ -92,12 +92,12 @@
 }
 
 .chat-input-area {
-    padding: 1rem;
+    padding: 1.25rem;
     border-top: 1px solid #f1f5f9;
     display: flex;
-    gap: 0.75rem;
+    flex-direction: column;
+    gap: 1rem;
     background-color: white;
-    position: relative;
 }
 
 .chat-form {
@@ -106,28 +106,64 @@
     flex: 1;
 }
 
-.template-web {
+.admin-tools {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.template-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
     position: relative;
 }
 
 .template-btn {
-    background: #f1f5f9;
+    background: white;
     border: 1px solid #e2e8f0;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s;
     color: var(--text-dark);
 }
 
 .template-btn:hover {
-    background: #e2e8f0;
+    background: #f1f5f9;
+    border-color: var(--primary);
     color: var(--primary);
+}
+
+.ai-btn {
+    background: #f0f9ff !important;
+    color: #0ea5e9 !important;
+    border-color: #bae6fd !important;
+}
+
+.ai-btn:hover {
+    background: #e0f2fe !important;
+    border-color: #0ea5e9 !important;
+}
+
+.video-btn {
+    background: #fee2e2 !important;
+    color: #ef4444 !important;
+    border-color: #fecaca !important;
+}
+
+.video-btn:hover {
+    background: #fecaca !important;
+    border-color: #ef4444 !important;
 }
 
 .template-menu {

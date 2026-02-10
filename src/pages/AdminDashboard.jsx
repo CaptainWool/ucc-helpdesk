@@ -74,6 +74,12 @@ const AdminDashboard = () => {
     // Reset analysis when ticket changes
     useEffect(() => {
         setAiAnalysis(null);
+        // Prevent body scroll when modal is open
+        if (selectedTicket) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
     }, [selectedTicket]);
 
     const fetchTickets = async () => {
@@ -724,11 +730,11 @@ const AdminDashboard = () => {
                         </div>
                         <div className="modal-body">
                             <div className="ticket-meta-grid">
-                                <div className="meta-item">
+                                <div className="meta-card">
                                     <label>Status</label>
                                     <span className={`status-pill ${selectedTicket.status.toLowerCase()}`}>{selectedTicket.status}</span>
                                 </div>
-                                <div className="meta-item">
+                                <div className="meta-card">
                                     <label>Priority</label>
                                     <select value={selectedTicket.priority || 'Medium'} onChange={(e) => handlePriorityChange(selectedTicket.id, e.target.value)} className="modal-priority-select">
                                         <option value="Urgent">Urgent</option>
@@ -737,29 +743,35 @@ const AdminDashboard = () => {
                                         <option value="Low">Low</option>
                                     </select>
                                 </div>
-                                <div className="meta-item">
+                                <div className="meta-card">
                                     <label>Student</label>
-                                    <span>{selectedTicket.full_name}</span>
+                                    <span className="meta-value">{selectedTicket.full_name}</span>
+                                </div>
+                                <div className="meta-card">
+                                    <label>Category</label>
+                                    <span className="meta-value text-capitalize">{selectedTicket.type || 'General'}</span>
                                 </div>
                             </div>
 
                             <div className="ticket-description">
-                                <h3>Description</h3>
-                                <p>{selectedTicket.description}</p>
+                                <h3>Full Description</h3>
+                                <div className="description-text">{selectedTicket.description}</div>
                             </div>
 
                             {renderAiAnalysis()}
 
                             {selectedTicket.attachment_url && (
                                 <div className="attachment-section">
-                                    <h3>Attachment</h3>
-                                    <a href={selectedTicket.attachment_url.startsWith('http') ? selectedTicket.attachment_url : `${BASE_URL}${selectedTicket.attachment_url}`} target="_blank" rel="noopener noreferrer">
-                                        View File <ExternalLink size={14} />
+                                    <h3>Attached Evidence</h3>
+                                    <a href={selectedTicket.attachment_url.startsWith('http') ? selectedTicket.attachment_url : `${BASE_URL}${selectedTicket.attachment_url}`} target="_blank" rel="noopener noreferrer" className="attachment-link">
+                                        <Download size={16} /> Download Attachment
                                     </a>
                                 </div>
                             )}
 
-                            <TicketChat ticketId={selectedTicket.id} role="admin" ticketData={selectedTicket} />
+                            <div className="modal-chat-section">
+                                <TicketChat ticketId={selectedTicket.id} role="admin" ticketData={selectedTicket} />
+                            </div>
                         </div>
                     </div>
                 </div>

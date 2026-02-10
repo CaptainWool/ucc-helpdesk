@@ -249,17 +249,15 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
                                 onClick={handleGenerateAiReply}
                                 title="Generate AI Reply"
                                 disabled={isGenerating}
-                                style={{ marginLeft: '0.5rem', background: '#f0f9ff', color: '#0ea5e9', border: '1px solid #bae6fd' }}
                             >
                                 {isGenerating ? '...' : <Sparkles size={16} />}
                             </button>
 
                             <button
                                 type="button"
-                                className="template-btn"
+                                className="template-btn video-btn"
                                 onClick={() => setShowRecorder(true)}
                                 title="Record Video Response"
-                                style={{ marginLeft: '0.5rem', background: '#fee2e2', color: '#ef4444', border: '1px solid #fecaca' }}
                             >
                                 <Video size={16} />
                             </button>
