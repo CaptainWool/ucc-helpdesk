@@ -123,8 +123,8 @@ const initDb = async () => {
         const settingsToSeed = [
             ['maintenance_mode', false],
             ['submissions_locked', false],
-            ['showHeaderSubmit', true],
-            ['showHeaderFAQ', true],
+            ['showHeaderSubmit', false],
+            ['showHeaderFAQ', false],
             ['max_open_tickets', 100],
             ['ai_sensitivity', 0.7],
             ['sla_peak_mode', false]
@@ -135,6 +135,35 @@ const initDb = async () => {
                 'INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
                 [key, JSON.stringify(val)]
             );
+        }
+
+        // --- NEW: Administrative Bootstrapping via Env Vars ---
+        // 1. Promote Admin Email
+        if (process.env.ADMIN_EMAIL) {
+            const adminEmail = process.env.ADMIN_EMAIL.trim();
+            const promoRes = await client.query(
+                "UPDATE users SET role = 'super_admin', is_assigned = true WHERE email = $1 RETURNING id",
+                [adminEmail]
+            );
+            if (promoRes.rowCount > 0) {
+                console.log(`⭐ Successfully promoted ${adminEmail} to Super Admin via bootstrap.`);
+            }
+        }
+
+        // 2. Forced Settings Override (e.g., '{"showHeaderSubmit": false}')
+        if (process.env.FORCED_SETTINGS) {
+            try {
+                const forced = JSON.parse(process.env.FORCED_SETTINGS);
+                for (const [key, val] of Object.entries(forced)) {
+                    await client.query(
+                        'INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+                        [key, JSON.stringify(val)]
+                    );
+                }
+                console.log('⚙️ Applied forced settings from environment variables.');
+            } catch (err) {
+                console.error('❌ Failed to parse FORCED_SETTINGS JSON:', err.message);
+            }
         }
 
         await client.query('COMMIT');
