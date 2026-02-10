@@ -28,8 +28,8 @@ import OnboardingTour from '../components/common/OnboardingTour';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
-    const { user, profile } = useAuth();
-    const { showInfo } = useToast();
+    const { user, profile, refreshProfile } = useAuth();
+    const { showInfo, showSuccess, showError } = useToast();
     const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -133,6 +133,28 @@ const StudentDashboard = () => {
         }
     };
 
+    const handleAvatarUpdate = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            showError('Image size must be less than 5MB');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await api.auth.updateAvatar(user.id, file);
+            await refreshProfile();
+            showSuccess('Profile picture updated successfully!');
+        } catch (err) {
+            console.error('Avatar update failed:', err);
+            showError('Failed to update profile picture. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return (
         <div className="container student-dashboard">
@@ -221,6 +243,23 @@ const StudentDashboard = () => {
                             </h3>
                             <p className="student-id">Student ID: {displayUser?.student_id || displayUser?.studentId || 'N/A'}</p>
                             <p className="student-email">{displayUser?.email}</p>
+                            <div style={{ marginTop: '0.5rem' }}>
+                                <input
+                                    type="file"
+                                    id="avatar-update-input"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleAvatarUpdate}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    style={{ fontSize: '0.75rem', height: 'auto', padding: '4px 8px' }}
+                                    onClick={() => document.getElementById('avatar-update-input').click()}
+                                >
+                                    Change Photo
+                                </Button>
+                            </div>
                             <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
                                 <Link to="/faq" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                     <HelpCircle size={14} /> Need help? Visit FAQ

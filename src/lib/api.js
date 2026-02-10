@@ -74,6 +74,17 @@ export const api = {
                 body: JSON.stringify(data)
             });
             return handleResponse(res);
+        },
+        updateAvatar: async (id, file) => {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            // Don't set Content-Type header for FormData, browser does it automatically with boundary
+            const res = await fetch(`${API_URL}/users/${id}/avatar`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+                body: formData
+            });
+            return handleResponse(res);
         }
     },
     tickets: {

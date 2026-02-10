@@ -82,13 +82,13 @@ const Layout = () => {
                                 <Link to="/admin" className="nav-link">Admin</Link>
                             )}
 
-                            {/* Submit Ticket - Restricted to Admins/Agents */}
-                            {profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
+                            {/* Submit Ticket - For Students */}
+                            {profile?.role === 'student' && (
                                 <Link to="/submit-ticket" className="nav-link">{t('nav_submit')}</Link>
                             )}
 
-                            {/* FAQ - Restricted to Admins/Agents */}
-                            {profile && (profile?.role === 'agent' || profile?.role === 'super_admin') && (
+                            {/* FAQ - For Students */}
+                            {profile?.role === 'student' && (
                                 <Link to="/faq" className="nav-link">FAQ</Link>
                             )}
 

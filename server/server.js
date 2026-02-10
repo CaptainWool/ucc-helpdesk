@@ -305,6 +305,16 @@ app.get('/', (req, res) => {
 // 1. Auth Routes
 app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
     const { email, password, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise } = req.body;
+
+    // Server-side password complexity check
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+            error: 'Password requirements not met',
+            message: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.'
+        });
+    }
+
     const avatar_url = req.file ? `/uploads/avatars/${req.file.filename}` : null;
 
     try {
@@ -526,6 +536,24 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Update failed' });
+    }
+});
+
+app.post('/api/users/:id/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+    const { id } = req.params;
+    if (req.user.id !== id && req.user.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (!req.file) {
+        return res.status(400).json({ error: 'No avatar image provided' });
+    }
+    const avatar_url = `/uploads/avatars/${req.file.filename}`;
+    try {
+        await pool.query('UPDATE users SET avatar_url = $1, updated_at = NOW() WHERE id = $2', [avatar_url, id]);
+        res.json({ success: true, avatar_url });
+    } catch (err) {
+        console.error('Avatar update failed:', err);
+        res.status(500).json({ error: 'Failed to update avatar' });
     }
 });
 

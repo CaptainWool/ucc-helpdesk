@@ -65,10 +65,24 @@ const StudentSignUp = () => {
             return;
         }
 
-        // Validate Email Format
+        // Validate Email Format & Integrity
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
         if (!emailRegex.test(formData.email)) {
             setError('Please enter a valid email address (e.g., student@ucc.edu.gh).');
+            return;
+        }
+
+        const suspiciousDomains = ['test.com', 'example.com', 'asdf.com', 'tempmail.com', 'mailinator.com', 'fake.com', 'test.io'];
+        const domain = formData.email.split('@')[1].toLowerCase();
+        if (suspiciousDomains.includes(domain)) {
+            setError('It looks like you are using a non-working or temporary email. Please use a valid personal or institutional email.');
+            return;
+        }
+
+        // Validate Password Complexity (Min 8 chars, 1 Upper, 1 Lower, 1 Number, 1 Special)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            setError('Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.');
             return;
         }
 

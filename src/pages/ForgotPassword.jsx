@@ -30,8 +30,10 @@ const ForgotPassword = () => {
             return setError('Passwords do not match');
         }
 
-        if (newPassword.length < 6) {
-            return setError('Password must be at least 6 characters');
+        // Validate Password Complexity (Min 8 chars, 1 Upper, 1 Lower, 1 Number, 1 Special)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return setError('Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.');
         }
 
         setLoading(true);

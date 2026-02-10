@@ -48,11 +48,26 @@ const AdminSignUp = () => {
         generatedEmail = `${generatedEmail}${randomSuffix}@ucc.edu.gh`;
 
         // Generate random secure password
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-        let generatedPassword = 'UCC-';
-        for (let i = 0; i < 8; i++) {
-            generatedPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Generate random secure password satisfying all requirements
+        const uppers = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lowers = 'abcdefghijkmnopqrstuvwxyz';
+        const numbers = '23456789';
+        const specials = '!@#$%&*';
+
+        // Guarantee at least one of each
+        const p1 = uppers.charAt(Math.floor(Math.random() * uppers.length));
+        const p2 = lowers.charAt(Math.floor(Math.random() * lowers.length));
+        const p3 = numbers.charAt(Math.floor(Math.random() * numbers.length));
+        const p4 = specials.charAt(Math.floor(Math.random() * specials.length));
+
+        const allChars = uppers + lowers + numbers + specials;
+        let pRemaining = '';
+        for (let i = 0; i < 6; i++) {
+            pRemaining += allChars.charAt(Math.floor(Math.random() * allChars.length));
         }
+
+        // Combine and prefix
+        const generatedPassword = `UCC-${p1}${p2}${p3}${p4}${pRemaining}`;
 
         setFormData(prev => ({
             ...prev,
@@ -73,6 +88,23 @@ const AdminSignUp = () => {
             setError('Please generate the login credentials before submitting.');
             return;
         }
+
+        // Validate Contact Email if provided
+        if (formData.contactEmail) {
+            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+            if (!emailRegex.test(formData.contactEmail)) {
+                setError('Please provide a valid working contact email.');
+                return;
+            }
+
+            const suspiciousDomains = ['test.com', 'example.com', 'asdf.com', 'tempmail.com', 'mailinator.com', 'fake.com', 'test.io'];
+            const domain = formData.contactEmail.split('@')[1].toLowerCase();
+            if (suspiciousDomains.includes(domain)) {
+                setError('The contact email appears to be a temporary or non-working address. Please use a real email.');
+                return;
+            }
+        }
+
         setError('');
         setLoading(true);
 
