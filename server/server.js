@@ -22,6 +22,47 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
 });
 
+// Email Service Configuration
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // Can be changed to 'SendGrid', 'Mailgun', etc.
+    auth: {
+        user: process.env.EMAIL_USER, // Your email address
+        pass: process.env.EMAIL_PASS  // App-specific password (not regular password)
+    }
+});
+
+// Email sending utility
+const sendResetEmail = async (email, token, fullName) => {
+    const mailOptions = {
+        from: `"UCC Helpdesk" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Password Reset Verification Code',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+                <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h2 style="color: #1e40af; margin-bottom: 20px;">Password Reset Request</h2>
+                    <p>Hello ${fullName || 'Student'},</p>
+                    <p>You requested to reset your password. Use the verification code below:</p>
+                    <div style="background-color: #e0f2fe; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
+                        <h1 style="color: #1e40af; font-size: 32px; letter-spacing: 8px; margin: 0;">${token}</h1>
+                    </div>
+                    <p style="color: #64748b; font-size: 14px;">This code will expire in <strong>15 minutes</strong>.</p>
+                    <p style="color: #64748b; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                        UCC CoDE Helpdesk Platform<br>
+                        University of Cape Coast
+                    </p>
+                </div>
+            </div>
+        `
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
 // --- Auto-Initialize Database Schema ---
 const initDb = async () => {
     console.log('Checking database schema synchronization...');
@@ -119,6 +160,19 @@ const initDb = async () => {
                 target_type TEXT,
                 target_id TEXT,
                 details JSONB,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create Password Reset Tokens Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                email TEXT NOT NULL,
+                student_id TEXT NOT NULL,
+                token TEXT NOT NULL,
+                expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                used BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -453,8 +507,9 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-app.post('/api/auth/forgot-password', async (req, res) => {
-    const { email, student_id, new_password } = req.body;
+// Step 1: Request Password Reset Token
+app.post('/api/auth/request-reset', async (req, res) => {
+    const { email, student_id } = req.body;
     try {
         // Verify user exists
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -469,6 +524,66 @@ app.post('/api/auth/forgot-password', async (req, res) => {
             return res.status(401).json({ error: 'The email and Student ID do not match our records. Please verify your information.' });
         }
 
+        // Generate 6-digit token
+        const token = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+        // Delete any existing tokens for this email (prevent token flooding)
+        await pool.query('DELETE FROM password_reset_tokens WHERE email = $1', [email]);
+
+        // Store token in database
+        await pool.query(
+            'INSERT INTO password_reset_tokens (email, student_id, token, expires_at) VALUES ($1, $2, $3, $4)',
+            [email, student_id, token, expiresAt]
+        );
+
+        // Send email with token
+        await sendResetEmail(email, token, user.full_name);
+
+        res.json({
+            message: 'Verification code sent to your email. Please check your inbox.',
+            success: true
+        });
+    } catch (err) {
+        console.error('Password reset request error:', err);
+        res.status(500).json({ error: 'Failed to process reset request. Please try again.' });
+    }
+});
+
+// Step 2: Verify Reset Token
+app.post('/api/auth/verify-reset-token', async (req, res) => {
+    const { email, token } = req.body;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM password_reset_tokens WHERE email = $1 AND token = $2 AND used = FALSE AND expires_at > NOW()',
+            [email, token]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new one.' });
+        }
+
+        res.json({ success: true, message: 'Token verified successfully.' });
+    } catch (err) {
+        console.error('Token verification error:', err);
+        res.status(500).json({ error: 'Failed to verify token.' });
+    }
+});
+
+// Step 3: Complete Password Reset
+app.post('/api/auth/complete-reset', async (req, res) => {
+    const { email, token, new_password } = req.body;
+    try {
+        // Verify token is still valid
+        const tokenResult = await pool.query(
+            'SELECT * FROM password_reset_tokens WHERE email = $1 AND token = $2 AND used = FALSE AND expires_at > NOW()',
+            [email, token]
+        );
+
+        if (tokenResult.rows.length === 0) {
+            return res.status(400).json({ error: 'Invalid or expired verification code.' });
+        }
+
         // Apply student password policy (numbers optional)
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
         if (!passwordRegex.test(new_password)) {
@@ -478,14 +593,25 @@ app.post('/api/auth/forgot-password', async (req, res) => {
             });
         }
 
+        // Get user to update password
+        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        const user = userResult.rows[0];
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
         // Hash and update password
         const hashedPassword = await bcrypt.hash(new_password, 10);
         await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [hashedPassword, user.id]);
 
-        res.json({ message: 'Password reset successful. You can now login with your new password.' });
+        // Mark token as used
+        await pool.query('UPDATE password_reset_tokens SET used = TRUE WHERE email = $1 AND token = $2', [email, token]);
+
+        res.json({ message: 'Password reset successful. You can now login with your new password.', success: true });
     } catch (err) {
-        console.error('Password reset error:', err);
-        res.status(500).json({ error: 'Failed to reset password' });
+        console.error('Password reset completion error:', err);
+        res.status(500).json({ error: 'Failed to reset password. Please try again.' });
     }
 });
 
