@@ -23,7 +23,13 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
 });
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with a fallback to prevent crash on startup if variable is missing
+// The actual send attempt will fail gracefully instead of crashing the process
+const resend = new Resend(process.env.RESEND_API_KEY || 're_123_placeholder');
+
+if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ RESEND_API_KEY is not defined in environment variables. Email sending will fail.');
+}
 
 // Email sending utility
 const sendResetEmail = async (email, token, fullName) => {
