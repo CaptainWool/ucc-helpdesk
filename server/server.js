@@ -613,6 +613,54 @@ app.post('/api/auth/complete-reset', async (req, res) => {
     }
 });
 
+// Diagnostic Endpoint (TEMPORARY)
+app.get('/api/system/diagnose-email', async (req, res) => {
+    const report = {
+        env: {
+            user_configured: !!process.env.EMAIL_USER,
+            pass_configured: !!process.env.EMAIL_PASS,
+            pass_length: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
+        },
+        database: {},
+        smtp: {}
+    };
+
+    try {
+        // Check DB Table
+        const tableCheck = await pool.query("SELECT to_regclass('public.password_reset_tokens')");
+        report.database.table_exists = !!tableCheck.rows[0].to_regclass;
+
+        if (!report.database.table_exists) {
+            // Attempt to create table
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                    email TEXT NOT NULL,
+                    student_id TEXT NOT NULL,
+                    token TEXT NOT NULL,
+                    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                    used BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            report.database.table_created = true;
+        }
+
+        // Check SMTP
+        try {
+            await transporter.verify();
+            report.smtp.connection = 'success';
+        } catch (smtpErr) {
+            report.smtp.connection = 'failed';
+            report.smtp.error = smtpErr.message;
+        }
+
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ error: err.message, report });
+    }
+});
+
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, has_completed_tour FROM users WHERE id = $1', [req.user.id]);
