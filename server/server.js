@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
-const { Resend } = require('resend'); // Use Resend instead of Nodemailer
+const sgMail = require('@sendgrid/mail'); // Use SendGrid instead of Resend
 require('dotenv').config();
 
 const app = express();
@@ -23,20 +23,19 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
 });
 
-// Initialize Resend with a fallback to prevent crash on startup if variable is missing
-// The actual send attempt will fail gracefully instead of crashing the process
-const resend = new Resend(process.env.RESEND_API_KEY || 're_123_placeholder');
-
-if (!process.env.RESEND_API_KEY) {
-    console.warn('⚠️ RESEND_API_KEY is not defined in environment variables. Email sending will fail.');
+// Initialize SendGrid
+if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+} else {
+    console.warn('⚠️ SENDGRID_API_KEY is not defined in environment variables. Email sending will fail.');
 }
 
 // Email sending utility
 const sendResetEmail = async (email, token, fullName) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev', // Must be exactly this for the trial domain
-            to: email, // Re-verify this is your Resend signup email for testing
+        const msg = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL || 'carefreechelsea5@gmail.com', // Verified sender email
             subject: 'Password Reset Verification Code',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
@@ -57,15 +56,14 @@ const sendResetEmail = async (email, token, fullName) => {
                     </div>
                 </div>
             `
-        });
-
-        if (error) {
-            console.error('Resend Error:', error);
-            throw new Error(error.message);
-        }
-        return data;
+        };
+        await sgMail.send(msg);
+        console.log('✅ Password reset email sent via SendGrid');
     } catch (err) {
-        console.error('Failed to send email:', err);
+        console.error('❌ Failed to send email via SendGrid:', err);
+        if (err.response) {
+            console.error(err.response.body);
+        }
         throw err;
     }
 };
@@ -627,12 +625,12 @@ app.post('/api/auth/complete-reset', async (req, res) => {
 app.get('/api/system/diagnose-email', async (req, res) => {
     const report = {
         env: {
-            user_configured: !!process.env.EMAIL_USER,
-            pass_configured: !!process.env.EMAIL_PASS,
-            pass_length: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
+            sendgrid_key_configured: !!process.env.SENDGRID_API_KEY,
+            sendgrid_from_configured: !!process.env.SENDGRID_FROM_EMAIL,
+            from_email: process.env.SENDGRID_FROM_EMAIL
         },
         database: {},
-        smtp: {}
+        sendgrid: {}
     };
 
     try {
@@ -643,24 +641,24 @@ app.get('/api/system/diagnose-email', async (req, res) => {
         if (!report.database.table_exists) {
             // Attempt to create table
             await pool.query(`
-                CREATE TABLE IF NOT EXISTS password_reset_tokens(
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        email TEXT NOT NULL,
-        student_id TEXT NOT NULL,
-        token TEXT NOT NULL,
-        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        used BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
+                CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                    email TEXT NOT NULL,
+                    student_id TEXT NOT NULL,
+                    token TEXT NOT NULL,
+                    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                    used BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
             `);
             report.database.table_created = true;
         }
 
-        // Check Resend key format
-        if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith('re_')) {
-            report.resend.status = 'configured_correctly';
+        // Check SendGrid key format
+        if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.startsWith('SG.')) {
+            report.sendgrid.status = 'configured_correctly';
         } else {
-            report.resend.status = 'invalid_key_format';
+            report.sendgrid.status = 'invalid_key_format';
         }
 
         res.json(report);
