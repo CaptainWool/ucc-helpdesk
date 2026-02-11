@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend'); // Use Resend instead of Nodemailer
 require('dotenv').config();
 
 const app = express();
@@ -23,47 +23,47 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
 });
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS.replace(/\s+/g, '')
-    },
-    tls: {
-        // Force IPv4 if IPv6 is failing
-        rejectUnauthorized: false
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email sending utility
 const sendResetEmail = async (email, token, fullName) => {
-    const mailOptions = {
-        from: `"UCC Helpdesk" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Password Reset Verification Code',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
-                <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <h2 style="color: #1e40af; margin-bottom: 20px;">Password Reset Request</h2>
-                    <p>Hello ${fullName || 'Student'},</p>
-                    <p>You requested to reset your password. Use the verification code below:</p>
-                    <div style="background-color: #e0f2fe; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
-                        <h1 style="color: #1e40af; font-size: 32px; letter-spacing: 8px; margin: 0;">${token}</h1>
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'dohilip816@onboarding.resend.dev', // Use default testing domain or verify your own
+            to: email, // Can only send to YOUR email during testing unless domain is verified
+            subject: 'Password Reset Verification Code',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+                    <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h2 style="color: #1e40af; margin-bottom: 20px;">Password Reset Request</h2>
+                        <p>Hello ${fullName || 'Student'},</p>
+                        <p>You requested to reset your password. Use the verification code below:</p>
+                        <div style="background-color: #e0f2fe; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
+                            <h1 style="color: #1e40af; font-size: 32px; letter-spacing: 8px; margin: 0;">${token}</h1>
+                        </div>
+                        <p style="color: #64748b; font-size: 14px;">This code will expire in <strong>15 minutes</strong>.</p>
+                        <p style="color: #64748b; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                        <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                            UCC CoDE Helpdesk Platform<br>
+                            University of Cape Coast
+                        </p>
                     </div>
-                    <p style="color: #64748b; font-size: 14px;">This code will expire in <strong>15 minutes</strong>.</p>
-                    <p style="color: #64748b; font-size: 14px;">If you didn't request this, please ignore this email.</p>
-                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-                    <p style="color: #94a3b8; font-size: 12px; text-align: center;">
-                        UCC CoDE Helpdesk Platform<br>
-                        University of Cape Coast
-                    </p>
                 </div>
-            </div>
-        `
-    };
+            `
+        });
 
-    await transporter.sendMail(mailOptions);
+        if (error) {
+            console.error('Resend Error:', error);
+            throw new Error(error.message);
+        }
+        return data;
+    } catch (err) {
+        console.error('Failed to send email:', err);
+        throw err;
+    }
 };
+
 
 // --- Auto-Initialize Database Schema ---
 const initDb = async () => {
@@ -77,106 +77,106 @@ const initDb = async () => {
 
         // Create Users Table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'agent', 'super_admin')),
-                full_name TEXT,
-                student_id TEXT,
-                staff_id TEXT,
-                phone_number TEXT,
-                level TEXT,
-                programme TEXT,
-                avatar_url TEXT,
-                department VARCHAR(50) DEFAULT 'general',
-                expertise TEXT,
-                is_assigned BOOLEAN DEFAULT false,
-                has_completed_tour BOOLEAN DEFAULT false,
-                is_banned BOOLEAN DEFAULT false,
-                ban_expires_at TIMESTAMP WITH TIME ZONE,
-                revoked_at TIMESTAMP WITH TIME ZONE,
-                revocation_reason TEXT,
-                plaintext_password TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS users(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role VARCHAR(20) DEFAULT 'student' CHECK(role IN('student', 'agent', 'super_admin')),
+        full_name TEXT,
+        student_id TEXT,
+        staff_id TEXT,
+        phone_number TEXT,
+        level TEXT,
+        programme TEXT,
+        avatar_url TEXT,
+        department VARCHAR(50) DEFAULT 'general',
+        expertise TEXT,
+        is_assigned BOOLEAN DEFAULT false,
+        has_completed_tour BOOLEAN DEFAULT false,
+        is_banned BOOLEAN DEFAULT false,
+        ban_expires_at TIMESTAMP WITH TIME ZONE,
+        revoked_at TIMESTAMP WITH TIME ZONE,
+        revocation_reason TEXT,
+        plaintext_password TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
 
         // Ensure new columns for existing tables (Defensive Migration)
         await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plaintext_password TEXT');
 
         // Create Tickets Table (with all compatibility columns)
         await client.query(`
-            CREATE TABLE IF NOT EXISTS tickets (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-                email TEXT NOT NULL,
-                student_id TEXT,
-                student_id_ref UUID,
-                phone_number TEXT,
-                full_name TEXT NOT NULL,
-                subject TEXT NOT NULL,
-                description TEXT NOT NULL,
-                type VARCHAR(20) NOT NULL CHECK (type IN ('portal', 'fees', 'academic', 'other')),
-                status VARCHAR(20) DEFAULT 'Open' CHECK (status IN ('Open', 'In Progress', 'Resolved', 'Closed')),
-                priority VARCHAR(10) DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Urgent')),
-                attachment_url TEXT,
-                assigned_to_email TEXT,
-                rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-                feedback_comment TEXT,
-                sla_deadline TIMESTAMP WITH TIME ZONE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                resolved_at TIMESTAMP WITH TIME ZONE
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS tickets(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        email TEXT NOT NULL,
+        student_id TEXT,
+        student_id_ref UUID,
+        phone_number TEXT,
+        full_name TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        description TEXT NOT NULL,
+        type VARCHAR(20) NOT NULL CHECK(type IN('portal', 'fees', 'academic', 'other')),
+        status VARCHAR(20) DEFAULT 'Open' CHECK(status IN('Open', 'In Progress', 'Resolved', 'Closed')),
+        priority VARCHAR(10) DEFAULT 'Medium' CHECK(priority IN('Low', 'Medium', 'High', 'Urgent')),
+        attachment_url TEXT,
+        assigned_to_email TEXT,
+        rating INTEGER CHECK(rating >= 1 AND rating <= 5),
+        feedback_comment TEXT,
+        sla_deadline TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP WITH TIME ZONE
+    )
+    `);
 
         // Create Messages Table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS messages (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
-                sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
-                sender_role VARCHAR(20) NOT NULL CHECK (sender_role IN ('student', 'admin', 'agent')),
-                content TEXT NOT NULL,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS messages(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        ticket_id UUID REFERENCES tickets(id) ON DELETE CASCADE,
+        sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        sender_role VARCHAR(20) NOT NULL CHECK(sender_role IN('student', 'admin', 'agent')),
+        content TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
 
         // Create Settings Table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS system_settings (
-                key TEXT PRIMARY KEY,
-                value JSONB NOT NULL,
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS system_settings(
+        key TEXT PRIMARY KEY,
+        value JSONB NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
 
         // Create Audit Logs Table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
-                action TEXT NOT NULL,
-                target_type TEXT,
-                target_id TEXT,
-                details JSONB,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS audit_logs(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        action TEXT NOT NULL,
+        target_type TEXT,
+        target_id TEXT,
+        details JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
 
         // Create Password Reset Tokens Table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                email TEXT NOT NULL,
-                student_id TEXT NOT NULL,
-                token TEXT NOT NULL,
-                expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                used BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
+            CREATE TABLE IF NOT EXISTS password_reset_tokens(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        email TEXT NOT NULL,
+        student_id TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
         `);
 
         // Seed Initial Settings
@@ -273,7 +273,7 @@ const sendSMS = async (phoneNumber, message) => {
         });
 
         const data = await response.json();
-        console.log(`📱 SMS Status to ${formattedNumber}:`, data.status || data.message || 'Sent');
+        console.log(`📱 SMS Status to ${formattedNumber}: `, data.status || data.message || 'Sent');
         return data;
     } catch (err) {
         console.error('❌ SMS Sending failed:', err.message);
@@ -386,7 +386,7 @@ app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
         }
     }
 
-    const avatar_url = req.file ? `/uploads/avatars/${req.file.filename}` : null;
+    const avatar_url = req.file ? `/ uploads / avatars / ${req.file.filename} ` : null;
 
     try {
         // Check if user already exists
@@ -458,7 +458,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (user.revoked_at) {
             return res.status(403).json({
                 error: 'Account Revoked',
-                message: `Your account was permanently revoked on ${new Date(user.revoked_at).toLocaleDateString()}. Reason: ${user.revocation_reason || 'No reason provided.'}`
+                message: `Your account was permanently revoked on ${new Date(user.revoked_at).toLocaleDateString()}.Reason: ${user.revocation_reason || 'No reason provided.'} `
             });
         }
 
@@ -473,7 +473,7 @@ app.post('/api/auth/login', async (req, res) => {
         // Check if account is banned
         if (user.is_banned) {
             if (!user.ban_expires_at || new Date(user.ban_expires_at) > new Date()) {
-                const expires = user.ban_expires_at ? `until ${new Date(user.ban_expires_at).toLocaleString()}` : 'indefinitely';
+                const expires = user.ban_expires_at ? `until ${new Date(user.ban_expires_at).toLocaleString()} ` : 'indefinitely';
                 return res.status(403).json({
                     error: 'Account Banned',
                     message: `Your account is temporarily banned ${expires} due to misconduct.`
@@ -637,26 +637,24 @@ app.get('/api/system/diagnose-email', async (req, res) => {
         if (!report.database.table_exists) {
             // Attempt to create table
             await pool.query(`
-                CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                    email TEXT NOT NULL,
-                    student_id TEXT NOT NULL,
-                    token TEXT NOT NULL,
-                    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                    used BOOLEAN DEFAULT FALSE,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                )
+                CREATE TABLE IF NOT EXISTS password_reset_tokens(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        email TEXT NOT NULL,
+        student_id TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
             `);
             report.database.table_created = true;
         }
 
-        // Check SMTP
-        try {
-            await transporter.verify();
-            report.smtp.connection = 'success';
-        } catch (smtpErr) {
-            report.smtp.connection = 'failed';
-            report.smtp.error = smtpErr.message;
+        // Check Resend key format
+        if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith('re_')) {
+            report.resend.status = 'configured_correctly';
+        } else {
+            report.resend.status = 'invalid_key_format';
         }
 
         res.json(report);
@@ -734,9 +732,9 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
         }
 
         const validValues = validFields.map(f => updates[f]);
-        const setClause = validFields.map((f, i) => `${f} = $${i + 2}`).join(', ');
+        const setClause = validFields.map((f, i) => `${f} = $${i + 2} `).join(', ');
 
-        const result = await pool.query(`UPDATE users SET ${setClause}, updated_at = NOW() WHERE id = $1 RETURNING *`, [id, ...validValues]);
+        const result = await pool.query(`UPDATE users SET ${setClause}, updated_at = NOW() WHERE id = $1 RETURNING * `, [id, ...validValues]);
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
@@ -752,7 +750,7 @@ app.post('/api/users/:id/avatar', authenticateToken, upload.single('avatar'), as
     if (!req.file) {
         return res.status(400).json({ error: 'No avatar image provided' });
     }
-    const avatar_url = `/uploads/avatars/${req.file.filename}`;
+    const avatar_url = `/ uploads / avatars / ${req.file.filename} `;
     try {
         await pool.query('UPDATE users SET avatar_url = $1, updated_at = NOW() WHERE id = $2', [avatar_url, id]);
         res.json({ success: true, avatar_url });
@@ -820,7 +818,7 @@ app.get('/api/audit-logs', authenticateToken, async (req, res) => {
             LEFT JOIN users u ON a.admin_id = u.id 
             ORDER BY a.created_at DESC 
             LIMIT 100
-        `);
+    `);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch audit logs' });
@@ -837,7 +835,7 @@ app.post('/api/system/cleanup', authenticateToken, async (req, res) => {
             UPDATE tickets 
             SET status = 'Closed', updated_at = NOW() 
             WHERE status = 'Resolved' 
-            AND resolved_at < NOW() - ($1 || ' days')::interval
+            AND resolved_at < NOW() - ($1 || ' days'):: interval
             RETURNING id
         `, [rules.auto_close_resolved_days]);
 
@@ -905,7 +903,7 @@ app.get('/api/tickets/:id', authenticateToken, async (req, res) => {
 
 app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment')], async (req, res) => {
     const { full_name, email, student_id, phone_number, subject, description, type, priority } = req.body;
-    const attachment_url = req.file ? `/uploads/attachments/${req.file.filename}` : null;
+    const attachment_url = req.file ? `/ uploads / attachments / ${req.file.filename} ` : null;
 
     try {
         const user_id = req.user?.id;
@@ -946,7 +944,7 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
             if (currentCount >= parseInt(settings.max_open_tickets)) {
                 return res.status(429).json({
                     error: 'System at Capacity',
-                    message: `Our current support queue is full (max ${settings.max_open_tickets} active requests). Please check our FAQ or try again later.`
+                    message: `Our current support queue is full(max ${settings.max_open_tickets} active requests).Please check our FAQ or try again later.`
                 });
             }
         }
@@ -957,11 +955,11 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
             const sizeMB = req.file.size / (1024 * 1024);
 
             if (sizeMB > limits.max_size_mb) {
-                return res.status(400).json({ error: 'File too large', message: `The attachment exceeds the maximum allowed size of ${limits.max_size_mb}MB.` });
+                return res.status(400).json({ error: 'File too large', message: `The attachment exceeds the maximum allowed size of ${limits.max_size_mb} MB.` });
             }
 
             if (limits.allowed_types && !limits.allowed_types.includes(req.file.mimetype)) {
-                return res.status(400).json({ error: 'Unsupported file type', message: `Only the following formats are allowed: ${limits.allowed_types.join(', ')}` });
+                return res.status(400).json({ error: 'Unsupported file type', message: `Only the following formats are allowed: ${limits.allowed_types.join(', ')} ` });
             }
         }
 
@@ -970,7 +968,7 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
         if (!priority) {
             const sensitivity = parseFloat(settings.ai_sensitivity || 0.7);
             const urgentKeywords = ['urgent', 'emergency', 'broken', 'cannot', 'blocked', 'fail', 'error'];
-            const content = `${subject} ${description}`.toLowerCase();
+            const content = `${subject} ${description} `.toLowerCase();
             const keywordScore = urgentKeywords.filter(k => content.includes(k)).length;
 
             // Higher sensitivity or more keywords increases chance of Urgent/High
@@ -1003,7 +1001,7 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
 
         // SMS Notification for new ticket
         if (settings.sms_notifications_enabled && phone_number) {
-            const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
+            const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket(#${result.rows[0].id.substring(0, 8)}) has been received.Subject: ${subject}. We'll resolve it soon!`;
             sendSMS(phone_number, smsMessage);
         }
 
