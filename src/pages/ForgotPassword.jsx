@@ -29,19 +29,12 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:3000/api/auth/request-reset', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, student_id: studentId })
+            const res = await api.auth.requestReset({
+                email,
+                student_id: studentId
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw data;
-            }
-
-            showSuccess(data.message || 'Verification code sent to your email!');
+            showSuccess(res.message || 'Verification code sent to your email!');
             setStep(2); // Move to token verification step
         } catch (err) {
             showError(err.error || 'Failed to send verification code. Please check your details.');
@@ -64,17 +57,10 @@ const ForgotPassword = () => {
         }
 
         try {
-            const res = await fetch('http://localhost:3000/api/auth/verify-reset-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, token })
+            await api.auth.verifyToken({
+                email,
+                token
             });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw data;
-            }
 
             showSuccess('Code verified! Please set your new password.');
             setStep(3); // Move to password setting step
@@ -105,19 +91,13 @@ const ForgotPassword = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:3000/api/auth/complete-reset', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, token, new_password: newPassword })
+            const res = await api.auth.completeReset({
+                email,
+                token,
+                new_password: newPassword
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw data;
-            }
-
-            showSuccess(data.message || 'Password reset successful!');
+            showSuccess(res.message || 'Password reset successful!');
             setTimeout(() => navigate('/student-login'), 2000);
         } catch (err) {
             showError(err.error || 'Failed to reset password.');

@@ -53,6 +53,30 @@ export const api = {
             });
             return handleResponse(res);
         },
+        requestReset: async (data) => {
+            const res = await fetch(`${API_URL}/auth/request-reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return handleResponse(res);
+        },
+        verifyToken: async (data) => {
+            const res = await fetch(`${API_URL}/auth/verify-reset-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return handleResponse(res);
+        },
+        completeReset: async (data) => {
+            const res = await fetch(`${API_URL}/auth/complete-reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return handleResponse(res);
+        },
         me: async () => {
             const res = await fetch(`${API_URL}/auth/me`, {
                 headers: getHeaders()
