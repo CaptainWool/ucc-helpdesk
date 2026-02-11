@@ -35,8 +35,8 @@ if (!process.env.RESEND_API_KEY) {
 const sendResetEmail = async (email, token, fullName) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'dohilip816@onboarding.resend.dev', // Use default testing domain or verify your own
-            to: email, // Can only send to YOUR email during testing unless domain is verified
+            from: 'onboarding@resend.dev', // Must be exactly this for the trial domain
+            to: email, // Re-verify this is your Resend signup email for testing
             subject: 'Password Reset Verification Code',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
