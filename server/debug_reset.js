@@ -11,14 +11,12 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, '') // Stripping spaces
     }
 });
 
 async function testSystem() {
     console.log('--- DIAGNOSTIC START ---');
-
-    // 1. Check Env Vars
     console.log('Checking Environment Variables...');
     if (!process.env.EMAIL_USER) console.error('❌ EMAIL_USER missing');
     else console.log('✅ EMAIL_USER found:', process.env.EMAIL_USER);
@@ -26,7 +24,6 @@ async function testSystem() {
     if (!process.env.EMAIL_PASS) console.error('❌ EMAIL_PASS missing');
     else console.log('✅ EMAIL_PASS found (length):', process.env.EMAIL_PASS.length);
 
-    // 2. Check Database Table
     console.log('\nChecking Database Table...');
     try {
         const client = await pool.connect();
@@ -35,33 +32,37 @@ async function testSystem() {
             console.log('✅ Table password_reset_tokens exists');
         } else {
             console.error('❌ Table password_reset_tokens DOES NOT EXIST');
-            console.log('Attempting to create table...');
-            await client.query(`
-                CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                    email TEXT NOT NULL,
-                    student_id TEXT NOT NULL,
-                    token TEXT NOT NULL,
-                    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                    used BOOLEAN DEFAULT FALSE,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-            console.log('✅ Table created successfully');
         }
         client.release();
     } catch (err) {
         console.error('❌ Database Error:', err.message);
     }
 
-    // 3. Check Email Connection
     console.log('\nChecking Email Connection...');
+    console.log('Attempting verify()...');
     try {
         await transporter.verify();
-        console.log('✅ SMTP Connection Successful');
+        console.log('✅ SMTP Authenticated Successfully (Your credentials are correct)');
     } catch (err) {
-        console.error('❌ SMTP Error:', err.message);
-        console.error('   Hint: Check if App Password is correct and 2FA is enabled.');
+        console.error('❌ SMTP Auth Failed:', err.message);
+        console.log('\nPossible Fixes:');
+        console.log('1. Ensure 2-Step Verification is enabled on Google account.');
+        console.log('2. Ensure App Password is correct (try generating a new one).');
+        pool.end();
+        return;
+    }
+
+    console.log('\nAttempting to send test email...');
+    try {
+        const info = await transporter.sendMail({
+            from: `"Test Bot" <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER, // Send to self
+            subject: 'Diagnostic Test Email',
+            text: 'If you see this, email sending works!'
+        });
+        console.log('✅ Test Email Sent! Message ID:', info.messageId);
+    } catch (err) {
+        console.error('❌ Send Mail Failed:', err.message);
     }
 
     console.log('--- DIAGNOSTIC END ---');
