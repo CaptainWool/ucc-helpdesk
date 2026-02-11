@@ -22,14 +22,11 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
 });
 
-// Email Service Configuration
-const nodemailer = require('nodemailer');
-
 const transporter = nodemailer.createTransport({
     service: 'gmail', // Can be changed to 'SendGrid', 'Mailgun', etc.
     auth: {
         user: process.env.EMAIL_USER, // Your email address
-        pass: process.env.EMAIL_PASS  // App-specific password (not regular password)
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, '')  // Remove spaces from App Password
     }
 });
 
