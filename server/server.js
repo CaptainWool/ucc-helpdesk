@@ -24,10 +24,12 @@ const pool = new Pool({
 });
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Can be changed to 'SendGrid', 'Mailgun', etc.
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL
     auth: {
-        user: process.env.EMAIL_USER, // Your email address
-        pass: process.env.EMAIL_PASS.replace(/\s+/g, '')  // Remove spaces from App Password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, '')
     }
 });
 
