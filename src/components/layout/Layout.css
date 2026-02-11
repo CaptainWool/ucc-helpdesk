@@ -80,6 +80,104 @@
     color: var(--primary);
 }
 
+.nav-settings {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lang-select {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    padding: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.user-nav-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-name-inline {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    color: var(--text-main);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--primary-light);
+}
+
+@media (max-width: 768px) {
+    .logo-text {
+        font-size: 1rem;
+    }
+
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-links {
+        position: fixed;
+        top: 4rem;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--bg-card);
+        flex-direction: column;
+        padding: 2rem;
+        gap: 1.5rem;
+        z-index: 1000;
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(20px);
+    }
+
+    .nav-links.mobile-open {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .nav-link {
+        font-size: 1.25rem;
+        width: 100%;
+        text-align: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .nav-settings {
+        width: 100%;
+        justify-content: center;
+        padding: 1rem 0;
+        gap: 2rem;
+    }
+
+    .user-nav-info {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+    }
+}
+
 .main-content {
     flex: 1;
     display: flex;
@@ -87,8 +185,8 @@
 }
 
 .footer {
-    background-color: white;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border);
     padding: 2rem 0;
     margin-top: auto;
 }
@@ -107,6 +205,14 @@
     align-items: center;
 }
 
+@media (max-width: 640px) {
+    .footer-container {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+}
+
 .footer-text {
     color: var(--text-muted);
     font-size: 0.875rem;
@@ -115,6 +221,14 @@
 .footer-links {
     display: flex;
     gap: 1.5rem;
+}
+
+@media (max-width: 480px) {
+    .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
 }
 
 .footer-link {
@@ -137,10 +251,12 @@
     padding: 0.5rem;
     color: var(--text-muted);
     transition: color 0.2s;
+    border-radius: 8px;
 }
 
 .theme-toggle:hover {
     color: var(--primary);
+    background: var(--primary-light);
 }
 
 /* Impersonation Banner */

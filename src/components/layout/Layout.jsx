@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { GraduationCap, LifeBuoy, Sun, Moon, ArrowLeft } from 'lucide-react';
+import { GraduationCap, LifeBuoy, Sun, Moon, ArrowLeft, Menu, X } from 'lucide-react';
 import './Layout.css';
 import Button from '../common/Button';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -16,6 +16,9 @@ const Layout = () => {
     const { settings } = useSettings();
     const navigate = useNavigate();
     const location = useLocation();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     const isHomePage = location.pathname === '/';
     const isDashboard = location.pathname === '/dashboard';
@@ -66,63 +69,58 @@ const Layout = () => {
                                 <span className="logo-text">U.C.C (CoDE) Helpdesk</span>
                             </Link>
                         </div>
-                        <nav className="nav-links">
+                        <nav className={`nav-links ${isMenuOpen ? 'mobile-open' : ''}`}>
                             {/* Home link - only for students and non-logged-in users */}
                             {(!profile || profile?.role === 'student') && (
-                                <Link to="/" className="nav-link">{t('nav_home')}</Link>
+                                <Link to="/" className="nav-link" onClick={() => setIsMenuOpen(false)}>{t('nav_home')}</Link>
                             )}
 
                             {/* Student Dashboard */}
                             {user && profile?.role === 'student' && (
-                                <Link to="/dashboard" className="nav-link">Dashboard</Link>
+                                <Link to="/dashboard" className="nav-link" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
                             )}
 
                             {/* Admin Dashboard */}
                             {(profile?.role === 'agent' || profile?.role === 'super_admin') && (
-                                <Link to="/admin" className="nav-link">Admin</Link>
+                                <Link to="/admin" className="nav-link" onClick={() => setIsMenuOpen(false)}>Admin</Link>
                             )}
 
-                            {/* Submit Ticket and FAQ removed as per request */}
+                            {/* Settings Row */}
+                            <div className="nav-settings">
+                                <select
+                                    value={language}
+                                    onChange={(e) => setLanguage(e.target.value)}
+                                    className="lang-select"
+                                >
+                                    <option value="en">EN</option>
+                                    <option value="fr">FR</option>
+                                    <option value="tw">TW</option>
+                                </select>
 
-                            {/* Language Toggle */}
-                            <select
-                                value={language}
-                                onChange={(e) => setLanguage(e.target.value)}
-                                className="lang-select"
-                                style={{
-                                    background: 'transparent',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '4px',
-                                    color: 'var(--text-primary)',
-                                    padding: '4px',
-                                    marginRight: '8px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <option value="en">EN</option>
-                                <option value="fr">FR</option>
-                                <option value="tw">TW</option>
-                            </select>
-
-                            <button onClick={toggleTheme} className="theme-toggle" title="Toggle Theme">
-                                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                            </button>
+                                <button onClick={toggleTheme} className="theme-toggle" title="Toggle Theme">
+                                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                                </button>
+                            </div>
 
                             {!loading && (
                                 user ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                    <div className="user-nav-info">
+                                        <span className="user-name-inline">
                                             {profile?.full_name || user?.full_name || user?.email?.split('@')[0]}
                                         </span>
                                         <Button variant="ghost" size="sm" onClick={handleLogout}>{t('nav_logout')}</Button>
                                     </div>
                                 ) : (
-                                    <Link to="/student-login">
+                                    <Link to="/student-login" onClick={() => setIsMenuOpen(false)}>
                                         <Button variant="primary" size="sm">Student Login</Button>
                                     </Link>
                                 )
                             )}
                         </nav>
+
+                        <button className="mobile-menu-toggle" onClick={toggleMenu}>
+                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
                     </div>
                 </header>
             )}

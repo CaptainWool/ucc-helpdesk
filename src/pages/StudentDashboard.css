@@ -361,13 +361,76 @@
 }
 
 @media (max-width: 768px) {
+    .student-dashboard {
+        padding-top: 1rem;
+    }
+
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .header-actions button,
+    .header-actions a {
+        width: 100%;
+    }
+
+    .header-actions .new-ticket-btn {
+        justify-content: center;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    .card-header-actions {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .search-bar input {
         width: 100%;
+    }
+
+    .tickets-table th:nth-child(3),
+    .tickets-table td:nth-child(3),
+    .tickets-table th:nth-child(5),
+    .tickets-table td:nth-child(5) {
+        display: none;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-info .student-id {
+        display: block;
+        margin: 0.5rem auto;
+        width: fit-content;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .stat-content h3 {
+        font-size: 1.25rem;
     }
 }

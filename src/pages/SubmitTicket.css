@@ -362,16 +362,23 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .submit-page-container {
+        padding: 1rem 1rem 3rem;
+    }
+
     .form-layout {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
     .tips-card {
         position: static;
+        margin-top: 1rem;
     }
 
     .form-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .full-width {
@@ -379,6 +386,45 @@
     }
 
     .page-header h1 {
-        font-size: 2rem;
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+        font-size: 0.95rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+
+    .success-card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+
+    .success-actions {
+        flex-direction: column;
+    }
+
+    .success-actions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+    }
+
+    .suggestion-footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
     }
 }
