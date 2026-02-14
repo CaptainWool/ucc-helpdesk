@@ -1,18 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { ChevronRight, ChevronLeft, X, Sparkles, GraduationCap, Shield, MessageCircle, Send, Clock, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from './Button';
 import './OnboardingTour.css';
 
-const OnboardingTour = ({ role = 'student', onComplete }) => {
+interface Step {
+    title: string;
+    content: string;
+    icon: ReactNode;
+    target: string;
+}
+
+interface OnboardingTourProps {
+    role?: 'student' | 'agent' | 'super_admin';
+    onComplete?: () => void;
+}
+
+const OnboardingTour: React.FC<OnboardingTourProps> = ({ role = 'student', onComplete }) => {
     const { user, profile, refreshProfile } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
 
     // Steps configuration based on role
-    const steps = role === 'student' ? [
+    const steps: Step[] = role === 'student' ? [
         {
             title: "Welcome to UCC CoDE Helpdesk!",
             content: "We're thrilled to have you here! This platform is your direct line to the College of Distance Education (CoDE) support team. Let's show you how to get the most out of it.",

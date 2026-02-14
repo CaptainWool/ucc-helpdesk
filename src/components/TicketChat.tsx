@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, Shield, Sparkles, Video, Trash2, Mic } from 'lucide-react';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
+import { Send, User as UserIcon, Shield, Sparkles, Video, Trash2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
@@ -7,30 +7,53 @@ import { generateSmartReplyAI, analyzeResponseQuality } from '../lib/ai';
 import { requestNotificationPermission, sendNotification } from '../lib/notifications';
 import ResponseQualityIndicator from './common/ResponseQualityIndicator';
 import VideoRecorder from './common/VideoRecorder';
+import { Ticket } from '../types';
 import './TicketChat.css';
 
-const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
-    const { showSuccess, showError, showInfo, showWarning } = useToast();
-    // ... states ...
-    const [messages, setMessages] = useState([]);
+interface Message {
+    id: string;
+    content: string;
+    sender_role: string;
+    created_at: string;
+    attachment_url?: string;
+}
+
+interface TicketChatProps {
+    ticketId: string;
+    role?: string;
+    ticketData?: Ticket;
+}
+
+const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', ticketData }) => {
+    const { showSuccess, showError, showWarning } = useToast();
+    const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
-    const [qualityAnalysis, setQualityAnalysis] = useState(null);
+    const [qualityAnalysis, setQualityAnalysis] = useState<any>(null);
     const [isAnalyzingQuality, setIsAnalyzingQuality] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
-    const [videoBlob, setVideoBlob] = useState(null);
-    const analysisTimeoutRef = useRef(null);
-    const messagesEndRef = useRef(null);
+    const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+    const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Request notification permission on mount
-    // Request notification permission on mount
     useEffect(() => {
         requestNotificationPermission();
     }, []);
 
-    // Debounced Quality Analysis
+    const cannedResponses = [
+        "Hello, we are looking into your issue.",
+        "Please provide your Student ID and Receipt Number.",
+        "Your issue has been resolved. Please check your portal.",
+        "Could you please upload a screenshot of the error?",
+        "This is a known issue we are fixing."
+    ];
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
     useEffect(() => {
         const isStaff = role === 'admin' || role === 'agent' || role === 'super_admin';
         if (!isStaff || !newMessage || newMessage.length < 10) {
@@ -46,54 +69,16 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
             const analysis = await analyzeResponseQuality(newMessage, context);
             setQualityAnalysis(analysis);
             setIsAnalyzingQuality(false);
-        }, 1500); // Wait 1.5s after typing stops
-
-        return () => clearTimeout(analysisTimeoutRef.current);
-    }, [newMessage, role, ticketData]);
-
-    const cannedResponses = [
-        "Hello, we are looking into your issue.",
-        "Please provide your Student ID and Receipt Number.",
-        "Your issue has been resolved. Please check your portal.",
-        "Could you please upload a screenshot of the error?",
-        "This is a known issue we are fixing."
-    ];
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    // Quality Analysis Effect
-    useEffect(() => {
-        if (role !== 'admin' || !newMessage || newMessage.trim().length < 10) {
-            setQualityAnalysis(null);
-            return;
-        }
-
-        if (analysisTimeoutRef.current) clearTimeout(analysisTimeoutRef.current);
-
-        analysisTimeoutRef.current = setTimeout(async () => {
-            setIsAnalyzingQuality(true);
-            try {
-                const analysis = await analyzeResponseQuality(newMessage, ticketData || {});
-                setQualityAnalysis(analysis);
-            } catch (err) {
-                console.error('Quality analysis failed:', err);
-            } finally {
-                setIsAnalyzingQuality(false);
-            }
-        }, 1200);
+        }, 1500);
 
         return () => {
             if (analysisTimeoutRef.current) clearTimeout(analysisTimeoutRef.current);
         };
     }, [newMessage, role, ticketData]);
 
-
     useEffect(() => {
         fetchMessages();
 
-        // Polling for new messages (v2 replacement for realtime)
         const pollInterval = setInterval(async () => {
             try {
                 const refreshedMessages = await api.messages.list(ticketId);
@@ -101,7 +86,6 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
                     const newMsgs = refreshedMessages.slice(messages.length);
                     setMessages(refreshedMessages);
 
-                    // Notify if message is from the other party and tab is backgrounded
                     const latestNewMsg = newMsgs[newMsgs.length - 1];
                     if (latestNewMsg.sender_role !== role && document.hidden) {
                         sendNotification(`New message from ${latestNewMsg.sender_role === 'admin' ? 'Support' : 'Student'}`, {
@@ -114,7 +98,7 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
             } catch (err) {
                 console.error('Polling for messages failed:', err);
             }
-        }, 5000); // Poll every 5 seconds for chat
+        }, 5000);
 
         return () => {
             clearInterval(pollInterval);
@@ -136,19 +120,18 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
         }
     };
 
-    const handleSendMessage = async (e) => {
+    const handleSendMessage = async (e: FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() && !videoBlob) return; // Allow sending if no text but has video
+        if (!newMessage.trim() && !videoBlob) return;
 
         try {
-            let attachment = null;
+            let attachment: File | null = null;
             if (videoBlob) {
                 attachment = new File([videoBlob], "response-video.webm", { type: 'video/webm' });
             }
 
-            const data = await api.messages.create(ticketId, newMessage, role, attachment);
+            const data = await api.messages.create(ticketId, newMessage, role, attachment as any);
 
-            // Optimistically update UI
             if (data) {
                 setMessages(prev => {
                     if (prev.some(m => m.id === data.id)) return prev;
@@ -157,7 +140,7 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
             }
 
             setNewMessage('');
-            setVideoBlob(null); // Clear video
+            setVideoBlob(null);
             setQualityAnalysis(null);
             scrollToBottom();
         } catch (error) {
@@ -166,29 +149,30 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
         }
     };
 
-    const handleTemplateClick = (text) => {
+    const handleTemplateClick = (text: string) => {
         setNewMessage(text);
         setShowTemplates(false);
     };
 
     const handleGenerateAiReply = async () => {
         setIsGenerating(true);
-        // Fallback context if ticketData is missing
         const ticketContext = ticketData || { full_name: 'Student', subject: 'Inquiry', description: 'Please help.' };
 
         try {
-            const reply = await generateSmartReplyAI(ticketContext, messages);
+            const reply = await generateSmartReplyAI(ticketContext as any, messages);
             if (reply) {
                 setNewMessage(reply);
-                showSuccess('AI reply generated', 3000);
+                showSuccess('AI reply generated');
             } else {
                 showWarning("AI Reply failed. This usually means the API Key is invalid or has reached its quota.");
             }
-        } catch (error) {
+        } catch (error: any) {
             showError(`AI Error: ${error.message || "An unexpected error occurred"}`);
         }
         setIsGenerating(false);
     };
+
+    const isStaff = (role: string) => ['admin', 'agent', 'super_admin'].includes(role);
 
     return (
         <div className="chat-container">
@@ -210,10 +194,10 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
                             <div className="message-bubble">
                                 <div className="message-info">
                                     <span className="message-sender">
-                                        {(msg.sender_role === 'admin' || msg.sender_role === 'agent' || msg.sender_role === 'super_admin') ? (
+                                        {isStaff(msg.sender_role) ? (
                                             <><Shield size={12} /> Staff</>
                                         ) : (
-                                            <><User size={12} /> Student</>
+                                            <><UserIcon size={12} /> Student</>
                                         )}
                                     </span>
                                     <span className="message-time">
@@ -229,7 +213,7 @@ const TicketChat = ({ ticketId, role = 'student', ticketData }) => {
             </div>
 
             <div className="chat-input-area">
-                {(role === 'admin' || role === 'agent' || role === 'super_admin') && (
+                {isStaff(role) && (
                     <div className="admin-tools mb-2">
                         <ResponseQualityIndicator
                             loading={isAnalyzingQuality}

@@ -22,7 +22,7 @@ export const useTickets = (options: UseTicketsOptions = {}) => {
         queryFn: () => api.tickets.list(),
         initialData: [] as Ticket[],
         enabled: isStudent ? !!user?.id : true,
-        refetchInterval: 30000, // 30s polling for real-time updates
+        refetchInterval: 5000, // 5s polling for very fast updates
         ...queryOptions
     });
 };
@@ -55,16 +55,52 @@ export const useCreateTicket = () => {
     });
 };
 
+import { sendTicketUpdateNotification } from '../lib/emailNotifications';
+import { sendSmsNotification, formatStatusUpdateMessage, formatResolutionMessage } from '../lib/smsNotifications';
+import { useAuth } from '../contexts/AuthContext';
+
 export const useUpdateTicket = () => {
     const queryClient = useQueryClient();
-    const { showSuccess, showError } = useToast();
+    const { showSuccess, showError, showInfo } = useToast();
+    const { profile } = useAuth();
 
     return useMutation({
         mutationFn: ({ id, updates }: { id: string, updates: Partial<Ticket> }) => api.tickets.update(id, updates),
-        onSuccess: (_data, variables) => {
+        onSuccess: async (updatedTicket, variables) => {
             queryClient.invalidateQueries({ queryKey: ['tickets'] });
             queryClient.invalidateQueries({ queryKey: ['admin-tickets'] });
             queryClient.invalidateQueries({ queryKey: ['ticket', variables.id] });
+
+            // Trigger notifications if status changed
+            if (variables.updates.status && updatedTicket) {
+                const studentEmail = updatedTicket.email; // Assuming ticket object has student contact info
+                const oldStatus = '...'; // In a real app, we'd compare with previous state
+                const newStatus = updatedTicket.status;
+                const updatedBy = profile?.email || 'System';
+
+                // 1. Email Notification
+                if (updatedTicket.notification_preferences?.email !== false) {
+                    await sendTicketUpdateNotification(updatedTicket, 'Previous', newStatus, updatedBy);
+                }
+
+                // 2. SMS/WhatsApp Notification
+                const phone = updatedTicket.phone_number;
+                if (phone) {
+                    const isResolved = newStatus === 'Resolved';
+                    const message = isResolved
+                        ? formatResolutionMessage(updatedTicket.id, updatedTicket.subject)
+                        : formatStatusUpdateMessage(updatedTicket.id, updatedTicket.subject, 'Previous', newStatus);
+
+                    if (updatedTicket.notification_preferences?.sms) {
+                        await sendSmsNotification(phone, message, 'sms');
+                    }
+
+                    if (updatedTicket.notification_preferences?.whatsapp) {
+                        showInfo('🚀 Sending realtime WhatsApp update...');
+                        await sendSmsNotification(phone, message, 'whatsapp');
+                    }
+                }
+            }
         },
         onError: (error: any) => {
             console.error('Update ticket failed:', error);
@@ -112,4 +148,22 @@ export const useAssignTicket = () => {
             showSuccess(email ? `Assigned to ${email}` : 'Ticket unassigned');
         }
     };
+};
+
+export const useAddTicketMessage = () => {
+    const queryClient = useQueryClient();
+    const { showError } = useToast();
+
+    return useMutation({
+        mutationFn: ({ ticketId, message, isInternal }: { ticketId: string, message: string, isInternal?: boolean }) =>
+            api.messages.create(ticketId, message, isInternal ? 'agent' : 'student'),
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['ticket', variables.ticketId] });
+            queryClient.invalidateQueries({ queryKey: ['messages', variables.ticketId] });
+        },
+        onError: (error: any) => {
+            console.error('Add message failed:', error);
+            showError(error.message || 'Failed to send message');
+        }
+    });
 };

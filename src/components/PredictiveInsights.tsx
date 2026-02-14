@@ -4,13 +4,34 @@ import Card from './common/Card';
 import { generatePredictiveInsights } from '../lib/ai';
 import { api } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
+import { Ticket } from '../types';
 import './PredictiveInsights.css';
 
-const PredictiveInsights = () => {
-    const { showSuccess, showError } = useToast();
-    const [insights, setInsights] = useState(null);
+interface Prediction {
+    probability: number;
+    category: string;
+    issue: string;
+    recommendedAction: string;
+    proactiveMessage?: string;
+}
+
+interface Trend {
+    pattern: string;
+    impact: string;
+    recommendation: string;
+}
+
+interface InsightResult {
+    predictions: Prediction[];
+    trends: Trend[];
+    alerts: string[];
+}
+
+const PredictiveInsights: React.FC = () => {
+    const { showError } = useToast();
+    const [insights, setInsights] = useState<InsightResult | null>(null);
     const [loading, setLoading] = useState(false);
-    const [recentTickets, setRecentTickets] = useState([]);
+    const [recentTickets, setRecentTickets] = useState<Ticket[]>([]);
 
     useEffect(() => {
         fetchRecentTickets();
@@ -19,7 +40,6 @@ const PredictiveInsights = () => {
     const fetchRecentTickets = async () => {
         try {
             const tickets = await api.tickets.list();
-            // Get last 7 days
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -34,13 +54,20 @@ const PredictiveInsights = () => {
         setLoading(true);
         try {
             const result = await generatePredictiveInsights(recentTickets);
-            setInsights(result);
+            setInsights(result as InsightResult);
         } catch (error) {
             console.error('Failed to generate insights:', error);
             showError('Failed to generate insights. Please try again.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const getPriorityLevel = (probability: number) => {
+        if (probability >= 0.8) return 'critical';
+        if (probability >= 0.6) return 'high';
+        if (probability >= 0.4) return 'medium';
+        return 'low';
     };
 
     return (
@@ -212,13 +239,6 @@ const PredictiveInsights = () => {
             )}
         </div>
     );
-};
-
-const getPriorityLevel = (probability) => {
-    if (probability >= 0.8) return 'critical';
-    if (probability >= 0.6) return 'high';
-    if (probability >= 0.4) return 'medium';
-    return 'low';
 };
 
 export default PredictiveInsights;

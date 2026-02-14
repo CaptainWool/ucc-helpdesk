@@ -50,7 +50,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
-          utils: ['lucide-react', 'recharts', 'bcryptjs', 'jsonwebtoken']
+          utils: ['lucide-react', 'recharts']
         }
       }
     }

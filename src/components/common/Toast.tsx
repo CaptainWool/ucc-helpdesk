@@ -1,15 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, ReactNode } from 'react';
 import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 import './Toast.css';
 
-const Toast = ({ message, type = 'info', onClose, duration = 5000 }) => {
+interface ToastProps {
+    message: string;
+    type?: 'success' | 'error' | 'info' | 'warning';
+    onClose: () => void;
+    duration?: number;
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose, duration = 5000 }) => {
     useEffect(() => {
         if (duration === Infinity) return;
         const timer = setTimeout(onClose, duration);
         return () => clearTimeout(timer);
     }, [onClose, duration]);
 
-    const icons = {
+    const icons: Record<string, ReactNode> = {
         success: <CheckCircle className="toast-icon" size={20} />,
         error: <AlertCircle className="toast-icon" size={20} />,
         info: <Info className="toast-icon" size={20} />,

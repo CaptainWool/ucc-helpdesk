@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../contexts/ToastContext';
-import { Sparkles, Brain, MessageSquare, TrendingUp, Lightbulb, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Sparkles, Brain, MessageSquare, Lightbulb, Zap, CheckCircle, AlertTriangle } from 'lucide-react';
 import Card from './common/Card';
 import Button from './common/Button';
 import {
@@ -9,16 +9,62 @@ import {
     analyzeTone,
     extractActionItems
 } from '../lib/ai';
+import { Ticket, Message } from '../types';
 import './AIIntelligencePanel.css';
 
-const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
-    const { showSuccess, showError, showWarning } = useToast();
-    const [activeFeature, setActiveFeature] = useState(null);
+interface SummaryResult {
+    executiveSummary: string;
+    keyPoints: string[];
+    currentStatus: string;
+    sentiment: string;
+    urgencyLevel: string;
+    suggestedNextSteps: string[];
+}
+
+interface Suggestion {
+    confidence: number;
+    tone: string;
+    responseText: string;
+    reasoning: string;
+}
+
+interface SuggestionsResult {
+    suggestions: Suggestion[];
+    relatedKnowledge: string[];
+}
+
+interface ToneAnalysisResult {
+    toneScore: number;
+    currentTone: string;
+    isAppropriate: boolean;
+    suggestions: string[];
+    improvedVersion: string;
+}
+
+interface ActionItem {
+    task: string;
+    assignedTo: string;
+    priority: string;
+}
+
+interface ActionItemsResult {
+    actionItems: ActionItem[];
+}
+
+interface AIIntelligencePanelProps {
+    ticket: Ticket;
+    messages: Message[];
+    allTickets: Ticket[];
+}
+
+const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({ ticket, messages, allTickets }) => {
+    const { showError, showWarning } = useToast();
+    const [activeFeature, setActiveFeature] = useState<'summary' | 'suggestions' | 'tone' | 'actions' | null>(null);
     const [loading, setLoading] = useState(false);
-    const [summary, setSummary] = useState(null);
-    const [suggestions, setSuggestions] = useState(null);
-    const [toneAnalysis, setToneAnalysis] = useState(null);
-    const [actionItems, setActionItems] = useState(null);
+    const [summary, setSummary] = useState<SummaryResult | null>(null);
+    const [suggestions, setSuggestions] = useState<SuggestionsResult | null>(null);
+    const [toneAnalysis, setToneAnalysis] = useState<ToneAnalysisResult | null>(null);
+    const [actionItems, setActionItems] = useState<ActionItemsResult | null>(null);
     const [draftMessage, setDraftMessage] = useState('');
 
     const handleSummarize = async () => {
@@ -26,7 +72,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
         setActiveFeature('summary');
         try {
             const result = await summarizeTicketThread(ticket, messages);
-            setSummary(result);
+            setSummary(result as SummaryResult);
         } catch (error) {
             console.error('Summarization failed:', error);
             showError('Failed to generate summary. Please try again.');
@@ -40,7 +86,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
         setActiveFeature('suggestions');
         try {
             const result = await suggestResponseFromHistory(ticket, allTickets, messages);
-            setSuggestions(result);
+            setSuggestions(result as SuggestionsResult);
         } catch (error) {
             console.error('Suggestions failed:', error);
             showError('Failed to get suggestions. Please try again.');
@@ -58,7 +104,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
         setActiveFeature('tone');
         try {
             const result = await analyzeTone(draftMessage);
-            setToneAnalysis(result);
+            setToneAnalysis(result as ToneAnalysisResult);
         } catch (error) {
             console.error('Tone analysis failed:', error);
             showError('Failed to analyze tone. Please try again.');
@@ -72,7 +118,7 @@ const AIIntelligencePanel = ({ ticket, messages, allTickets }) => {
         setActiveFeature('actions');
         try {
             const result = await extractActionItems(messages);
-            setActionItems(result);
+            setActionItems(result as ActionItemsResult);
         } catch (error) {
             console.error('Action extraction failed:', error);
             showError('Failed to extract action items. Please try again.');

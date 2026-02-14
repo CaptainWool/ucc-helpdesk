@@ -17,14 +17,14 @@ test.describe('Ticket Lifecycle', () => {
 
         // Fill the form
         await page.fill('input[name="subject"]', 'E2E Test Ticket');
-        await page.selectOption('select[name="type"]', 'portal');
+        await page.selectOption('select[name="type"]', 'Portal Access');
         await page.fill('textarea[name="description"]', 'This is a test ticket created by Playwright.');
 
         // Submit
         await page.click('button[type="submit"]');
 
-        // Confirm success
-        await expect(page.locator('.success-card')).toBeVisible();
-        await expect(page.locator('h1')).toContainText('Submitted');
+        // Confirm success via toast and redirection
+        await expect(page.getByText(/submitted successfully/i)).toBeVisible();
+        await expect(page).toHaveURL(/.*dashboard/);
     });
 });

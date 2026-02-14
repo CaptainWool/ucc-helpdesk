@@ -3,8 +3,24 @@ import { Download, Sparkles } from 'lucide-react';
 import Button from '../common/Button';
 import TicketChat from '../TicketChat';
 import { BASE_URL } from '../../lib/api';
+import { Ticket } from '../../types';
 
-const TicketDetailModal = ({
+interface AiAnalysis {
+    sentiment: string;
+    priority: string;
+    summary: string;
+}
+
+interface TicketDetailModalProps {
+    ticket: Ticket | null;
+    onClose: () => void;
+    onPriorityChange: (id: string, priority: string) => void;
+    aiAnalysis: AiAnalysis | null;
+    analyzing: boolean;
+    onAnalyze: () => void;
+}
+
+const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     ticket,
     onClose,
     onPriorityChange,
@@ -28,7 +44,11 @@ const TicketDetailModal = ({
                 </div>
             );
         }
-        return <Button size="sm" variant="secondary" onClick={onAnalyze} style={{ marginTop: '1rem' }}><Sparkles size={14} style={{ marginRight: '0.5rem' }} /> AI Analysis & Priority</Button>;
+        return (
+            <Button size="sm" variant="secondary" onClick={onAnalyze} style={{ marginTop: '1rem' }}>
+                <Sparkles size={14} style={{ marginRight: '0.5rem' }} /> AI Analysis & Priority
+            </Button>
+        );
     };
 
     return (
@@ -47,7 +67,11 @@ const TicketDetailModal = ({
                         </div>
                         <div className="meta-card">
                             <label>Priority</label>
-                            <select value={ticket.priority || 'Medium'} onChange={(e) => onPriorityChange(ticket.id, e.target.value)} className="modal-priority-select">
+                            <select
+                                value={ticket.priority || 'Medium'}
+                                onChange={(e) => onPriorityChange(ticket.id, e.target.value)}
+                                className="modal-priority-select"
+                            >
                                 <option value="Urgent">Urgent</option>
                                 <option value="High">High</option>
                                 <option value="Medium">Medium</option>
@@ -74,7 +98,12 @@ const TicketDetailModal = ({
                     {ticket.attachment_url && (
                         <div className="attachment-section">
                             <h3>Attached Evidence</h3>
-                            <a href={ticket.attachment_url.startsWith('http') ? ticket.attachment_url : `${BASE_URL}${ticket.attachment_url}`} target="_blank" rel="noopener noreferrer" className="attachment-link">
+                            <a
+                                href={ticket.attachment_url.startsWith('http') ? ticket.attachment_url : `${BASE_URL}${ticket.attachment_url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="attachment-link"
+                            >
                                 <Download size={16} /> Download Attachment
                             </a>
                         </div>

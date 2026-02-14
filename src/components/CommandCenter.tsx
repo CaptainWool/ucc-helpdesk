@@ -1,16 +1,40 @@
-
-import React, { useState, useEffect } from 'react';
-import { Lock, Unlock, ShieldAlert, UserMinus, Search, Ban, History, Info, Bell, Users, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, KeyboardEvent } from 'react';
+import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import Card from './common/Card';
 import Input from './common/Input';
+import { User } from '../types';
 import './CommandCenter.css';
 
-const CommandCenter = () => {
-    const { showSuccess, showError, showWarning, showInfo } = useToast();
-    const [settings, setSettings] = useState({
+interface SystemSettings {
+    submissions_locked: boolean;
+    maintenance_mode: boolean;
+    global_announcement: { enabled: boolean; message: string; type: string };
+    max_open_tickets: number;
+    sla_peak_mode: boolean;
+    resource_limits: { max_size_mb: number; allowed_types: string[] };
+    ai_sensitivity: number;
+    housekeeping_rules: { enabled: boolean; auto_close_resolved_days: number };
+    command_center_password?: string;
+    current_ticket_count?: number;
+}
+
+interface AuditLog {
+    id: string;
+    created_at: string;
+    admin_name: string;
+    admin_email: string;
+    action: string;
+    target_type?: string;
+    target_id?: string;
+    details: any;
+}
+
+const CommandCenter: React.FC = () => {
+    const { showSuccess, showError, showInfo } = useToast();
+    const [settings, setSettings] = useState<SystemSettings>({
         submissions_locked: false,
         maintenance_mode: false,
         global_announcement: { enabled: false, message: '', type: 'info' },
@@ -21,14 +45,14 @@ const CommandCenter = () => {
         housekeeping_rules: { enabled: false, auto_close_resolved_days: 30 },
         command_center_password: 'israel@40'
     });
-    const [users, setUsers] = useState([]);
-    const [auditLogs, setAuditLogs] = useState([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const [modifying, setModifying] = useState(null);
+    const [modifying, setModifying] = useState<string | null>(null);
     const [announcementDraft, setAnnouncementDraft] = useState({ enabled: false, message: '', type: 'info' });
-    const [resourceDraft, setResourceDraft] = useState({ max_size_mb: 5, allowed_types: [] });
-    const [activeTab, setActiveTab] = useState('controls'); // controls, moderation, audit
+    const [resourceDraft, setResourceDraft] = useState({ max_size_mb: 5, allowed_types: [] as string[] });
+    const [activeTab, setActiveTab] = useState<'controls' | 'moderation' | 'audit'>('controls');
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [passwordAttempt, setPasswordAttempt] = useState('');
 
@@ -48,7 +72,7 @@ const CommandCenter = () => {
             setAuditLogs(logs);
             setAnnouncementDraft(s.global_announcement || { enabled: false, message: '', type: 'info' });
             setResourceDraft(s.resource_limits || { max_size_mb: 5, allowed_types: ['image/jpeg', 'image/png', 'application/pdf'] });
-            setUsers(u.filter(user => user.role !== 'master')); // Show all except master bypass
+            setUsers(u.filter((user: User) => user.role !== 'master'));
         } catch (err) {
             console.error('Failed to fetch command center data:', err);
         } finally {
@@ -84,7 +108,7 @@ const CommandCenter = () => {
         }
     };
 
-    const updateSetting = async (key, value) => {
+    const updateSetting = async (key: string, value: any) => {
         try {
             await api.system.updateSettings(key, value);
             setSettings(prev => ({ ...prev, [key]: value }));
@@ -94,18 +118,18 @@ const CommandCenter = () => {
         }
     };
 
-    const toggleSetting = (key) => updateSetting(key, !settings[key]);
+    const toggleSetting = (key: keyof SystemSettings) => updateSetting(key, !settings[key]);
 
     const saveAnnouncement = () => updateSetting('global_announcement', announcementDraft);
 
     const saveResourceLimits = () => updateSetting('resource_limits', resourceDraft);
 
-    const handleModerate = async (userId, data) => {
+    const handleModerate = async (userId: string, data: any) => {
         setModifying(userId);
         try {
             await api.system.moderateUser(userId, data);
             showSuccess('User status updated');
-            await fetchData(); // Refresh list
+            await fetchData();
         } catch (err) {
             showError('Failed to update user status');
         } finally {
@@ -113,7 +137,7 @@ const CommandCenter = () => {
         }
     };
 
-    const handleBan = (user) => {
+    const handleBan = (user: User) => {
         const days = prompt(`Ban ${user.full_name} for how many days? (0 for indefinite)`, "7");
         if (days === null) return;
 
@@ -124,7 +148,7 @@ const CommandCenter = () => {
         handleModerate(user.id, banData);
     };
 
-    const handleRevoke = (user) => {
+    const handleRevoke = (user: User) => {
         const reason = prompt(`Reason for permanently revoking ${user.full_name}'s account?`);
         if (!reason) return;
 
@@ -160,7 +184,7 @@ const CommandCenter = () => {
                             placeholder="Enter Security PIN"
                             value={passwordAttempt}
                             onChange={(e) => setPasswordAttempt(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleUnlock()}
+                            onKeyPress={(e: KeyboardEvent) => e.key === 'Enter' && handleUnlock()}
                         />
                         <Button onClick={handleUnlock} className="w-full">Unlock Dashboard</Button>
                     </div>
@@ -172,7 +196,6 @@ const CommandCenter = () => {
     const renderControls = () => (
         <>
             <div className="admin-grid">
-                {/* System Controls */}
                 <Card className="system-controls">
                     <h3><ShieldAlert size={20} /> System Critical Controls</h3>
                     <p className="section-desc">Manage global availability of the helpdesk platform.</p>
@@ -206,7 +229,6 @@ const CommandCenter = () => {
                     </div>
                 </Card>
 
-                {/* PIN Control */}
                 <Card className="pin-control">
                     <h3><Lock size={20} /> Access Control</h3>
                     <p className="section-desc">Manage the Command Center security PIN.</p>
@@ -217,7 +239,6 @@ const CommandCenter = () => {
                     </div>
                 </Card>
 
-                {/* Capacity Card */}
                 <Card className="capacity-card">
                     <h3><Users size={20} /> Queue Capacity</h3>
                     <p className="section-desc">Limit active ticket volume.</p>
@@ -231,7 +252,6 @@ const CommandCenter = () => {
                     </div>
                 </Card>
 
-                {/* SLA Peak Mode Card */}
                 <Card className="sla-peak-card">
                     <div className="card-top-cc">
                         <h3><ShieldAlert size={20} /> SLA Peak Mode</h3>
@@ -248,7 +268,6 @@ const CommandCenter = () => {
             </div>
 
             <div className="admin-grid">
-                {/* AI & Automation */}
                 <Card className="ai-controls">
                     <h3><Sparkles size={20} /> AI Sensitivity Tuning</h3>
                     <p className="section-desc">Adjust how aggressive the AI is in auto-prioritizing.</p>
@@ -269,7 +288,6 @@ const CommandCenter = () => {
                     </div>
                 </Card>
 
-                {/* Housekeeping */}
                 <Card className="housekeeping">
                     <h3><History size={20} /> Automated Cleanup</h3>
                     <p className="section-desc">Keep the system clean by closing stale tickets.</p>
@@ -297,7 +315,6 @@ const CommandCenter = () => {
             </div>
 
             <div className="admin-grid">
-                {/* Resource Limits Editor */}
                 <Card className="resource-limits">
                     <h3><ShieldAlert size={20} /> Resource Security</h3>
                     <p className="section-desc">Manage attachment type and size constraints.</p>
@@ -340,7 +357,6 @@ const CommandCenter = () => {
                     </div>
                 </Card>
 
-                {/* Info Card */}
                 <Card className="info-card-cc">
                     <h3><Info size={20} /> Operational Status</h3>
                     <p>Load: <strong>{settings.current_ticket_count || 0} active tickets</strong>.</p>
@@ -352,13 +368,11 @@ const CommandCenter = () => {
                 </Card>
             </div>
 
-            {/* Announcement Editor */}
             <Card className="announcement-editor">
                 <h3><Bell size={20} /> Global Announcement</h3>
                 <p className="section-desc">Broadcast a message to all students in the portal.</p>
 
                 <div className="announcement-presets" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '100%', marginBottom: '0.25rem', fontWeight: 'bold' }}>Quick Draft Presets:</span>
                     {[
                         { label: 'Fee Deadline', msg: '⚠️ Fee Deadline: Final date for Semester 1 fee clearance is Friday, Feb 20th.', type: 'warning' },
                         { label: 'Registration', msg: '📅 Course Registration: Undergraduate registration closes this Sunday at midnight.', type: 'info' },
@@ -369,21 +383,7 @@ const CommandCenter = () => {
                         <button
                             key={i}
                             className="preset-pill"
-                            style={{
-                                fontSize: '0.7rem',
-                                padding: '0.25rem 0.6rem',
-                                borderRadius: '12px',
-                                border: '1px solid var(--border)',
-                                background: 'white',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                color: 'var(--text-main)',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}
                             onClick={() => setAnnouncementDraft({ enabled: true, message: p.msg, type: p.type })}
-                            onMouseOver={(e) => { e.target.style.borderColor = 'var(--primary)'; e.target.style.background = '#f8fafc'; }}
-                            onMouseOut={(e) => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'white'; }}
                         >
                             {p.label}
                         </button>
@@ -420,7 +420,7 @@ const CommandCenter = () => {
                             placeholder="Enter announcement message..."
                             value={announcementDraft.message}
                             onChange={(e) => setAnnouncementDraft(prev => ({ ...prev, message: e.target.value }))}
-                            rows="2"
+                            rows={2}
                         />
                     </div>
                     <div className="form-actions-cc">
@@ -452,7 +452,7 @@ const CommandCenter = () => {
                 <table className="cc-table">
                     <thead>
                         <tr>
-                            <th>User Detals</th>
+                            <th>User Details</th>
                             <th>Role / Status</th>
                             <th>Credentials / Actions</th>
                         </tr>
@@ -487,7 +487,7 @@ const CommandCenter = () => {
                                     <div className="cc-actions-column">
                                         {user.plaintext_password && (
                                             <div className="credential-recovery-cc" onClick={() => {
-                                                navigator.clipboard.writeText(user.plaintext_password);
+                                                navigator.clipboard.writeText(user.plaintext_password!);
                                                 showSuccess('Temporary password copied to clipboard');
                                             }} title="Generated Password (Recovery)">
                                                 <Lock size={12} />
@@ -513,7 +513,6 @@ const CommandCenter = () => {
                                             )}
                                             {user.revoked_at && (
                                                 <Button size="sm" variant="ghost" onClick={() => showInfo(`Reason: ${user.revocation_reason}`)} title="View Reason">
-
                                                     <History size={16} /> Details
                                                 </Button>
                                             )}
@@ -560,7 +559,7 @@ const CommandCenter = () => {
                                 <td style={{ fontSize: '0.85rem' }}>
                                     {log.target_type && <code>[{log.target_type}: {log.target_id}]</code>}
                                     <div style={{ marginTop: '0.25rem', color: 'var(--text-muted)' }}>
-                                        {JSON.stringify(log.details)}
+                                        {typeof log.details === 'object' ? JSON.stringify(log.details) : log.details}
                                     </div>
                                 </td>
                             </tr>

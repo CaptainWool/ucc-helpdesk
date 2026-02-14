@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { UserSchema, TicketSchema, StatsSchema, FAQSchema } from '../lib/schemas';
+import { UserSchema, TicketSchema, MessageSchema, StatsSchema, FAQSchema } from '../lib/schemas';
 
 export type User = z.infer<typeof UserSchema>;
 export type Ticket = z.infer<typeof TicketSchema>;
+export type Message = z.infer<typeof MessageSchema>;
 export type Stats = z.infer<typeof StatsSchema>;
 export type FAQ = z.infer<typeof FAQSchema>;
 
