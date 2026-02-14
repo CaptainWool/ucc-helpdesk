@@ -9,6 +9,7 @@ const sgMail = require('@sendgrid/mail');
 const compression = require('compression');
 const helmet = require('helmet');
 require('dotenv').config();
+const logger = require('./logger');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -43,7 +44,7 @@ const pool = new Pool({
 if (process.env.SENDGRID_API_KEY) {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } else {
-    console.warn('⚠️ SENDGRID_API_KEY is not defined in environment variables. Email sending will fail.');
+    logger.warn('SENDGRID_API_KEY is not defined in environment variables. Email sending will fail.');
 }
 
 const sendResetEmail = async (email, token, fullName) => {
@@ -77,9 +78,9 @@ const sendResetEmail = async (email, token, fullName) => {
             `
         };
         await sgMail.send(msg);
-        console.log(`✅ Reset email sent to ${email}`);
+        logger.info(`Reset email sent to ${email}`);
     } catch (err) {
-        console.error('❌ SendGrid Error (Reset):', err.message);
+        logger.error('SendGrid Error (Reset): ' + err.message);
     }
 };
 
@@ -126,9 +127,9 @@ const sendTicketConfirmationEmail = async (email, ticket) => {
             `
         };
         await sgMail.send(msg);
-        console.log(`✅ Confirmation email sent to ${email}`);
+        logger.info(`Confirmation email sent to ${email}`);
     } catch (err) {
-        console.error('❌ SendGrid Error (Confirmation):', err.message);
+        logger.error('SendGrid Error (Confirmation): ' + err.message);
     }
 };
 
@@ -173,9 +174,9 @@ const sendTicketResolutionEmail = async (email, ticket) => {
             `
         };
         await sgMail.send(msg);
-        console.log(`✅ Resolution email sent to ${email}`);
+        logger.info(`Resolution email sent to ${email}`);
     } catch (err) {
-        console.error('❌ SendGrid Error (Resolution):', err.message);
+        logger.error('SendGrid Error (Resolution): ' + err.message);
     }
 };
 
@@ -184,7 +185,7 @@ const sendTicketResolutionEmail = async (email, ticket) => {
 
 // --- Auto-Initialize Database Schema ---
 const initDb = async () => {
-    console.log('Checking database schema synchronization...');
+    logger.info('Checking database schema synchronization...');
     const client = await pool.connect();
     try {
         await client.query('BEGIN');

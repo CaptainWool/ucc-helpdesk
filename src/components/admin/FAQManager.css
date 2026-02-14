@@ -83,6 +83,21 @@
     flex-shrink: 0;
 }
 
+.icon-blue {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.icon-green {
+    background-color: hsl(145, 80%, 95%);
+    color: hsl(145, 70%, 40%);
+}
+
+[data-theme="dark"] .icon-green {
+    background-color: hsl(145, 60%, 25%);
+    color: hsl(145, 70%, 70%);
+}
+
 .stat-content {
     flex: 1;
 }
@@ -117,11 +132,12 @@
 .faq-search-bar input {
     width: 100%;
     padding: 0.875rem 1rem 0.875rem 3rem;
-    border: 2px solid var(--border-color);
+    border: 2px solid var(--border);
     border-radius: 12px;
     font-size: 1rem;
     transition: all 0.2s ease;
-    background: white;
+    background: var(--bg-card);
+    color: var(--text-main);
 }
 
 .faq-search-bar input:focus {
@@ -163,12 +179,13 @@
 .form-input,
 .form-textarea {
     padding: 0.75rem 1rem;
-    border: 2px solid var(--border-color);
+    border: 2px solid var(--border);
     border-radius: 8px;
     font-size: 1rem;
     font-family: inherit;
     transition: all 0.2s ease;
-    background: white;
+    background: var(--bg-card);
+    color: var(--text-main);
 }
 
 .form-select:focus,
@@ -208,7 +225,7 @@
     color: var(--text-primary);
     margin: 0;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--border);
 }
 
 .faq-items {
@@ -258,7 +275,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--background);
+    background: transparent;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -286,6 +303,10 @@
     background: #fee2e2;
 }
 
+[data-theme="dark"] .delete-btn:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.2);
+}
+
 .faq-answer {
     margin: 0;
     color: var(--text-secondary);
@@ -297,7 +318,7 @@
     gap: 1rem;
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border);
 }
 
 .meta-badge {
@@ -315,9 +336,19 @@
     color: #16a34a;
 }
 
+[data-theme="dark"] .meta-badge.helpful {
+    background: rgba(22, 163, 74, 0.2);
+    color: #4ade80;
+}
+
 .meta-badge.unhelpful {
     background: #fee2e2;
     color: #dc2626;
+}
+
+[data-theme="dark"] .meta-badge.unhelpful {
+    background: rgba(220, 38, 38, 0.2);
+    color: #f87171;
 }
 
 .no-faqs {

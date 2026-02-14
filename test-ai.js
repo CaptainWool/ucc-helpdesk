@@ -1,6 +1,12 @@
+import 'dotenv/config';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = "AIzaSyAn_UXumzYZCtqZsag565S8fcvi7FCPxD0";
+const API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GENERATIVE_AI_KEY;
+if (!API_KEY) {
+    console.error('Missing API key: set VITE_GEMINI_API_KEY or GENERATIVE_AI_KEY in your .env');
+    process.exit(1);
+}
+
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 async function listModels() {

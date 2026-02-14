@@ -82,13 +82,13 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background-color: white;
+    background-color: var(--bg-card);
     border-radius: 999px;
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-muted);
     box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
 }
 
 .pill-icon {
@@ -113,7 +113,8 @@
 
 .visual-card {
     position: absolute;
-    background-color: white;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
     transition: transform 0.3s ease;
 }
 
@@ -175,14 +176,20 @@
     margin-bottom: 0.5rem;
 }
 
+/* Default (Light Mode) */
 .status-resolved {
     background-color: hsl(145, 80%, 95%);
     color: hsl(145, 70%, 35%);
 }
 
+[data-theme="dark"] .status-resolved {
+    background-color: hsl(145, 60%, 25%);
+    color: hsl(145, 70%, 85%);
+}
+
 .progress-bar {
     height: 6px;
-    background-color: #f1f5f9;
+    background-color: var(--border);
     border-radius: 3px;
     margin-top: 1rem;
     overflow: hidden;
@@ -248,14 +255,26 @@
     color: var(--primary);
 }
 
+/* Default (Light Mode) */
 .icon-green {
     background-color: hsl(145, 80%, 95%);
     color: hsl(145, 70%, 40%);
 }
 
+[data-theme="dark"] .icon-green {
+    background-color: hsl(145, 60%, 25%);
+    color: hsl(145, 70%, 70%);
+}
+
+/* Default (Light Mode) */
 .icon-purple {
     background-color: hsl(280, 80%, 95%);
     color: hsl(280, 70%, 40%);
+}
+
+[data-theme="dark"] .icon-purple {
+    background-color: hsl(280, 60%, 25%);
+    color: hsl(280, 70%, 70%);
 }
 
 .category-card h3 {

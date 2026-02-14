@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - name: Install root deps
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Run tests
+        run: npm test
+      - name: Run npm audit (root)
+        run: |
+          npm ci
+          npm audit --json > audit-root.json || true
+      - name: Upload root audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-root
+          path: audit-root.json
+      - name: Server audit
+        run: |
+          if [ -d server ]; then
+            cd server
+            npm ci
+            npm audit --json > ../audit-server.json || true
+            cd ..
+          else
+            echo "No server folder"
+          fi
+      - name: Upload server audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-server
+          path: audit-server.json

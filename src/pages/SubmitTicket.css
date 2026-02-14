@@ -31,12 +31,12 @@
     font-size: 2.5rem;
     font-weight: 800;
     letter-spacing: -0.03em;
-    color: #0f172a;
+    color: var(--text-main);
     margin-bottom: 0.75rem;
 }
 
 .page-header p {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 1.05rem;
     margin-bottom: 1.5rem;
 }
@@ -93,9 +93,9 @@
 }
 
 .form-layout>.card {
-    background: white;
+    background: var(--bg-card);
     border-radius: 2rem;
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.04);
 }
 
@@ -125,8 +125,8 @@
 
 /* Sidebar Tips */
 .tips-card {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 1px solid #e2e8f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 2rem;
     position: sticky;
     top: 6rem;
@@ -134,7 +134,7 @@
 }
 
 .tips-card h3 {
-    color: #0f172a;
+    color: var(--text-main);
     font-weight: 800;
     font-size: 1.1rem;
     margin-bottom: 1rem;
@@ -149,7 +149,7 @@
 .tips-list {
     margin-top: 1rem;
     padding-left: 1.25rem;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.9rem;
     line-height: 1.6;
 }
@@ -182,9 +182,9 @@
     text-align: center;
     max-width: 540px;
     padding: 3.5rem 3rem;
-    background: white;
+    background: var(--bg-card);
     border-radius: 2.5rem;
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
 }
 
@@ -219,11 +219,11 @@
 .success-card h1 {
     margin-bottom: 1rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text-main);
 }
 
 .success-card p {
-    color: #64748b;
+    color: var(--text-muted);
     margin-bottom: 2.5rem;
     line-height: 1.6;
 }
@@ -306,12 +306,12 @@
 .suggestion-content h4 {
     font-size: 1.15rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-main);
     margin-bottom: 0.75rem;
 }
 
 .suggestion-content p {
-    color: #64748b;
+    color: var(--text-muted);
     line-height: 1.7;
     margin-bottom: 1.5rem;
 }
@@ -323,7 +323,7 @@
     border-top: 1px solid rgba(59, 130, 246, 0.15);
     padding-top: 1rem;
     font-size: 0.875rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .suggestion-actions {

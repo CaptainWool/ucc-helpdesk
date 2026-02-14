@@ -149,7 +149,7 @@ const FAQManager = () => {
 
             <div className="faq-stats">
                 <Card className="stat-card">
-                    <div className="stat-icon" style={{ background: '#dbeafe', color: '#2563eb' }}>
+                    <div className="stat-icon icon-blue">
                         <BookOpen size={24} />
                     </div>
                     <div className="stat-content">
@@ -158,7 +158,7 @@ const FAQManager = () => {
                     </div>
                 </Card>
                 <Card className="stat-card">
-                    <div className="stat-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                    <div className="stat-icon icon-green">
                         <TrendingUp size={24} />
                     </div>
                     <div className="stat-content">

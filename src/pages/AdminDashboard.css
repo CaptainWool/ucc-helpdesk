@@ -1,11 +1,11 @@
 :root {
-    --dash-bg: #f3f4f6;
-    --dash-surface: #ffffff;
-    --dash-border: #e5e7eb;
-    --dash-primary: #2563eb;
-    --dash-primary-hover: #1d4ed8;
-    --dash-text: #111827;
-    --dash-text-muted: #6b7280;
+    --dash-bg: var(--bg-body);
+    --dash-surface: var(--bg-card);
+    --dash-border: var(--border);
+    --dash-primary: var(--primary);
+    --dash-primary-hover: hsl(var(--primary-hue), 60%, 45%);
+    --dash-text: var(--text-main);
+    --dash-text-muted: var(--text-muted);
     --dash-radius: 12px;
 }
 
@@ -25,7 +25,7 @@
 /* Top Bar */
 .admin-top-bar {
     height: 64px;
-    background: white;
+    background: var(--dash-surface);
     border-bottom: 1px solid var(--dash-border);
     display: flex;
     justify-content: space-between;
@@ -42,7 +42,7 @@
     gap: 0.75rem;
     font-weight: 700;
     color: var(--dash-primary);
-    background: #eff6ff;
+    background: var(--primary-light);
     padding: 0.5rem 1rem;
     border-radius: 99px;
 }
@@ -127,7 +127,7 @@
 }
 
 .header-status-pill {
-    background: white;
+    background: var(--dash-surface);
     padding: 0.5rem 1rem;
     border-radius: 99px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -172,7 +172,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: white;
+    background: var(--dash-surface);
     padding: 0.5rem;
     border-radius: var(--dash-radius);
     border: 1px solid var(--dash-border);
@@ -214,7 +214,7 @@
 }
 
 .mini-stat {
-    background: white;
+    background: var(--dash-surface);
     padding: 1.25rem;
     border-radius: var(--dash-radius);
     border: 1px solid var(--dash-border);
@@ -298,7 +298,7 @@
     padding: 0 1rem 0 3rem;
     border-radius: 10px;
     border: 1px solid var(--dash-border);
-    background: white;
+    background: var(--dash-surface);
     font-size: 0.95rem;
 }
 
@@ -312,7 +312,7 @@
     padding: 0 1rem;
     border-radius: 10px;
     border: 1px solid var(--dash-border);
-    background: white;
+    background: var(--dash-surface);
     font-weight: 500;
 }
 
@@ -352,7 +352,7 @@
 .ticket-id-tag {
     font-size: 0.75rem;
     font-family: monospace;
-    background: #f3f4f6;
+    background: var(--dash-bg);
     color: #4b5563;
     padding: 0.1rem 0.4rem;
     border-radius: 4px;
@@ -414,7 +414,7 @@
 }
 
 .priority-pill.medium {
-    background: #f3f4f6;
+    background: var(--dash-bg);
     color: #374151;
 }
 
@@ -440,7 +440,7 @@
 }
 
 .modal-content {
-    background: white;
+    background: var(--dash-surface);
     width: 100%;
     max-width: 850px;
     max-height: 92vh;
@@ -473,7 +473,7 @@
 }
 
 .header-badge {
-    background: #eff6ff;
+    background: var(--primary-light);
     color: #2563eb;
     padding: 0.25rem 0.75rem;
     border-radius: 6px;
@@ -520,7 +520,7 @@
 }
 
 .description-text {
-    background: white;
+    background: var(--dash-surface);
     padding: 1rem;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
@@ -534,7 +534,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
-    background: #eff6ff;
+    background: var(--primary-light);
     color: #2563eb;
     border-radius: 8px;
     font-weight: 600;
@@ -573,7 +573,7 @@
 }
 
 .team-mini-card {
-    background: white;
+    background: var(--dash-surface);
     padding: 1.5rem;
     border-radius: 12px;
     border: 1px solid var(--dash-border);
@@ -669,7 +669,7 @@
     font-size: 0.8rem;
     font-weight: 600;
     color: #374151;
-    background: #f3f4f6;
+    background: var(--dash-bg);
     padding: 4px 10px;
     border-radius: 6px;
     border: 1px solid #e5e7eb;
@@ -720,16 +720,16 @@
     letter-spacing: 0.05em;
     color: #6b7280;
     padding: 14px 16px;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 2px solid var(--dash-border);
 }
 
 .team-table tbody td {
     padding: 16px;
     vertical-align: middle;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--dash-bg);
 }
 
 .team-table tbody tr:hover {
-    background: #f9fafb;
+    background: var(--dash-bg);
     transition: background 0.2s ease;
 }
