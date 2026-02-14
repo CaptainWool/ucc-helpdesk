@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     Clock,
@@ -31,13 +32,22 @@ const StudentDashboard = () => {
     const { user, profile, refreshProfile } = useAuth();
     const { showInfo, showSuccess, showError } = useToast();
     const navigate = useNavigate();
-    const [tickets, setTickets] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [searchQuery, setSearchQuery] = useState('');
     const [showTour, setShowTour] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isInstallable, setIsInstallable] = useState(false);
     const [showDataSettings, setShowDataSettings] = useState(false);
+
+    // Fetch tickets using React Query for global caching
+    const { data: tickets = [], isLoading: ticketsLoading, error: ticketsError } = useQuery({
+        queryKey: ['tickets', user?.id],
+        queryFn: () => api.tickets.list(),
+        enabled: !!user,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+    });
+
+    const loading = ticketsLoading;
 
     // Use profile which should have the latest data including student_id and avatar_url
     const displayUser = profile || user;
@@ -70,25 +80,10 @@ const StudentDashboard = () => {
     };
 
     useEffect(() => {
-        if (user) {
-            fetchStudentTickets();
-            // Check if user needs the tour
-            if (profile && profile.has_completed_tour === false) {
-                setShowTour(true);
-            }
+        if (user && profile && profile.has_completed_tour === false) {
+            setShowTour(true);
         }
     }, [user, profile]);
-
-    const fetchStudentTickets = async () => {
-        try {
-            const data = await api.tickets.list();
-            setTickets(data);
-        } catch (error) {
-            console.error('Error fetching tickets:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const stats = {
         total: tickets.length,

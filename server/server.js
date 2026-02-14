@@ -5,22 +5,36 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
-const sgMail = require('@sendgrid/mail'); // Use SendGrid instead of Resend
+const sgMail = require('@sendgrid/mail');
+const compression = require('compression');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
+app.use(helmet({
+    crossOriginResourcePolicy: false, // Allow cross-origin images (avatars/attachments)
+}));
+app.use(compression()); // Compress all responses
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
+
+// Optimized Static Serving with Caching
+app.use('/uploads', express.static('uploads', {
+    maxAge: '1d', // Cache uploads for 1 day
+    immutable: true
+}));
 
 // Database Connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false
+    ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false,
+    max: 20, // Maximum number of clients in the pool
+    idleTimeoutMillis: 30000, // How long a client is allowed to sit idle before being closed
+    connectionTimeoutMillis: 2000, // How long to wait for a connection
 });
 
 // Initialize SendGrid
@@ -279,6 +293,14 @@ const initDb = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
         `);
+
+        // Optimized Indexes for performance
+        await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON tickets(user_id)');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_email ON tickets(email)');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_assigned_email ON tickets(assigned_to_email)');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)');
+        await client.query('CREATE INDEX IF NOT EXISTS idx_messages_ticket_id ON messages(ticket_id)');
 
         // Seed Initial Settings
         const settingsToSeed = [

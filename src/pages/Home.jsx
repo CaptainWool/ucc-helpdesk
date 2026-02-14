@@ -6,12 +6,25 @@ import Card from '../components/common/Card';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api';
 import './Home.css';
 
 const Home = () => {
     const { t } = useLanguage();
     const { user, profile } = useAuth();
     const { settings } = useSettings();
+    const queryClient = useQueryClient();
+
+    const prefetchDashboard = () => {
+        if (!user) return;
+        const queryKey = profile?.role === 'student' ? ['tickets', user.id] : ['admin-tickets'];
+        queryClient.prefetchQuery({
+            queryKey,
+            queryFn: () => api.tickets.list(),
+            staleTime: 1000 * 60 * 5,
+        });
+    };
     const isAdmin = profile?.role === 'agent' || profile?.role === 'super_admin';
     const isStudent = profile?.role === 'student';
 
@@ -30,7 +43,7 @@ const Home = () => {
                         </p>
                         <div className="hero-actions">
                             {isAdmin ? (
-                                <Link to="/admin">
+                                <Link to="/admin" onMouseEnter={prefetchDashboard}>
                                     <Button size="lg" className="hero-cta">
                                         Manage Dashboard <ChevronRight size={20} />
                                     </Button>
@@ -93,7 +106,7 @@ const Home = () => {
                             {isAdmin ? (
                                 <Link to="/admin" className="card-link">View Portal Tickets &rarr;</Link>
                             ) : isStudent ? (
-                                <Link to="/dashboard" className="card-link">View My Portal Issues &rarr;</Link>
+                                <Link to="/dashboard" className="card-link" onMouseEnter={prefetchDashboard}>View My Portal Issues &rarr;</Link>
                             ) : (
                                 <Link to="/submit-ticket?type=portal" className="card-link">Report Issue &rarr;</Link>
                             )}
@@ -106,7 +119,7 @@ const Home = () => {
                             {isAdmin ? (
                                 <Link to="/admin" className="card-link">View Fee Inquiries &rarr;</Link>
                             ) : isStudent ? (
-                                <Link to="/dashboard" className="card-link">Check My Fee Tickets &rarr;</Link>
+                                <Link to="/dashboard" className="card-link" onMouseEnter={prefetchDashboard}>Check My Fee Tickets &rarr;</Link>
                             ) : (
                                 <Link to="/submit-ticket?type=fees" className="card-link">Inquire Now &rarr;</Link>
                             )}
@@ -137,7 +150,7 @@ const Home = () => {
                             <p style={{ opacity: 0.9, marginTop: '0.5rem' }}>Check our frequently asked questions for immediate answers.</p>
                         </div>
                         {settings.showHeaderFAQ && (
-                            <Link to="/faq">
+                            <Link to="/faq" onMouseEnter={() => queryClient.prefetchQuery({ queryKey: ['faq'], queryFn: api.faq.list })}>
                                 <Button variant="secondary" size="lg" style={{ background: 'white', color: 'var(--primary)' }}>
                                     Visit FAQ Center
                                 </Button>

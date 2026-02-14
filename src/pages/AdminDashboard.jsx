@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Search, GraduationCap, CheckCircle, ExternalLink, LogOut, Sparkles, Eye, User, LayoutDashboard, Users, Shield, Terminal, Settings, Download, BarChart2, Trash2, BookOpen } from 'lucide-react';
 import { api, BASE_URL } from '../lib/api';
@@ -22,8 +23,25 @@ import KnowledgeBaseManager from '../components/KnowledgeBaseManager';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const [tickets, setTickets] = useState([]);
-    const [agents, setAgents] = useState([]);
+    const { user, profile, signOut, impersonateUser } = useAuth();
+    const queryClient = useQueryClient();
+
+    // Fetch tickets with React Query
+    const { data: tickets = [], refetch: refetchTickets } = useQuery({
+        queryKey: ['admin-tickets'],
+        queryFn: () => api.tickets.list(),
+        refetchInterval: 30000, // 30s polling
+        initialData: [],
+    });
+
+    // Fetch agents with React Query
+    const { data: agents = [], refetch: refetchAgents } = useQuery({
+        queryKey: ['admin-agents'],
+        queryFn: () => api.auth.getUsers('agent,super_admin'),
+        enabled: profile?.role === 'agent' || profile?.role === 'super_admin',
+        initialData: [],
+    });
+
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
@@ -40,38 +58,9 @@ const AdminDashboard = () => {
     const [analyzing, setAnalyzing] = useState(false);
     const [ticketMessages, setTicketMessages] = useState([]);
 
-    const { user, profile, signOut, impersonateUser } = useAuth();
     const { settings, updateSetting } = useSettings();
     const { showSuccess, showError, showInfo } = useToast();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        fetchTickets();
-        if (profile?.role === 'agent' || profile?.role === 'super_admin') {
-            fetchAgents();
-        }
-
-        // Check for tour
-        if (profile && profile.has_completed_tour === false) {
-            setShowTour(true);
-        }
-
-        // Realtime replacement: Polling for new tickets every 30 seconds
-        const pollInterval = setInterval(() => {
-            fetchTickets();
-        }, 30000);
-
-        // Request notification permission
-        requestNotificationPermission();
-
-        // Update time every second for SLA countdown
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-
-        return () => {
-            clearInterval(pollInterval);
-            clearInterval(timer);
-        };
-    }, [profile]);
 
     // Reset analysis when ticket changes
     useEffect(() => {
@@ -84,29 +73,28 @@ const AdminDashboard = () => {
         }
     }, [selectedTicket]);
 
-    const fetchTickets = async () => {
-        try {
-            const data = await api.tickets.list();
-            setTickets(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error('Error fetching tickets:', error);
+    useEffect(() => {
+        // Check for tour
+        if (profile && profile.has_completed_tour === false) {
+            setShowTour(true);
         }
-    };
 
-    const fetchAgents = async () => {
-        try {
-            const data = await api.auth.getUsers('agent,super_admin');
-            setAgents(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error('Error fetching agents:', error);
-        }
-    };
+        // Request notification permission
+        requestNotificationPermission();
+
+        // Update time every second for SLA countdown
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
+        return () => {
+            clearInterval(timer);
+        };
+    }, [profile]);
 
     const handleResolve = async (id) => {
         try {
             await api.tickets.update(id, { status: 'Resolved' });
             showSuccess('Ticket status updated to Resolved');
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
         } catch (error) {
             console.error('Error updating ticket:', error);
             showError('Failed to update ticket status');
@@ -121,7 +109,7 @@ const AdminDashboard = () => {
             if (selectedTicket?.id === id) {
                 setSelectedTicket(null);
             }
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
         } catch (error) {
             console.error('Error deleting ticket:', error);
             showError(`Failed to delete ticket: ${error.message || error.error || 'Server error'}`);
@@ -132,7 +120,7 @@ const AdminDashboard = () => {
         try {
             await api.tickets.update(ticketId, { assigned_to_email: agentEmail });
             showSuccess(`Ticket assigned to ${agentEmail}`);
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
         } catch (error) {
             console.error('Error assigning ticket:', error);
             showError('Failed to assign ticket');
@@ -143,7 +131,7 @@ const AdminDashboard = () => {
         try {
             await api.tickets.update(ticketId, { priority: newPriority });
             showSuccess(`Ticket priority updated to ${newPriority}`);
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
         } catch (error) {
             console.error('Error updating priority:', error);
             showError('Failed to update priority');
@@ -154,7 +142,7 @@ const AdminDashboard = () => {
         try {
             await api.auth.updateUser(agentId, { department });
             showSuccess(`Department updated to ${department}`);
-            fetchAgents();
+            queryClient.invalidateQueries(['admin-agents']);
         } catch (error) {
             console.error('Error updating department:', error);
             showError('Failed to update department');
@@ -214,7 +202,7 @@ const AdminDashboard = () => {
                 });
             }
             setSelectedTicketIds([]);
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
         } catch (err) {
             console.error('Bulk resolve error:', err);
         } finally {
@@ -230,7 +218,7 @@ const AdminDashboard = () => {
                 await api.tickets.update(id, { assigned_to_email: user.email });
             }
             setSelectedTicketIds([]);
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
         } catch (err) {
             console.error('Bulk assign error:', err);
         } finally {
@@ -251,12 +239,12 @@ const AdminDashboard = () => {
                 }
             }
             setSelectedTicketIds([]);
-            fetchTickets();
+            queryClient.invalidateQueries(['admin-tickets']);
             showSuccess('Selected tickets deleted successfully');
         } catch (err) {
             console.error('Bulk delete error:', err);
             showError(`Failed to delete tickets: ${err.message || 'Check your permissions.'}`);
-            fetchTickets(); // Refresh anyway to show what's left
+            queryClient.invalidateQueries(['admin-tickets']); // Refresh anyway to show what's left
         } finally {
             setIsBulkUpdating(false);
         }

@@ -49,8 +49,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['lucide-react', 'recharts']
+          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+          utils: ['lucide-react', 'recharts', 'bcryptjs', 'jsonwebtoken']
         }
       }
     }

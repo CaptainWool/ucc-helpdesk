@@ -5,6 +5,7 @@ import { Send, CheckCircle, AlertCircle, Sparkles, X, Lock, ShieldAlert, Users, 
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { findDeflectionAI } from '../lib/ai';
 import { useSettings } from '../contexts/SettingsContext';
 import { FAQS } from '../lib/constants';
@@ -19,6 +20,7 @@ const SubmitTicket = () => {
     const { user, profile } = useAuth();
     const { settings } = useSettings();
     const { showSuccess, showError } = useToast();
+    const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const initialType = searchParams.get('type') || 'portal';
@@ -118,6 +120,7 @@ const SubmitTicket = () => {
             }
 
             const data = await api.tickets.create(ticketData);
+            queryClient.invalidateQueries(['tickets', user?.id]);
 
             if (data) {
                 showSuccess('Ticket submitted successfully!', 5000);
