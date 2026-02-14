@@ -248,5 +248,42 @@ export const api = {
             });
             return handleResponse(res);
         }
+    },
+    faq: {
+        list: async () => {
+            const res = await fetch(`${API_URL}/faq`);
+            return handleResponse(res);
+        },
+        create: async (data) => {
+            const res = await fetch(`${API_URL}/faq`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            return handleResponse(res);
+        },
+        update: async (id, data) => {
+            const res = await fetch(`${API_URL}/faq/${id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+            return handleResponse(res);
+        },
+        delete: async (id) => {
+            const res = await fetch(`${API_URL}/faq/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            return handleResponse(res);
+        },
+        trackHelpful: async (id, helpful) => {
+            const res = await fetch(`${API_URL}/faq/${id}/helpful`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ helpful })
+            });
+            return handleResponse(res);
+        }
     }
 };

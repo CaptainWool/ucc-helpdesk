@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Search, GraduationCap, CheckCircle, ExternalLink, LogOut, Sparkles, Eye, User, LayoutDashboard, Users, Shield, Terminal, Settings, Download, BarChart2, Trash2, BookOpen } from 'lucide-react';
+import { Search, GraduationCap, CheckCircle, ExternalLink, LogOut, Sparkles, Eye, User, LayoutDashboard, Users, Shield, Terminal, Settings, Download, BarChart2, Trash2, BookOpen, HelpCircle } from 'lucide-react';
 import { api, BASE_URL } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -20,6 +20,7 @@ import { requestNotificationPermission, sendNotification } from '../lib/notifica
 import OnboardingTour from '../components/common/OnboardingTour';
 import CommandCenter from '../components/CommandCenter';
 import KnowledgeBaseManager from '../components/KnowledgeBaseManager';
+import FAQManager from '../components/admin/FAQManager';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -46,7 +47,7 @@ const AdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
-    const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'team'
+    const [activeTab, setActiveTab] = useState('tickets'); // 'tickets', 'team', 'faq'
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [selectedTicketIds, setSelectedTicketIds] = useState([]);
     const [isBulkUpdating, setIsBulkUpdating] = useState(false);
@@ -429,6 +430,13 @@ const AdminDashboard = () => {
                                 >
                                     <Settings size={18} /> <span>Settings</span>
                                 </Button>
+                                <Button
+                                    variant={activeTab === 'faq' ? "primary" : "ghost"}
+                                    onClick={() => setActiveTab('faq')}
+                                    className={activeTab === 'faq' ? 'nav-active' : ''}
+                                >
+                                    <HelpCircle size={18} /> <span>FAQ Manager</span>
+                                </Button>
                             </>
                         )}
                     </div>
@@ -473,6 +481,7 @@ const AdminDashboard = () => {
                     )}
                     {activeTab === 'compliance' && <ComplianceOverview tickets={tickets} />}
                     {activeTab === 'kb' && <KnowledgeBaseManager />}
+                    {activeTab === 'faq' && <FAQManager />}
                     {activeTab === 'settings' && <AdminSettings />}
 
                     {activeTab === 'tickets' && (
