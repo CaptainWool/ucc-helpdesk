@@ -16,6 +16,8 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(helmet({
     crossOriginResourcePolicy: false, // Allow cross-origin images (avatars/attachments)
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
 }));
 app.use(compression()); // Compress all responses
 app.use(cors());

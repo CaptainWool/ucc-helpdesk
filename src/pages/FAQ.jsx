@@ -112,12 +112,15 @@ const FAQ = () => {
                 <p>Instant solutions for your common campus inquiries.</p>
                 <div className="faq-search-wrapper">
                     <Search className="search-icon" size={20} />
+                    <label htmlFor="faq-search" className="sr-only" style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>Search FAQ</label>
                     <input
-                        type="text"
+                        id="faq-search"
+                        type="search"
                         placeholder="Search for answers (e.g. 'fees', 'portal')..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="faq-search-input"
+                        autoComplete="off"
                     />
                 </div>
             </div>

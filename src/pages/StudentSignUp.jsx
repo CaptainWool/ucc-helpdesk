@@ -154,24 +154,27 @@ const StudentSignUp = () => {
                             {avatarPreview ? (
                                 <img src={avatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
-                                <User size={50} style={{ color: '#94a3b8' }} />
+                                <User size={50} style={{ color: '#94a3b8' }} aria-label="Default avatar" />
                             )}
                         </div>
                         <input
                             id="avatar-input"
+                            name="avatar"
                             type="file"
                             accept="image/*"
                             onChange={handleAvatarChange}
                             style={{ display: 'none' }}
                         />
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => document.getElementById('avatar-input').click()}
-                        >
-                            Upload Profile Picture <span style={{ color: 'red' }}>*</span>
-                        </Button>
+                        <label htmlFor="avatar-input">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => document.getElementById('avatar-input').click()}
+                            >
+                                Upload Profile Picture <span style={{ color: 'red' }}>*</span>
+                            </Button>
+                        </label>
                     </div>
 
                     <Input
@@ -242,6 +245,7 @@ const StudentSignUp = () => {
                             value={formData.programme}
                             onChange={handleChange}
                             required
+                            autoComplete="organization-title"
                         />
                     </div>
 

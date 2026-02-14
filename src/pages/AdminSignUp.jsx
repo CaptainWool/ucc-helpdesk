@@ -211,6 +211,7 @@ const AdminSignUp = () => {
                             onChange={handleChange}
                             icon={<User size={18} />}
                             required
+                            autoComplete="name"
                         />
                         <Input
                             id="staffId"
@@ -221,13 +222,15 @@ const AdminSignUp = () => {
                             value={formData.staffId}
                             onChange={handleChange}
                             required
+                            autoComplete="off"
                         />
                     </div>
 
                     <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
                         <div className="input-group">
-                            <label className="input-label">System Role</label>
+                            <label className="input-label" htmlFor="role">System Role</label>
                             <select
+                                id="role"
                                 name="role"
                                 className="input-field"
                                 value={formData.role}
@@ -240,8 +243,9 @@ const AdminSignUp = () => {
                             </select>
                         </div>
                         <div className="input-group">
-                            <label className="input-label">Department</label>
+                            <label className="input-label" htmlFor="department">Department</label>
                             <select
+                                id="department"
                                 name="department"
                                 className="input-field"
                                 value={formData.department}
@@ -268,6 +272,7 @@ const AdminSignUp = () => {
                             value={formData.phoneNumber}
                             onChange={handleChange}
                             required
+                            autoComplete="tel"
                         />
                         <Input
                             id="contactEmail"
@@ -279,6 +284,7 @@ const AdminSignUp = () => {
                             onChange={handleChange}
                             icon={<Mail size={18} />}
                             required
+                            autoComplete="email"
                         />
                     </div>
 

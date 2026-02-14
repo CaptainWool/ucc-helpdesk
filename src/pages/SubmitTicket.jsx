@@ -279,6 +279,7 @@ const SubmitTicket = () => {
                                         className="input-field"
                                         value={formData.type}
                                         onChange={handleChange}
+                                        autoComplete="off"
                                     >
                                         <option value="portal">Portal / Login Issue</option>
                                         <option value="fees">Fees & Payments</option>
@@ -363,13 +364,14 @@ const SubmitTicket = () => {
                                 </div>
 
                                 <div className="input-group full-width">
-                                    <label className="input-label">Attachment (Optional)</label>
+                                    <label className="input-label" htmlFor="file">Attachment (Optional)</label>
 
                                     {!videoBlob ? (
                                         <div className="flex gap-2 items-center">
                                             <div className="flex-1">
                                                 <Input
                                                     id="file"
+                                                    name="attachment"
                                                     type="file"
                                                     onChange={handleFileChange}
                                                     accept="image/*,.pdf"

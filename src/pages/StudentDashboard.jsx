@@ -239,6 +239,7 @@ const StudentDashboard = () => {
                             <p className="student-id">Student ID: {displayUser?.student_id || displayUser?.studentId || 'N/A'}</p>
                             <p className="student-email">{displayUser?.email}</p>
                             <div style={{ marginTop: '0.5rem' }}>
+                                <label htmlFor="avatar-update-input" className="sr-only" style={{ display: 'none' }}>Update Profile Picture</label>
                                 <input
                                     type="file"
                                     id="avatar-update-input"
