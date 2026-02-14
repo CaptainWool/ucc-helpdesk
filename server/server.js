@@ -1134,10 +1134,8 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
         );
 
         // SMS Notification for new ticket
-        console.log(`Checking SMS trigger: enabled=${settings.sms_notifications_enabled}, phone=${phone_number}`);
         if (settings.sms_notifications_enabled && phone_number) {
             const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
-            console.log('Attempting to send new ticket SMS...');
             sendSMS(phone_number, smsMessage);
         }
 
