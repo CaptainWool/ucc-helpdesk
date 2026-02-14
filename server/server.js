@@ -355,11 +355,6 @@ const sendSMS = async (phoneNumber, message) => {
             return;
         }
 
-        // Clean API Key if it contains the secret manager prefix 'atsk_'
-        if (apiKey.startsWith('atsk_')) {
-            apiKey = apiKey.substring(5);
-        }
-
         // Clean phone number (Africa's Talking requires international format with +)
         let formattedNumber = phoneNumber.replace(/[^0-9]/g, '');
         if (formattedNumber.startsWith('0')) {
@@ -393,7 +388,7 @@ const sendSMS = async (phoneNumber, message) => {
             if (recipient.status === 'Success' || recipient.status === 'Sent') {
                 console.log(`✅ SMS Sent successfully to ${formattedNumber} (${username} mode).`);
             } else {
-                console.error(`❌ Africa's Talking Error (${formattedNumber}):`, recipient.status);
+                console.error(`❌ Africa's Talking Error (${formattedNumber}): Status=${recipient.status}, Raw Response:`, JSON.stringify(data, null, 2));
             }
         } else {
             console.error('❌ Africa\'s Talking unexpected response:', data);
@@ -1139,8 +1134,10 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
         );
 
         // SMS Notification for new ticket
+        console.log(`Checking SMS trigger: enabled=${settings.sms_notifications_enabled}, phone=${phone_number}`);
         if (settings.sms_notifications_enabled && phone_number) {
             const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
+            console.log('Attempting to send new ticket SMS...');
             sendSMS(phone_number, smsMessage);
         }
 
