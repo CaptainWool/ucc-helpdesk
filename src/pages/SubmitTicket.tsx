@@ -2,7 +2,6 @@ import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Send,
-    AlertCircle,
     Paperclip,
     X,
     FileText,
@@ -18,7 +17,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useCreateTicket } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { findDeflectionAI, DeflectionResult } from '../lib/ai';
+import { findDeflectionAI, type DeflectionResult } from '../lib/ai';
 import { api } from '../lib/api';
 import { FAQ } from '../types';
 import './SubmitTicket.css';
@@ -56,7 +55,9 @@ const SubmitTicket: React.FC = () => {
         const fetchFaqs = async () => {
             try {
                 const data = await api.faq.list();
-                setFaqs(data);
+                if (Array.isArray(data)) {
+                    setFaqs(data);
+                }
             } catch (err) {
                 console.error('Failed to fetch FAQs:', err);
             }
@@ -65,8 +66,13 @@ const SubmitTicket: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (!formData.subject || formData.subject.length <= 5) {
+            setSuggestion(null);
+            return;
+        }
+
         const timeoutId = setTimeout(async () => {
-            if (formData.subject.length > 5 && faqs.length > 0) {
+            if (faqs.length > 0) {
                 setIsSearchingSuggestions(true);
                 try {
                     const result = await findDeflectionAI(formData.subject, faqs);
@@ -76,8 +82,6 @@ const SubmitTicket: React.FC = () => {
                 } finally {
                     setIsSearchingSuggestions(false);
                 }
-            } else {
-                setSuggestion(null);
             }
         }, 600);
 
@@ -85,6 +89,17 @@ const SubmitTicket: React.FC = () => {
     }, [formData.subject, faqs]);
 
     const displayUser = profile || user;
+
+    // IF USER IS NOT LOGGED IN OR NO PROFILE, SHOW ERROR INSTEAD OF BLANK
+    if (!displayUser) {
+        return (
+            <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
+                <h2>Authentication Error</h2>
+                <p>Please log in to submit a ticket.</p>
+                <Button onClick={() => navigate('/login')}>Go to Login</Button>
+            </div>
+        );
+    }
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -143,9 +158,9 @@ const SubmitTicket: React.FC = () => {
 
         try {
             const ticketData = new FormData();
-            ticketData.append('student_id', displayUser?.student_id || displayUser?.id || '');
-            ticketData.append('full_name', displayUser?.full_name || '');
-            ticketData.append('email', displayUser?.email || '');
+            ticketData.append('student_id', displayUser.student_id || displayUser.id || '');
+            ticketData.append('full_name', displayUser.full_name || '');
+            ticketData.append('email', displayUser.email || '');
             ticketData.append('subject', formData.subject);
             ticketData.append('type', formData.type);
             ticketData.append('priority', formData.priority);
@@ -214,10 +229,10 @@ const SubmitTicket: React.FC = () => {
                                         <div className="suggestion-footer">
                                             <p>Does this resolve your issue?</p>
                                             <div className="suggestion-actions">
-                                                <Button size="sm" variant="outline" onClick={() => navigate('/faq')}>
+                                                <Button type="button" size="sm" variant="outline" onClick={() => navigate('/faq')}>
                                                     View Full FAQ
                                                 </Button>
-                                                <Button size="sm" onClick={() => setSuggestion(null)}>
+                                                <Button type="button" size="sm" onClick={() => setSuggestion(null)}>
                                                     Still need help
                                                 </Button>
                                             </div>
@@ -226,7 +241,7 @@ const SubmitTicket: React.FC = () => {
                                 )}
 
                                 <div className="form-row">
-                                    <div className="form-group half">
+                                    <div className="form-group">
                                         <label htmlFor="type">Category</label>
                                         <select
                                             id="type"
@@ -240,7 +255,7 @@ const SubmitTicket: React.FC = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="form-group half">
+                                    <div className="form-group">
                                         <label htmlFor="priority">Urgency Level</label>
                                         <select
                                             id="priority"
@@ -348,9 +363,9 @@ const SubmitTicket: React.FC = () => {
                     </Card>
 
                     <Card className="info-card">
-                        <h3><AlertCircle size={18} /> Response Time</h3>
+                        <h3><Info size={18} /> Response Time</h3>
                         <p>Most tickets are addressed within <strong>24-48 hours</strong>.</p>
-                        <p>Urgent issues are prioritized and usually handled within 4 hours during business days.</p>
+                        <p>Urgent issues are handled within 4 hours during business days.</p>
                     </Card>
                 </aside>
             </div>
