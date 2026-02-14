@@ -8,7 +8,6 @@ import { useToast } from '../contexts/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { findDeflectionAI } from '../lib/ai';
 import { useSettings } from '../contexts/SettingsContext';
-import { FAQS } from '../lib/constants';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
@@ -58,6 +57,21 @@ const SubmitTicket = () => {
     const [showRecorder, setShowRecorder] = useState(false);
     const [videoBlob, setVideoBlob] = useState(null);
     const [systemSettings, setSystemSettings] = useState({ submissions_locked: false, maintenance_mode: false });
+    const [faqs, setFaqs] = useState([]);
+
+    // Fetch FAQs from API
+    useEffect(() => {
+        const fetchFAQs = async () => {
+            try {
+                const faqData = await api.faq.list();
+                setFaqs(faqData || []);
+            } catch (err) {
+                console.error('Failed to fetch FAQs:', err);
+                setFaqs([]);
+            }
+        };
+        fetchFAQs();
+    }, []);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -73,9 +87,9 @@ const SubmitTicket = () => {
 
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (formData.subject.trim().length > 10) {
+            if (formData.subject.trim().length > 10 && faqs.length > 0) {
                 setIsSearchingHelp(true);
-                const match = await findDeflectionAI(formData.subject, FAQS);
+                const match = await findDeflectionAI(formData.subject, faqs);
                 setSuggestedHelp(match);
                 setIsSearchingHelp(false);
             } else {
@@ -84,7 +98,7 @@ const SubmitTicket = () => {
         }, 1500); // 1.5s debounce
 
         return () => clearTimeout(timer);
-    }, [formData.subject]);
+    }, [formData.subject, faqs]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
