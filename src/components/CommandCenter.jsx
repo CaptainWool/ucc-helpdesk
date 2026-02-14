@@ -9,7 +9,7 @@ import Input from './common/Input';
 import './CommandCenter.css';
 
 const CommandCenter = () => {
-    const { showSuccess, showError, showWarning } = useToast();
+    const { showSuccess, showError, showWarning, showInfo } = useToast();
     const [settings, setSettings] = useState({
         submissions_locked: false,
         maintenance_mode: false,
