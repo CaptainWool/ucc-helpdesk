@@ -78,6 +78,18 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- FAQs Table
+CREATE TABLE IF NOT EXISTS faqs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    category TEXT NOT NULL,
+    helpful_count INTEGER DEFAULT 0,
+    unhelpful_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Seed Initial Settings
 INSERT INTO system_settings (key, value) VALUES 
 ('maintenance_mode', 'false'),

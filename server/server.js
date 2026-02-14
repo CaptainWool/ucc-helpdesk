@@ -270,6 +270,20 @@ const initDb = async () => {
     )
     `);
 
+        // Create FAQs Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS faqs(
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        category TEXT NOT NULL,
+        helpful_count INTEGER DEFAULT 0,
+        unhelpful_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+    `);
+
         // Create Audit Logs Table
         await client.query(`
             CREATE TABLE IF NOT EXISTS audit_logs(
@@ -324,6 +338,19 @@ const initDb = async () => {
             await client.query(
                 'INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
                 [key, JSON.stringify(val)]
+            );
+        }
+
+        // Seed Initial FAQs
+        const faqsToSeed = [
+            { category: 'Student Portal & Registration', question: 'I cannot log in to my portal. What should I do?', answer: 'First, ensure you are using your correct Student ID and password. If you have forgotten your password, use the "Forgot Password" link on the portal login page. If the issue persists, submit a ticket here with "Portal / Login Issue" as the type.' },
+            { category: 'Student Portal & Registration', question: 'How do I register my courses for the semester?', answer: 'Log in to your portal, navigate to "Course Registration," select the appropriate semester, and follow the prompts. Ensure you click "Submit" at the end to confirm your registration.' }
+        ];
+
+        for (const faq of faqsToSeed) {
+            await client.query(
+                'INSERT INTO faqs (category, question, answer) SELECT $1, $2, $3 WHERE NOT EXISTS (SELECT 1 FROM faqs WHERE question = $2)',
+                [faq.category, faq.question, faq.answer]
             );
         }
 
@@ -1309,6 +1336,72 @@ app.post('/api/tickets/:id/messages', async (req, res) => {
     }
 });
 
+
+// 4. FAQ Routes
+app.get('/api/faq', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM faqs ORDER BY category ASC, created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('FAQ fetch error:', err);
+        res.status(500).json({ error: 'Failed to fetch FAQs' });
+    }
+});
+
+app.post('/api/faq', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'super_admin') return res.status(403).json({ error: 'Unauthorized' });
+    const { question, answer, category } = req.body;
+    try {
+        const result = await pool.query(
+            'INSERT INTO faqs (question, answer, category) VALUES ($1, $2, $3) RETURNING *',
+            [question, answer, category]
+        );
+        await logAudit(req.user.id, 'create_faq', 'faqs', result.rows[0].id, { question });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create FAQ' });
+    }
+});
+
+app.put('/api/faq/:id', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'super_admin') return res.status(403).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const { question, answer, category } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE faqs SET question = $1, answer = $2, category = $3, updated_at = NOW() WHERE id = $4 RETURNING *',
+            [question, answer, category, id]
+        );
+        await logAudit(req.user.id, 'update_faq', 'faqs', id, { question });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update FAQ' });
+    }
+});
+
+app.delete('/api/faq/:id', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'super_admin') return res.status(403).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM faqs WHERE id = $1', [id]);
+        await logAudit(req.user.id, 'delete_faq', 'faqs', id, {});
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete FAQ' });
+    }
+});
+
+app.post('/api/faq/:id/helpful', async (req, res) => {
+    const { id } = req.params;
+    const { helpful } = req.body;
+    try {
+        const column = helpful ? 'helpful_count' : 'unhelpful_count';
+        await pool.query(`UPDATE faqs SET ${column} = ${column} + 1 WHERE id = $1`, [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to track helpfulness' });
+    }
+});
 
 // 3. Public Routes
 app.get('/api/public/settings', async (req, res) => {
