@@ -523,7 +523,7 @@ const AdminDashboard = () => {
                                 <table className="tickets-table">
                                     <thead>
                                         <tr>
-                                            <th><input type="checkbox" checked={selectedTicketIds.length > 0 && selectedTicketIds.length === filteredTickets.length} onChange={toggleSelectAll} /></th>
+                                            <th><input type="checkbox" id="select-all-tickets" name="select-all-tickets" aria-label="Select all tickets" checked={selectedTicketIds.length > 0 && selectedTicketIds.length === filteredTickets.length} onChange={toggleSelectAll} /></th>
                                             <th>Subject</th>
                                             <th>Student</th>
                                             <th>SLA / Created</th>
@@ -541,7 +541,7 @@ const AdminDashboard = () => {
                                                 const color = sla.class;
                                                 return (
                                                     <tr key={ticket.id} className={selectedTicketIds.includes(ticket.id) ? 'row-selected' : ''}>
-                                                        <td><input type="checkbox" checked={selectedTicketIds.includes(ticket.id)} onChange={() => toggleSelectTicket(ticket.id)} /></td>
+                                                        <td><input type="checkbox" id={`select-ticket-${ticket.id}`} name={`select-ticket-${ticket.id}`} aria-label={`Select ticket ${ticket.subject}`} checked={selectedTicketIds.includes(ticket.id)} onChange={() => toggleSelectTicket(ticket.id)} /></td>
                                                         <td>
                                                             <div className="subject-cell" onClick={() => setSelectedTicket(ticket)}>
                                                                 <span className="ticket-subject">{ticket.subject}</span>

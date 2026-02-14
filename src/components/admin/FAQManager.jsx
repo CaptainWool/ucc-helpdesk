@@ -170,7 +170,10 @@ const FAQManager = () => {
 
             <div className="faq-search-bar">
                 <Search size={20} />
+                <label htmlFor="faq-search" className="visually-hidden">Search FAQs</label>
                 <input
+                    id="faq-search"
+                    name="faq-search"
                     type="search"
                     placeholder="Search FAQs by question, answer, or category..."
                     value={searchTerm}
