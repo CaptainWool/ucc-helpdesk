@@ -30,12 +30,15 @@ if (process.env.SENDGRID_API_KEY) {
     console.warn('⚠️ SENDGRID_API_KEY is not defined in environment variables. Email sending will fail.');
 }
 
-// Email sending utility
 const sendResetEmail = async (email, token, fullName) => {
     try {
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL;
         const msg = {
             to: email,
-            from: process.env.SENDGRID_FROM_EMAIL || 'carefreechelsea5@gmail.com', // Verified sender email
+            from: {
+                email: fromEmail,
+                name: 'UCC CoDE Helpdesk'
+            },
             subject: 'Password Reset Verification Code',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
@@ -58,15 +61,109 @@ const sendResetEmail = async (email, token, fullName) => {
             `
         };
         await sgMail.send(msg);
-        console.log('✅ Password reset email sent via SendGrid');
+        console.log(`✅ Reset email sent to ${email}`);
     } catch (err) {
-        console.error('❌ Failed to send email via SendGrid:', err);
-        if (err.response) {
-            console.error(err.response.body);
-        }
-        throw err;
+        console.error('❌ SendGrid Error (Reset):', err.message);
     }
 };
+
+
+const sendTicketConfirmationEmail = async (email, ticket) => {
+    try {
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+        const appUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const msg = {
+            to: email,
+            from: {
+                email: fromEmail,
+                name: 'UCC CoDE Helpdesk'
+            },
+            subject: `Ticket Received: ${ticket.subject} [#${ticket.id.substring(0, 8)}]`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #1e40af; padding: 20px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">Support Request Received</h1>
+                    </div>
+                    <div style="padding: 30px; line-height: 1.6; color: #334155;">
+                        <p>Hello <strong>${ticket.full_name}</strong>,</p>
+                        <p>Your support ticket has been successfully submitted and received by the UCC CoDE Helpdesk team.</p>
+                        
+                        <div style="background-color: #f8fafc; padding: 20px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                            <p style="margin: 0; color: #1e40af; font-weight: bold;">Ticket Details:</p>
+                            <p style="margin: 10px 0 5px 0;"><strong>Ticket ID:</strong> #${ticket.id.substring(0, 8)}</p>
+                            <p style="margin: 5px 0;"><strong>Subject:</strong> ${ticket.subject}</p>
+                            <p style="margin: 5px 0;"><strong>Priority:</strong> ${ticket.priority}</p>
+                            <p style="margin: 5px 0;"><strong>Estimated Resolution:</strong> 24 hour response window</p>
+                        </div>
+
+                        <p>Our support team will review your request and get back to you soon. You can track your ticket status anytime using the portal.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${appUrl}/track-ticket" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Track My Ticket</a>
+                        </div>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+                        &copy; ${new Date().getFullYear()} University of Cape Coast (CoDE) Helpdesk.<br>
+                        This is an automated message, please do not reply.
+                    </div>
+                </div>
+            `
+        };
+        await sgMail.send(msg);
+        console.log(`✅ Confirmation email sent to ${email}`);
+    } catch (err) {
+        console.error('❌ SendGrid Error (Confirmation):', err.message);
+    }
+};
+
+const sendTicketResolutionEmail = async (email, ticket) => {
+    try {
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+        const appUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const msg = {
+            to: email,
+            from: {
+                email: fromEmail,
+                name: 'UCC CoDE Helpdesk'
+            },
+            subject: `Ticket RESOLVED: ${ticket.subject} [#${ticket.id.substring(0, 8)}]`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #10b981; padding: 20px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">Support Request Resolved</h1>
+                    </div>
+                    <div style="padding: 30px; line-height: 1.6; color: #334155;">
+                        <p>Hello <strong>${ticket.full_name}</strong>,</p>
+                        <p>Great news! Your support ticket has been marked as <strong>RESOLVED</strong> by our team.</p>
+                        
+                        <div style="background-color: #f0fdf4; padding: 20px; border-radius: 6px; margin: 20px 0; border: 1px solid #bbf7d0;">
+                            <p style="margin: 0; color: #15803d; font-weight: bold;">Ticket Summary:</p>
+                            <p style="margin: 10px 0 5px 0;"><strong>Ticket ID:</strong> #${ticket.id.substring(0, 8)}</p>
+                            <p style="margin: 5px 0;"><strong>Subject:</strong> ${ticket.subject}</p>
+                            <p style="margin: 5px 0;"><strong>Status:</strong> Resolved</p>
+                        </div>
+
+                        <p>Please log in to the portal to view the solution and provide your feedback. If you feel the issue hasn't been fully resolved, you can reopen it by replying to the thread.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${appUrl}/track-ticket" style="background-color: #10b981; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Resolution</a>
+                        </div>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+                        &copy; ${new Date().getFullYear()} University of Cape Coast (CoDE) Helpdesk.<br>
+                        Thank you for using our student support services!
+                    </div>
+                </div>
+            `
+        };
+        await sgMail.send(msg);
+        console.log(`✅ Resolution email sent to ${email}`);
+    } catch (err) {
+        console.error('❌ SendGrid Error (Resolution):', err.message);
+    }
+};
+
+
 
 
 // --- Auto-Initialize Database Schema ---
@@ -246,41 +343,69 @@ const initDb = async () => {
     }
 };
 
-// SMS Utility (Arkesel V2)
+// SMS Utility (Africa's Talking)
 const sendSMS = async (phoneNumber, message) => {
     try {
-        const apiKey = process.env.ARKESEL_API_KEY;
-        const senderId = process.env.ARKESEL_SENDER_ID || 'UCCHelpdesk';
+        const username = process.env.AT_USERNAME || 'sandbox';
+        let apiKey = process.env.AT_API_KEY;
+        const senderId = process.env.AT_SENDER_ID; // Optional
 
         if (!apiKey) {
-            console.warn('⚠️ Arkesel API Key missing. Skipping SMS.');
+            console.warn('⚠️ Africa\'s Talking API Key missing. Skipping SMS.');
             return;
         }
 
-        // Clean phone number (Arkesel prefers 233 format)
-        let formattedNumber = phoneNumber.replace(/[^0-9]/g, '');
-        if (formattedNumber.startsWith('0')) {
-            formattedNumber = '233' + formattedNumber.substring(1);
+        // Clean API Key if it contains the secret manager prefix 'atsk_'
+        if (apiKey.startsWith('atsk_')) {
+            apiKey = apiKey.substring(5);
         }
 
-        const response = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
+        // Clean phone number (Africa's Talking requires international format with +)
+        let formattedNumber = phoneNumber.replace(/[^0-9]/g, '');
+        if (formattedNumber.startsWith('0')) {
+            formattedNumber = '+233' + formattedNumber.substring(1);
+        } else if (!formattedNumber.startsWith('+')) {
+            formattedNumber = '+' + formattedNumber;
+        }
+
+        const params = new URLSearchParams();
+        params.append('username', username);
+        params.append('to', formattedNumber);
+        params.append('message', message);
+        if (senderId) params.append('from', senderId);
+
+        const apiHost = username === 'sandbox' ? 'api.sandbox.africastalking.com' : 'api.africastalking.com';
+
+        const response = await fetch(`https://${apiHost}/version1/messaging`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'api-key': apiKey
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'apiKey': apiKey
             },
-            body: JSON.stringify({
-                sender: senderId,
-                recipients: [formattedNumber],
-                message: message
-            })
+            body: params
         });
 
         const data = await response.json();
-        console.log(`📱 SMS Status to ${formattedNumber}: `, data.status || data.message || 'Sent');
+
+        if (data.SMSMessageData && data.SMSMessageData.Recipients) {
+            const recipient = data.SMSMessageData.Recipients[0];
+            if (recipient.status === 'Success' || recipient.status === 'Sent') {
+                console.log(`✅ SMS Sent successfully to ${formattedNumber} (${username} mode).`);
+            } else {
+                console.error(`❌ Africa's Talking Error (${formattedNumber}):`, recipient.status);
+            }
+        } else {
+            console.error('❌ Africa\'s Talking unexpected response:', data);
+        }
+
+        if (username === 'sandbox') {
+            console.log('ℹ️ Sandbox Mode: View your message at https://simulator.africastalking.com/');
+        }
+
         return data;
     } catch (err) {
-        console.error('❌ SMS Sending failed:', err.message);
+        console.error('❌ SMS Utility Critical Failure:', err.message);
     }
 };
 
@@ -661,6 +786,16 @@ app.get('/api/system/diagnose-email', async (req, res) => {
             report.sendgrid.status = 'invalid_key_format';
         }
 
+        // --- NEW: Check SMS Configuration ---
+        report.sms = {
+            provider: 'Africa\'s Talking',
+            username_configured: !!process.env.AT_USERNAME,
+            api_key_configured: !!process.env.AT_API_KEY,
+            sender_id_configured: !!process.env.AT_SENDER_ID,
+            current_username: process.env.AT_USERNAME || 'sandbox (Default)',
+            current_sender_id: process.env.AT_SENDER_ID || 'None'
+        };
+
         res.json(report);
     } catch (err) {
         res.status(500).json({ error: err.message, report });
@@ -1005,9 +1140,12 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
 
         // SMS Notification for new ticket
         if (settings.sms_notifications_enabled && phone_number) {
-            const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket(#${result.rows[0].id.substring(0, 8)}) has been received.Subject: ${subject}. We'll resolve it soon!`;
+            const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
             sendSMS(phone_number, smsMessage);
         }
+
+        // Email Notification for new ticket
+        sendTicketConfirmationEmail(email, result.rows[0]);
 
         res.json(result.rows[0]);
     } catch (err) {
@@ -1077,6 +1215,11 @@ app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
         if (settings.sms_notifications_enabled && updates.status === 'Resolved' && updatedTicket.phone_number) {
             const smsMessage = `Great news ${updatedTicket.full_name}! Your ticket "${updatedTicket.subject}" has been RESOLVED. Please log in to check the solution.`;
             sendSMS(updatedTicket.phone_number, smsMessage);
+        }
+
+        // Email Notification for resolution
+        if (updates.status === 'Resolved') {
+            sendTicketResolutionEmail(updatedTicket.email, updatedTicket);
         }
 
         res.json(updatedTicket);

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Send, CheckCircle, AlertCircle, Sparkles, X, Lock, ShieldAlert, Users, Video, Trash2 } from 'lucide-react';
 import { api } from '../lib/api';
-import { sendTicketEmail } from '../lib/email';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { findDeflectionAI } from '../lib/ai';
@@ -121,7 +120,6 @@ const SubmitTicket = () => {
             const data = await api.tickets.create(ticketData);
 
             if (data) {
-                sendTicketEmail({ ...data, ...formData }).catch(console.error);
                 showSuccess('Ticket submitted successfully!', 5000);
             }
 
