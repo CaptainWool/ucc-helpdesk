@@ -30,6 +30,7 @@ import AccessibilityChecker from '../components/common/AccessibilityChecker';
 import ComplianceOverview from '../components/ComplianceOverview';
 import AdminSettings from '../components/AdminSettings';
 import { requestNotificationPermission } from '../lib/notifications';
+import Card from '../components/common/Card';
 import OnboardingTour from '../components/common/OnboardingTour';
 import CommandCenter from '../components/CommandCenter';
 import KnowledgeBaseManager from '../components/KnowledgeBaseManager';

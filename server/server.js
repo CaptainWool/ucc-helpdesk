@@ -1073,12 +1073,13 @@ app.get('/api/tickets', authenticateToken, async (req, res) => {
         // Role-based ticket visibility
         if (req.user.role === 'student') {
             // Students see only their own tickets
-            // Use explicit casting to handle UUID vs STRING comparisons
-            query = 'SELECT * FROM tickets WHERE user_id::text = $1 OR email = (SELECT email FROM users WHERE id::text = $1) ORDER BY created_at DESC';
+            // Use explicit casting and case-insensitive email matching for reliability
+            query = 'SELECT * FROM tickets WHERE user_id::text = $1 OR LOWER(email) = (SELECT LOWER(email) FROM users WHERE id::text = $1) ORDER BY created_at DESC';
             params = [req.user.id];
         } else if (req.user.role === 'agent') {
-            // Agents (Coordinators) see only tickets assigned to them
-            query = 'SELECT * FROM tickets WHERE assigned_to_email = (SELECT email FROM users WHERE id::text = $1) ORDER BY created_at DESC';
+            // Agents (Coordinators) see tickets assigned to them OR completely unassigned tickets
+            // We use subquery to get the agent's email for comparison
+            query = 'SELECT * FROM tickets WHERE LOWER(assigned_to_email) = (SELECT LOWER(email) FROM users WHERE id::text = $1) OR assigned_to_email IS NULL OR assigned_to_email = \'\' ORDER BY created_at DESC';
             params = [req.user.id];
         }
         // Super Admins see all tickets (no filter needed)
