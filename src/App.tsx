@@ -22,6 +22,7 @@ const FAQ = lazy(() => import('./pages/FAQ'));
 const Forbidden = lazy(() => import('./pages/Forbidden'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const Home = lazy(() => import('./pages/Home'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -66,6 +67,7 @@ const App: React.FC = () => {
                                         <Suspense fallback={<Loader fullPage />}>
                                             <Routes>
                                                 {/* Public Routes */}
+                                                <Route path="/" element={<Home />} />
                                                 <Route path="/login" element={<StudentLogin />} />
                                                 <Route path="/admin/login" element={<AdminLogin />} />
                                                 <Route path="/faq" element={<FAQ />} />
@@ -97,7 +99,6 @@ const App: React.FC = () => {
 
                                                 {/* Utilities */}
                                                 <Route path="/forbidden" element={<Forbidden />} />
-                                                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                                                 <Route path="*" element={<NotFound />} />
                                             </Routes>
                                         </Suspense>

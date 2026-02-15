@@ -28,19 +28,10 @@
 
 .text-highlight {
     background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 100%);
-
     background-clip: text;
-    /* Standard */
     -webkit-background-clip: text;
-    background-clip: text;
-    /* WebKit */
-
     color: transparent;
-    /* Standard way */
     -webkit-text-fill-color: transparent;
-    /* Safari fallback */
-
-
 }
 
 .hero-subtitle {
@@ -176,7 +167,6 @@
     margin-bottom: 0.5rem;
 }
 
-/* Default (Light Mode) */
 .status-resolved {
     background-color: hsl(145, 80%, 95%);
     color: hsl(145, 70%, 35%);
@@ -255,7 +245,6 @@
     color: var(--primary);
 }
 
-/* Default (Light Mode) */
 .icon-green {
     background-color: hsl(145, 80%, 95%);
     color: hsl(145, 70%, 40%);
@@ -266,7 +255,6 @@
     color: hsl(145, 70%, 70%);
 }
 
-/* Default (Light Mode) */
 .icon-purple {
     background-color: hsl(280, 80%, 95%);
     color: hsl(280, 70%, 40%);
@@ -423,6 +411,5 @@
 
     .card-2 {
         display: none;
-        /* Hide second card on very small screens to reduce clutter */
     }
 }
