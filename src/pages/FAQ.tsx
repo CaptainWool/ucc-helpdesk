@@ -8,7 +8,10 @@ import {
     MessageCircle,
     PlusCircle,
     ChevronLeft,
-    ExternalLink
+    ExternalLink,
+    Eye,
+    ThumbsUp,
+    ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Card from '../components/common/Card';
@@ -83,21 +86,33 @@ const FAQ: React.FC = () => {
                 <div className="faq-list">
                     {filteredFaqs.length > 0 ? (
                         filteredFaqs.map((faq, index) => (
-                            <Card key={index} className={`faq-item ${openIndex === index ? 'open' : ''}`}>
-                                <div className="faq-question" onClick={() => toggleFaq(index)}>
-                                    <div className="category-pill">{faq.category}</div>
-                                    <h3>{faq.question}</h3>
-                                    {openIndex === index ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </div>
-                                {openIndex === index && (
-                                    <div className="faq-answer">
-                                        <p>{faq.answer}</p>
+                            <Card
+                                key={index}
+                                className={`faq-card-modern ${openIndex === index ? 'expanded' : ''}`}
+                                onClick={() => toggleFaq(index)}
+                            >
+                                <div className="faq-card-content">
+                                    <div className="faq-meta">
+                                        <span className="category-pill">{faq.category}</span>
                                     </div>
-                                )}
+                                    <h3>{faq.question}</h3>
+                                    <div className="faq-answer-preview">
+                                        {faq.answer}
+                                    </div>
+                                </div>
+                                <div className="faq-footer">
+                                    <div className="faq-stats">
+                                        <span><Eye size={14} /> {Math.floor(Math.random() * 500) + 100}</span>
+                                        <span><ThumbsUp size={14} /> {Math.floor(Math.random() * 50) + 90}%</span>
+                                    </div>
+                                    <div className="expand-icon">
+                                        Read <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                                    </div>
+                                </div>
                             </Card>
                         ))
                     ) : (
-                        <Card className="empty-faq">
+                        <Card className="empty-faq" style={{ gridColumn: '1 / -1' }}>
                             <Search size={48} />
                             <p>No answers found for "<strong>{searchQuery}</strong>"</p>
                             <Button variant="outline" onClick={() => setSearchQuery('')}>Clear Search</Button>
