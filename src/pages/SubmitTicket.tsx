@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, ChangeEvent } from 'react';
+import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Send,
@@ -11,16 +11,18 @@ import {
     Info,
     ChevronLeft,
     Mic,
-    Video
+    Video,
+    Lightbulb
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { useCreateTicket } from '../hooks/useTickets';
+import { useCreateTicket, useFAQs } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import VoiceRecorder from '../components/common/VoiceRecorder';
 import VideoRecorder from '../components/common/VideoRecorder';
+import { findDeflectionAI, DeflectionResult } from '../lib/ai';
 import './SubmitTicket.css';
 
 const SubmitTicket: React.FC = () => {
@@ -28,6 +30,7 @@ const SubmitTicket: React.FC = () => {
     const { profile, user } = useAuth();
     const { showSuccess, showError } = useToast();
     const { mutateAsync: createTicket, isPending: submitting } = useCreateTicket();
+    const { data: faqs = [] } = useFAQs();
 
     const [formData, setFormData] = useState({
         subject: '',
@@ -38,10 +41,16 @@ const SubmitTicket: React.FC = () => {
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [dragActive, setDragActive] = useState(false);
+
+    // Feature: Voice/Video Recorders
     const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
     const [showVideoRecorder, setShowVideoRecorder] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+
+    // Feature: AI Deflection
+    const [suggestion, setSuggestion] = useState<DeflectionResult | null>(null);
+    const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
 
     const categories = [
         'Portal Access',
@@ -59,6 +68,31 @@ const SubmitTicket: React.FC = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
+    // AI Deflection Logic
+    useEffect(() => {
+        if (!formData.subject || formData.subject.length <= 5) {
+            setSuggestion(null);
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            if (faqs.length > 0) {
+                setIsSearchingSuggestions(true);
+                try {
+                    const result = await findDeflectionAI(formData.subject, faqs);
+                    setSuggestion(result);
+                } catch (err) {
+                    console.error('Failed to find deflection:', err);
+                } finally {
+                    setIsSearchingSuggestions(false);
+                }
+            }
+        }, 600); // 600ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [formData.subject, faqs]);
+
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -171,6 +205,55 @@ const SubmitTicket: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="form-section">
                                 <h3 className="section-title"><Info size={18} /> Basic Information</h3>
+
+                                {/* AI Deflection Box */}
+                                {isSearchingSuggestions && (
+                                    <div className="deflection-box searching-help">
+                                        <div className="pulse-dot"></div> Analyzing your issue...
+                                    </div>
+                                )}
+
+                                {suggestion && !isSearchingSuggestions && (
+                                    <div className="deflection-box">
+                                        <div className="ai-deflection-card">
+                                            <div className="card-body" style={{ padding: '1.5rem' }}>
+                                                <div className="deflection-header">
+                                                    <div className="ai-badge">
+                                                        <Lightbulb size={14} /> Instant AI Solution
+                                                    </div>
+                                                    <button type="button" className="close-deflection" onClick={() => setSuggestion(null)}>
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="suggestion-content">
+                                                    <h4>{suggestion.faq.question}</h4>
+                                                    <p>{suggestion.faq.answer}</p>
+                                                </div>
+                                                <div className="suggestion-footer">
+                                                    <span>Was this helpful?</span>
+                                                    <div className="suggestion-actions">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => navigate('/faq')}
+                                                            type="button"
+                                                        >
+                                                            View Full FAQ
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => setSuggestion(null)}
+                                                            type="button"
+                                                        >
+                                                            Still need help
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="form-group">
                                     <label htmlFor="subject">Subject *</label>
                                     <input
@@ -331,6 +414,11 @@ const SubmitTicket: React.FC = () => {
                             <li>Upload screenshots of errors for faster resolution.</li>
                             <li>A clear subject line helps agents prioritize your request.</li>
                         </ul>
+                    </Card>
+
+                    <Card className="info-card suggestion-highlight">
+                        <h3><Lightbulb size={18} /> Did you know?</h3>
+                        <p>Our AI analyzes your subject in real-time to suggest instant fixes from our FAQ database.</p>
                     </Card>
 
                     <Card className="info-card">

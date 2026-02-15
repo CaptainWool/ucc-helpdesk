@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
-import { Ticket, User } from '../types';
+import { Ticket, User, FAQ } from '../types';
 
 interface UseTicketsOptions extends Partial<UseQueryOptions<Ticket[]>> {
     user?: User | null;
@@ -127,5 +127,13 @@ export const useAddTicketMessage = () => {
             console.error('Add message failed:', error);
             showError(error.message || 'Failed to send message');
         }
+    });
+};
+
+export const useFAQs = () => {
+    return useQuery({
+        queryKey: ['faqs'],
+        queryFn: () => api.faq.list(),
+        staleTime: 1000 * 60 * 5, // 5 minutes
     });
 };
