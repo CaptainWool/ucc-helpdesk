@@ -136,6 +136,11 @@ export const api = {
             const data = await handleResponse(res);
             return validate(TicketSchema, data, 'tickets.get');
         },
+        getPublic: async (id: string, email: string): Promise<Ticket> => {
+            const res = await fetch(`${API_URL}/public/tickets/${id}?email=${encodeURIComponent(email)}`);
+            const data = await handleResponse(res);
+            return validate(TicketSchema, data, 'tickets.getPublic');
+        },
         update: async (id: string, updates: Partial<Ticket>): Promise<Ticket> => {
             const res = await fetch(`${API_URL}/tickets/${id}`, {
                 method: 'PUT',

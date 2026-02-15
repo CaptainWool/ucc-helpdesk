@@ -77,7 +77,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <nav className={`nav-links ${isMenuOpen ? 'mobile-open' : ''}`}>
                             {/* Home link - only for students and non-logged-in users */}
                             {(!profile || profile?.role === 'student') && (
-                                <Link to="/" className="nav-link" onClick={() => setIsMenuOpen(false)}>{t('nav_home')}</Link>
+                                <>
+                                    <Link to="/" className="nav-link" onClick={() => setIsMenuOpen(false)}>{t('nav_home')}</Link>
+                                    <Link to="/track-ticket" className="nav-link" onClick={() => setIsMenuOpen(false)}>Track Ticket</Link>
+                                </>
                             )}
 
                             {/* Student Dashboard */}

@@ -1093,6 +1093,37 @@ app.get('/api/tickets', authenticateToken, async (req, res) => {
     }
 });
 
+// Public Ticket Tracking (No Auth Required)
+app.get('/api/public/tickets/:id', async (req, res) => {
+    const { id } = req.params;
+    const { email } = req.query;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required to track a ticket publicly.' });
+    }
+
+    try {
+        const result = await pool.query(`
+            SELECT t.*, 
+            json_agg(m.* ORDER BY m.created_at) FILTER (WHERE m.id IS NOT NULL AND m.is_internal = false) as messages
+            FROM tickets t
+            LEFT JOIN ticket_messages m ON t.id = m.ticket_id
+            WHERE t.id::text = $1 AND t.email = $2
+            GROUP BY t.id
+        `, [id, email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Ticket not found or email mismatch.' });
+        }
+
+        const ticket = result.rows[0];
+        res.json(ticket);
+    } catch (err) {
+        console.error('Public ticket fetch error:', err);
+        res.status(500).json({ error: 'Failed to fetch ticket details' });
+    }
+});
+
 app.get('/api/tickets/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {

@@ -109,11 +109,7 @@ const App: React.FC = () => {
                                                         <SubmitTicket />
                                                     </ProtectedRoute>
                                                 } />
-                                                <Route path="/track-ticket" element={
-                                                    <ProtectedRoute>
-                                                        <TrackTicket />
-                                                    </ProtectedRoute>
-                                                } />
+                                                <Route path="/track-ticket" element={<TrackTicket />} />
 
                                                 {/* Admin Routes */}
                                                 <Route path="/admin" element={

@@ -215,6 +215,115 @@
     }
 }
 
+.priority-badge-select {
+    appearance: none;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding-right: 1.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
+.priority-badge-select:focus {
+    outline: none;
+}
+
+.priority-select-wrapper {
+    display: inline-flex;
+    align-items: center;
+}
+
+.ai-analysis-container {
+    margin-bottom: 2rem;
+}
+
+.ai-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    color: #64748b;
+    border: 1px dashed #e2e8f0;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ai-insight-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    box-shadow: 0 4px 12px rgba(186, 230, 253, 0.2);
+}
+
+.insight-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #0369a1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.insight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.insight-stat label {
+    display: block;
+    font-size: 0.7rem;
+    color: #0c4a6e;
+    opacity: 0.7;
+    margin-bottom: 0.25rem;
+}
+
+.insight-stat span {
+    font-weight: 700;
+    color: #0c4a6e;
+    font-size: 0.9rem;
+}
+
+.insight-summary {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #075985;
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.4);
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+}
+
+.ai-analyze-btn {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
 .attachment-link {
     color: #3b82f6;
     text-decoration: none;
@@ -234,4 +343,97 @@
     color: #1e40af;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Track Ticket Page Enhancement styles */
+.track-form-card {
+    max-width: 500px;
+    margin: 4rem auto;
+    padding: 2.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+}
+
+.form-header {
+    margin-bottom: 2rem;
+}
+
+.form-header svg {
+    margin: 0 auto 1.5rem;
+    color: #6366f1;
+    /* Using a vibrant primary color */
+    background: #eef2ff;
+    padding: 1rem;
+    border-radius: 1rem;
+}
+
+.form-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.form-header p {
+    color: #64748b;
+}
+
+.track-id-form,
+.guest-verification-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid #eee;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px #eef2ff;
+}
+
+.not-found-card {
+    max-width: 500px;
+    margin: 4rem auto;
+    padding: 3rem;
+    text-align: center;
+}
+
+.not-found-card svg {
+    margin: 0 auto 1.5rem;
+}
+
+.not-found-card h2 {
+    margin-bottom: 1rem;
+}
+
+.not-found-card p {
+    margin-bottom: 2rem;
+    color: #64748b;
+}
+
+.not-found-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }

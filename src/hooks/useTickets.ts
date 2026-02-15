@@ -37,6 +37,16 @@ export const useTicket = (id: string, options: Partial<UseQueryOptions<Ticket>> 
     });
 };
 
+export const usePublicTicket = (id: string, email: string, options: Partial<UseQueryOptions<Ticket>> = {}) => {
+    return useQuery({
+        queryKey: ['public-ticket', id, email],
+        queryFn: () => api.tickets.getPublic(id, email),
+        enabled: !!id && !!email,
+        refetchInterval: 15000,
+        ...options
+    });
+};
+
 export const useCreateTicket = () => {
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();

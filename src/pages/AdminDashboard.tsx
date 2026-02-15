@@ -37,7 +37,6 @@ import KnowledgeBaseManager from '../components/KnowledgeBaseManager';
 import FAQManager from '../components/admin/FAQManager';
 import TicketsView from '../components/admin/TicketsView';
 import TeamView from '../components/admin/TeamView';
-import TicketDetailModal from '../components/admin/TicketDetailModal';
 import { Ticket, User } from '../types';
 import './AdminDashboard.css';
 
@@ -67,32 +66,25 @@ const AdminDashboard: React.FC = () => {
     const { assignTicket } = useAssignTicket();
     const { mutateAsync: updateTicket } = useUpdateTicket();
 
-    const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [activeTab, setActiveTab] = useState('tickets');
-    const [showAnalytics, setShowAnalytics] = useState(false);
     const [selectedTicketIds, setSelectedTicketIds] = useState<string[]>([]);
-    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [showTour, setShowTour] = useState(false);
-
-    // AI State
-    const [aiAnalysis, setAiAnalysis] = useState<any>(null);
-    const [analyzing, setAnalyzing] = useState(false);
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+    const [showAnalytics, setShowAnalytics] = useState(false);
 
     const { showSuccess, showError } = useToast();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        setAiAnalysis(null);
-        if (selectedTicket) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-    }, [selectedTicket]);
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    };
+
+
 
     useEffect(() => {
         if (profile && profile.has_completed_tour === false) {
@@ -111,9 +103,6 @@ const AdminDashboard: React.FC = () => {
         if (!window.confirm('Are you sure you want to delete this ticket?')) return;
         try {
             await deleteTicket(id);
-            if (selectedTicket?.id === id) {
-                setSelectedTicket(null);
-            }
         } catch (error) {
             // Handled by hook
         }
@@ -124,39 +113,7 @@ const AdminDashboard: React.FC = () => {
         await assignTicket(ticketId, agentEmail);
     };
 
-    const handlePriorityChange = async (ticketId: string, newPriority: string) => {
-        try {
-            await updateTicket({ id: ticketId, updates: { priority: newPriority as any } });
-            showSuccess(`Ticket priority updated to ${newPriority}`);
-        } catch (error) {
-            // Handled by hook
-        }
-    };
 
-    const handleLogout = async () => {
-        await signOut();
-        navigate('/login');
-    };
-
-    const handleAnalyzeTicket = async () => {
-        if (!selectedTicket) return;
-        setAnalyzing(true);
-        try {
-            const result = await analyzeTicketAI(selectedTicket.subject, selectedTicket.description || '');
-            setAiAnalysis(result);
-
-            if (result && result.priority) {
-                const priorityMap: Record<string, string> = { 'P1': 'Urgent', 'P2': 'High', 'P3': 'Medium', 'P4': 'Low', 'Urgent': 'Urgent', 'High': 'High', 'Medium': 'Medium', 'Low': 'Low' };
-                const dbPriority = priorityMap[result.priority] || result.priority;
-                await handlePriorityChange(selectedTicket.id, dbPriority);
-            }
-        } catch (error: any) {
-            console.error('AI Analysis failed:', error);
-            showError(`AI Analysis Error: ${error.message || "Could not complete analysis"}`);
-        } finally {
-            setAnalyzing(false);
-        }
-    };
 
     const filteredTickets = tickets.filter(ticket => {
         const subject = (ticket.subject || '').toLowerCase();
@@ -196,7 +153,7 @@ const AdminDashboard: React.FC = () => {
         try {
             for (const id of selectedTicketIds) {
                 await deleteTicket(id);
-                if (selectedTicket?.id === id) setSelectedTicket(null);
+                if (false && id) { } // Keep for reference if needed, but unused for local state now
             }
             setSelectedTicketIds([]);
             showSuccess('Selected tickets deleted successfully');
@@ -379,7 +336,7 @@ const AdminDashboard: React.FC = () => {
                             toggleSelectAll={toggleSelectAll}
                             toggleSelectTicket={toggleSelectTicket}
                             onBulkDelete={handleBulkDelete}
-                            onSelectTicket={setSelectedTicket}
+                            onSelectTicket={() => { }} // No longer using modal
                             onResolve={handleResolve}
                             onDelete={handleDeleteTicket}
                             onAssign={handleAssign}
@@ -398,16 +355,6 @@ const AdminDashboard: React.FC = () => {
                 </div>
             </div>
 
-            {selectedTicket && (
-                <TicketDetailModal
-                    ticket={selectedTicket}
-                    onClose={() => setSelectedTicket(null)}
-                    onPriorityChange={handlePriorityChange}
-                    aiAnalysis={aiAnalysis}
-                    analyzing={analyzing}
-                    onAnalyze={handleAnalyzeTicket}
-                />
-            )}
             <AccessibilityChecker />
         </div>
     );

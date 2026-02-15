@@ -140,7 +140,7 @@ const TicketsView: React.FC<TicketsViewProps> = ({
                                         <tr key={ticket.id} className={selectedTicketIds.includes(ticket.id) ? 'row-selected' : ''}>
                                             <td><input type="checkbox" id={`select-ticket-${ticket.id}`} name={`select-ticket-${ticket.id}`} aria-label={`Select ticket ${ticket.subject}`} checked={selectedTicketIds.includes(ticket.id)} onChange={() => toggleSelectTicket(ticket.id)} /></td>
                                             <td>
-                                                <div className="subject-cell" onClick={() => onSelectTicket(ticket)}>
+                                                <div className="subject-cell" onClick={() => (window.location.href = `/track-ticket?id=${ticket.id}`)}>
                                                     <span className="ticket-subject">{ticket.subject}</span>
                                                     <span className="ticket-id-tag">#{ticket.student_id ? ticket.student_id.toString().slice(-4) : 'N/A'}</span>
                                                 </div>
@@ -175,7 +175,7 @@ const TicketsView: React.FC<TicketsViewProps> = ({
                                             </td>
                                             <td>
                                                 <div className="action-btns">
-                                                    <Button size="sm" variant="ghost" onClick={() => onSelectTicket(ticket)} title="View & Reply">
+                                                    <Button size="sm" variant="ghost" onClick={() => (window.location.href = `/track-ticket?id=${ticket.id}`)} title="View & Reply">
                                                         <Eye size={14} />
                                                     </Button>
                                                     {(profile?.role === 'super_admin' || profile?.role === 'agent') && (
