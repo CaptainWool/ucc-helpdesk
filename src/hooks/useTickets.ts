@@ -20,7 +20,6 @@ export const useTickets = (options: UseTicketsOptions = {}) => {
     return useQuery({
         queryKey,
         queryFn: () => api.tickets.list(),
-        initialData: [] as Ticket[],
         enabled: isStudent ? !!user?.id : true,
         refetchInterval: 30000, // 30s polling for real-time updates
         ...queryOptions

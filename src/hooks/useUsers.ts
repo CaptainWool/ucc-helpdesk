@@ -7,7 +7,6 @@ export const useUsers = (role?: string, options: Partial<UseQueryOptions<User[]>
     return useQuery({
         queryKey: ['users', role],
         queryFn: () => api.auth.getUsers(role),
-        initialData: [] as User[],
         ...options
     });
 };
