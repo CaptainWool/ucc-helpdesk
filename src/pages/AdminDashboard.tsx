@@ -45,7 +45,12 @@ const AdminDashboard: React.FC = () => {
     const queryClient = useQueryClient();
 
     // Fetch tickets with React Query
-    const { data: tickets = [], isLoading: ticketsLoading } = useTickets({
+    const {
+        data: tickets = [],
+        isLoading: ticketsLoading,
+        isError: ticketsError,
+        error: apiError
+    } = useTickets({
         user: profile,
         refetchInterval: 30000
     });
@@ -346,7 +351,20 @@ const AdminDashboard: React.FC = () => {
                     {activeTab === 'kb' && <KnowledgeBaseManager />}
                     {activeTab === 'faq' && <FAQManager />}
                     {activeTab === 'settings' && <AdminSettings />}
-                    {activeTab === 'tickets' && (
+                    {ticketsError ? (
+                        <Card className="error-card" style={{ borderColor: 'var(--danger-border)', backgroundColor: 'var(--danger-bg-subtle)' }}>
+                            <div style={{ padding: '40px', textAlign: 'center' }}>
+                                <Shield size={48} color="var(--danger)" style={{ marginBottom: '16px' }} />
+                                <h2 style={{ color: 'var(--danger)' }}>Data Sync Error</h2>
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+                                    {(apiError as any)?.message || 'We could not sync with the helpdesk servers. Please check your connection or login again.'}
+                                </p>
+                                <Button onClick={() => window.location.reload()} variant="primary">
+                                    Refresh Dashboard
+                                </Button>
+                            </div>
+                        </Card>
+                    ) : activeTab === 'tickets' && (
                         <TicketsView
                             tickets={filteredTickets}
                             isLoading={ticketsLoading}
