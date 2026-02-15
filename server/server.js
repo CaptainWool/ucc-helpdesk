@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
@@ -8,10 +9,18 @@ const path = require('path');
 const sgMail = require('@sendgrid/mail');
 const compression = require('compression');
 const helmet = require('helmet');
+const { Server } = require('socket.io');
 require('dotenv').config();
 const logger = require('./logger');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        methods: ["GET", "POST"]
+    }
+});
 const port = process.env.PORT || 3000;
 
 // Middleware
@@ -1439,8 +1448,76 @@ app.get('/api/public/settings', async (req, res) => {
     }
 });
 
-const server = app.listen(port, async () => {
+// Socket.IO for Real-Time Chat (Urgent Tickets)
+const activeAgents = new Map(); // Track online agents per ticket
+const chatRooms = new Map(); // Store chat history per ticket
+
+io.on('connection', (socket) => {
+    const { userId, ticketId, userName, role } = socket.handshake.auth;
+    console.log(`✅ Socket connected: ${userName} (${role}) for ticket ${ticketId}`);
+
+    // Join ticket room
+    socket.join(ticketId);
+
+    // Track agent status
+    if (role === 'agent' || role === 'super_admin') {
+        activeAgents.set(ticketId, { userId, userName, socketId: socket.id });
+        io.to(ticketId).emit('agent_status', { online: true });
+    } else {
+        // Notify student if agent is online
+        socket.emit('agent_status', { online: activeAgents.has(ticketId) });
+    }
+
+    // Send chat history
+    if (!chatRooms.has(ticketId)) {
+        chatRooms.set(ticketId, []);
+    }
+    socket.emit('chat_history', chatRooms.get(ticketId));
+
+    // Handle new messages
+    socket.on('send_message', (data) => {
+        const message = {
+            id: Date.now().toString(),
+            sender_name: data.senderName,
+            sender_role: data.senderRole,
+            message: data.message,
+            created_at: new Date().toISOString(),
+            is_system: false
+        };
+
+        // Store message
+        const history = chatRooms.get(data.ticketId) || [];
+        history.push(message);
+        chatRooms.set(data.ticketId, history);
+
+        // Persist to database (async, non-blocking)
+        pool.query(
+            'INSERT INTO messages (ticket_id, content, sender_role, sender_id) VALUES ($1, $2, $3, $4)',
+            [data.ticketId, data.message, data.senderRole, userId]
+        ).catch(err => console.error('Failed to persist message:', err));
+
+        // Broadcast to all in the room
+        io.to(data.ticketId).emit('new_message', message);
+    });
+
+    // Typing indicator
+    socket.on('typing', (data) => {
+        socket.to(data.ticketId).emit('typing', { userName: data.userName });
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log(`❌ Socket disconnected: ${userName}`);
+        if (role === 'agent' || role === 'super_admin') {
+            activeAgents.delete(ticketId);
+            io.to(ticketId).emit('agent_status', { online: false });
+        }
+    });
+});
+
+server.listen(port, async () => {
     console.log(`Server running on port ${port}`);
+    console.log(`WebSocket server enabled for real-time chat`);
     // Auto-initialize DB on startup
     await initDb();
 });
