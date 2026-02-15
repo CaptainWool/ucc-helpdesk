@@ -224,6 +224,18 @@ const initDb = async () => {
         // Ensure new columns for existing tables (Defensive Migration)
         await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS plaintext_password TEXT');
 
+        // Defensive Migrations for Tickets table (relaxing constraints for new UI)
+        try {
+            await client.query('ALTER TABLE tickets ALTER COLUMN type TYPE TEXT');
+            await client.query('ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_type_check');
+            await client.query('ALTER TABLE tickets ALTER COLUMN status TYPE TEXT');
+            await client.query('ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check');
+            await client.query('ALTER TABLE tickets ALTER COLUMN priority TYPE TEXT');
+            await client.query('ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_priority_check');
+        } catch (migErr) {
+            logger.warn('Defensive ticket migration skipped/warning: ' + migErr.message);
+        }
+
         // Create Tickets Table (with all compatibility columns)
         await client.query(`
             CREATE TABLE IF NOT EXISTS tickets(
@@ -236,9 +248,9 @@ const initDb = async () => {
         full_name TEXT NOT NULL,
         subject TEXT NOT NULL,
         description TEXT NOT NULL,
-        type VARCHAR(20) NOT NULL CHECK(type IN('portal', 'fees', 'academic', 'other')),
-        status VARCHAR(20) DEFAULT 'Open' CHECK(status IN('Open', 'In Progress', 'Resolved', 'Closed')),
-        priority VARCHAR(10) DEFAULT 'Medium' CHECK(priority IN('Low', 'Medium', 'High', 'Urgent')),
+        type TEXT NOT NULL,
+        status TEXT DEFAULT 'Open',
+        priority TEXT DEFAULT 'Medium',
         attachment_url TEXT,
         assigned_to_email TEXT,
         rating INTEGER CHECK(rating >= 1 AND rating <= 5),
@@ -1116,6 +1128,25 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.array('attachments
     try {
         const user_id = req.user?.id;
 
+        // --- NEW: Enforce Student Info Integrity ---
+        // If logged in, prioritize official profile data over request body
+        let finalFullName = full_name;
+        let finalEmail = email;
+        let finalStudentId = student_id;
+        let finalPhoneNumber = phone_number;
+
+        if (user_id) {
+            const userRes = await pool.query('SELECT full_name, email, student_id, phone_number FROM users WHERE id = $1', [user_id]);
+            const officialProfile = userRes.rows[0];
+            if (officialProfile) {
+                finalFullName = officialProfile.full_name || finalFullName;
+                finalEmail = officialProfile.email || finalEmail;
+                finalStudentId = officialProfile.student_id || finalStudentId;
+                // Phone is more flexible, but we keep it if already set in profile
+                finalPhoneNumber = officialProfile.phone_number || finalPhoneNumber;
+            }
+        }
+
         // 1. Check Global Locks
         const settingsRes = await pool.query('SELECT * FROM system_settings');
         const settings = {};
@@ -1206,22 +1237,26 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.array('attachments
 
         const result = await pool.query(
             'INSERT INTO tickets (full_name, email, student_id, phone_number, subject, description, type, priority, user_id, sla_deadline, attachment_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-            [full_name, email, student_id, phone_number, subject, description, type, finalPriority, user_id, sla_deadline, attachment_url]
+            [finalFullName, finalEmail, finalStudentId, finalPhoneNumber, subject, description, type, finalPriority, user_id, sla_deadline, attachment_url]
         );
 
         // SMS Notification for new ticket
-        if (settings.sms_notifications_enabled && phone_number) {
-            const smsMessage = `Hi ${full_name}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
-            sendSMS(phone_number, smsMessage);
+        if (settings.sms_notifications_enabled && finalPhoneNumber) {
+            const smsMessage = `Hi ${finalFullName}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
+            sendSMS(finalPhoneNumber, smsMessage);
         }
 
         // Email Notification for new ticket
-        sendTicketConfirmationEmail(email, result.rows[0]);
+        sendTicketConfirmationEmail(finalEmail, result.rows[0]);
 
         res.json(result.rows[0]);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ticket creation failed' });
+        console.error('Ticket creation error:', err);
+        res.status(500).json({
+            error: 'Ticket creation failed',
+            message: err.message,
+            detail: err.detail
+        });
     }
 });
 
