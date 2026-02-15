@@ -1,36 +1,23 @@
-import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
+import React, { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Send,
+    AlertCircle,
     Paperclip,
     X,
     FileText,
     CheckCircle2,
     Loader2,
     Info,
-    ChevronLeft,
-    Sparkles,
-    Lightbulb
+    ChevronLeft
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useCreateTicket } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { findDeflectionAI, type DeflectionResult } from '../lib/ai';
-import { api } from '../lib/api';
-import { FAQ } from '../types';
+import Input from '../components/common/Input';
 import './SubmitTicket.css';
-
-const categories = [
-    'Portal Access',
-    'Fee Payment/Financial',
-    'Course Registration',
-    'Academic Records',
-    'Examination Issues',
-    'General Inquiry',
-    'Technical Support'
-];
 
 const SubmitTicket: React.FC = () => {
     const navigate = useNavigate();
@@ -47,59 +34,18 @@ const SubmitTicket: React.FC = () => {
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [dragActive, setDragActive] = useState(false);
-    const [suggestion, setSuggestion] = useState<DeflectionResult | null>(null);
-    const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
-    const [faqs, setFaqs] = useState<FAQ[]>([]);
 
-    useEffect(() => {
-        const fetchFaqs = async () => {
-            try {
-                const data = await api.faq.list();
-                if (Array.isArray(data)) {
-                    setFaqs(data);
-                }
-            } catch (err) {
-                console.error('Failed to fetch FAQs:', err);
-            }
-        };
-        fetchFaqs();
-    }, []);
-
-    useEffect(() => {
-        if (!formData.subject || formData.subject.length <= 5) {
-            setSuggestion(null);
-            return;
-        }
-
-        const timeoutId = setTimeout(async () => {
-            if (faqs.length > 0) {
-                setIsSearchingSuggestions(true);
-                try {
-                    const result = await findDeflectionAI(formData.subject, faqs);
-                    setSuggestion(result);
-                } catch (err) {
-                    console.error('Failed to find deflection:', err);
-                } finally {
-                    setIsSearchingSuggestions(false);
-                }
-            }
-        }, 600);
-
-        return () => clearTimeout(timeoutId);
-    }, [formData.subject, faqs]);
+    const categories = [
+        'Portal Access',
+        'Fee Payment/Financial',
+        'Course Registration',
+        'Academic Records',
+        'Examination Issues',
+        'General Inquiry',
+        'Technical Support'
+    ];
 
     const displayUser = profile || user;
-
-    // IF USER IS NOT LOGGED IN OR NO PROFILE, SHOW ERROR INSTEAD OF BLANK
-    if (!displayUser) {
-        return (
-            <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
-                <h2>Authentication Error</h2>
-                <p>Please log in to submit a ticket.</p>
-                <Button onClick={() => navigate('/login')}>Go to Login</Button>
-            </div>
-        );
-    }
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -158,9 +104,9 @@ const SubmitTicket: React.FC = () => {
 
         try {
             const ticketData = new FormData();
-            ticketData.append('student_id', displayUser.student_id || displayUser.id || '');
-            ticketData.append('full_name', displayUser.full_name || '');
-            ticketData.append('email', displayUser.email || '');
+            ticketData.append('student_id', displayUser?.student_id || displayUser?.id || '');
+            ticketData.append('full_name', displayUser?.full_name || '');
+            ticketData.append('email', displayUser?.email || '');
             ticketData.append('subject', formData.subject);
             ticketData.append('type', formData.type);
             ticketData.append('priority', formData.priority);
@@ -171,7 +117,6 @@ const SubmitTicket: React.FC = () => {
             });
 
             await createTicket(ticketData);
-            showSuccess('Ticket submitted successfully!');
             navigate('/dashboard');
         } catch (err: any) {
             console.error('Submission failed:', err);
@@ -197,51 +142,20 @@ const SubmitTicket: React.FC = () => {
                                 <h3 className="section-title"><Info size={18} /> Basic Information</h3>
                                 <div className="form-group">
                                     <label htmlFor="subject">Subject *</label>
-                                    <div className="subject-input-wrapper">
-                                        <input
-                                            type="text"
-                                            id="subject"
-                                            name="subject"
-                                            placeholder="What is the issue about? (e.g., Cannot access portal)"
-                                            value={formData.subject}
-                                            onChange={handleInputChange}
-                                            required
-                                            className="form-input"
-                                        />
-                                        {isSearchingSuggestions && (
-                                            <div className="searching-spinner">
-                                                <Loader2 className="animate-spin" size={16} />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <input
+                                        type="text"
+                                        id="subject"
+                                        name="subject"
+                                        placeholder="What is the issue about? (e.g., Cannot access portal)"
+                                        value={formData.subject}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-input"
+                                    />
                                 </div>
 
-                                {suggestion && (
-                                    <div className="ai-suggestion-card fade-in">
-                                        <div className="suggestion-header">
-                                            <Sparkles size={16} className="sparkle-icon" />
-                                            <span>Instant AI Solution Found</span>
-                                        </div>
-                                        <div className="suggestion-body">
-                                            <h4>{suggestion.question}</h4>
-                                            <p>{suggestion.answer}</p>
-                                        </div>
-                                        <div className="suggestion-footer">
-                                            <p>Does this resolve your issue?</p>
-                                            <div className="suggestion-actions">
-                                                <Button type="button" size="sm" variant="outline" onClick={() => navigate('/faq')}>
-                                                    View Full FAQ
-                                                </Button>
-                                                <Button type="button" size="sm" onClick={() => setSuggestion(null)}>
-                                                    Still need help
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
                                 <div className="form-row">
-                                    <div className="form-group">
+                                    <div className="form-group half">
                                         <label htmlFor="type">Category</label>
                                         <select
                                             id="type"
@@ -255,7 +169,7 @@ const SubmitTicket: React.FC = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="form-group">
+                                    <div className="form-group half">
                                         <label htmlFor="priority">Urgency Level</label>
                                         <select
                                             id="priority"
@@ -357,15 +271,10 @@ const SubmitTicket: React.FC = () => {
                         </ul>
                     </Card>
 
-                    <Card className="info-card suggestion-highlight">
-                        <h3><Lightbulb size={18} /> Did you know?</h3>
-                        <p>Our AI analyzes your subject in real-time to suggest instant fixes from our FAQ database.</p>
-                    </Card>
-
                     <Card className="info-card">
-                        <h3><Info size={18} /> Response Time</h3>
+                        <h3><AlertCircle size={18} /> Response Time</h3>
                         <p>Most tickets are addressed within <strong>24-48 hours</strong>.</p>
-                        <p>Urgent issues are handled within 4 hours during business days.</p>
+                        <p>Urgent issues are prioritized and usually handled within 4 hours during business days.</p>
                     </Card>
                 </aside>
             </div>
