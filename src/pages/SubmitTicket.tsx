@@ -309,8 +309,8 @@ const SubmitTicket: React.FC = () => {
                                                     </button>
                                                 </div>
                                                 <div className="suggestion-content">
-                                                    <h4>{suggestion.faq.question}</h4>
-                                                    <p>{suggestion.faq.answer}</p>
+                                                    <h4>{suggestion.question}</h4>
+                                                    <p>{suggestion.answer}</p>
                                                 </div>
                                                 <div className="suggestion-footer">
                                                     <span>Was this helpful?</span>
