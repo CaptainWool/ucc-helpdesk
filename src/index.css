@@ -1,24 +1,29 @@
-/* Global Design Tokens & Reset */
 :root {
-  /* Brand Colors - HSL for easy opacity manipulation */
-  --primary-hue: 220;
-  /* Radiant Royal Blue */
-  --primary: hsl(var(--primary-hue), 85%, 50%);
-  --primary-dark: hsl(var(--primary-hue), 70%, 40%);
-  --primary-light: hsl(var(--primary-hue), 70%, 96%);
+  /* Legacy/Homepage Colors - Preserving original design for the Home page */
+  --legacy-primary: hsl(220, 85%, 50%);
+  --legacy-secondary: hsl(172, 66%, 50%);
+  --legacy-accent: hsl(330, 80%, 60%);
 
-  --secondary: hsl(172, 66%, 50%);
-  /* Teal */
-  --accent: hsl(330, 80%, 60%);
-  /* Pink/Rose for alerts */
+  /* Brand Colors - Official UCC Ghana Palette (Navy, Gold, Vermilion) */
+  --primary-hue: 211;
+  /* Based on Congress Blue #00448F */
+  --primary: hsl(var(--primary-hue), 100%, 28%);
+  --primary-dark: hsl(var(--primary-hue), 100%, 20%);
+  --primary-light: hsl(var(--primary-hue), 30%, 96%);
 
-  --bg-hue: 220;
+  --secondary: hsl(56, 100%, 50%);
+  --secondary-light: hsl(56, 100%, 96%);
+  /* Aureolin Yellow #FDEE00 */
+  --accent: hsl(1, 99%, 57%);
+  /* Vermilion Red #FE2923 */
+
+  --bg-hue: 211;
   --bg-body: hsl(var(--bg-hue), 30%, 98%);
   --bg-card: hsl(0, 0%, 100%);
 
   --text-main: hsl(var(--bg-hue), 40%, 15%);
   --text-muted: hsl(var(--bg-hue), 20%, 50%);
-  --border: #e2e8f0;
+  --border: hsl(var(--bg-hue), 20%, 92%);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
