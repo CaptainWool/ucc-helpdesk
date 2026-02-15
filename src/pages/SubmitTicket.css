@@ -590,3 +590,32 @@
         grid-template-columns: 1fr;
     }
 }
+/* Compact Mode Styles */
+.student-info-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.student-info-summary:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+.summary-item { font-size: 0.9rem; color: #475569; }
+.summary-item strong { color: #0f172a; font-weight: 600; }
+.summary-item.text-muted { color: #64748b; font-size: 0.85rem; }
+
+/* Utilities needed if not using Tailwind */
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.items-center { align-items: center; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-0 { margin-bottom: 0 !important; }
+.text-xs { font-size: 0.75rem !important; padding: 0.25rem 0.5rem !important; height: auto !important; }
+

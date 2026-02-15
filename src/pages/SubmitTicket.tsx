@@ -61,6 +61,7 @@ const SubmitTicket: React.FC = () => {
     // Feature: AI Deflection
     const [suggestion, setSuggestion] = useState<DeflectionResult | null>(null);
     const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+    const [isStudentInfoOpen, setIsStudentInfoOpen] = useState(true);
 
     const categories = [
         'Portal Access',
@@ -82,6 +83,10 @@ const SubmitTicket: React.FC = () => {
                 email: profile?.email || user?.email || prev.email,
                 phoneNumber: profile?.phone_number || user?.phone_number || prev.phoneNumber
             }));
+            // Auto-collapse if we have data
+            if (profile?.full_name || user?.full_name) {
+                setIsStudentInfoOpen(false);
+            }
         }
     }, [profile, user]);
 
@@ -218,72 +223,92 @@ const SubmitTicket: React.FC = () => {
                     <Card className="form-card">
                         <form onSubmit={handleSubmit}>
                             <div className="form-section">
-                                <h3 className="section-title"><UserIcon size={16} /> Student Information</h3>
-                                <div className="compact-grid">
-                                    <div className="form-group">
-                                        <label htmlFor="fullName">Full Name</label>
-                                        <div className="input-with-icon">
-                                            <UserIcon size={14} className="input-icon" />
-                                            <input
-                                                type="text"
-                                                id="fullName"
-                                                name="fullName"
-                                                value={formData.fullName}
-                                                onChange={handleInputChange}
-                                                className="form-input with-icon"
-                                                placeholder="Enter full name"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="studentId">Student ID</label>
-                                        <div className="input-with-icon">
-                                            <CreditCard size={14} className="input-icon" />
-                                            <input
-                                                type="text"
-                                                id="studentId"
-                                                name="studentId"
-                                                value={formData.studentId}
-                                                onChange={handleInputChange}
-                                                className="form-input with-icon"
-                                                placeholder="Enter ID"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="email">Email Address</label>
-                                        <div className="input-with-icon">
-                                            <Mail size={14} className="input-icon" />
-                                            <input
-                                                type="email"
-                                                id="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                className="form-input with-icon"
-                                                placeholder="Enter email"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="phoneNumber">Phone Number</label>
-                                        <div className="input-with-icon">
-                                            <Phone size={14} className="input-icon" />
-                                            <input
-                                                type="tel"
-                                                id="phoneNumber"
-                                                name="phoneNumber"
-                                                value={formData.phoneNumber}
-                                                onChange={handleInputChange}
-                                                className="form-input with-icon"
-                                                placeholder="Enter number"
-                                            />
-                                        </div>
-                                    </div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="section-title mb-0"><UserIcon size={16} /> Student Information</h3>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsStudentInfoOpen(!isStudentInfoOpen)}
+                                        className="text-xs"
+                                    >
+                                        {isStudentInfoOpen ? 'Collapse' : 'Edit Info'}
+                                    </Button>
                                 </div>
+
+                                {isStudentInfoOpen ? (
+                                    <div className="compact-grid fade-in">
+                                        <div className="form-group">
+                                            <label htmlFor="fullName">Full Name</label>
+                                            <div className="input-with-icon">
+                                                <UserIcon size={14} className="input-icon" />
+                                                <input
+                                                    type="text"
+                                                    id="fullName"
+                                                    name="fullName"
+                                                    value={formData.fullName}
+                                                    onChange={handleInputChange}
+                                                    className="form-input with-icon"
+                                                    placeholder="Enter full name"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="studentId">Student ID</label>
+                                            <div className="input-with-icon">
+                                                <CreditCard size={14} className="input-icon" />
+                                                <input
+                                                    type="text"
+                                                    id="studentId"
+                                                    name="studentId"
+                                                    value={formData.studentId}
+                                                    onChange={handleInputChange}
+                                                    className="form-input with-icon"
+                                                    placeholder="Enter ID"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="email">Email Address</label>
+                                            <div className="input-with-icon">
+                                                <Mail size={14} className="input-icon" />
+                                                <input
+                                                    type="email"
+                                                    id="email"
+                                                    name="email"
+                                                    value={formData.email}
+                                                    onChange={handleInputChange}
+                                                    className="form-input with-icon"
+                                                    placeholder="Enter email"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="phoneNumber">Phone Number</label>
+                                            <div className="input-with-icon">
+                                                <Phone size={14} className="input-icon" />
+                                                <input
+                                                    type="tel"
+                                                    id="phoneNumber"
+                                                    name="phoneNumber"
+                                                    value={formData.phoneNumber}
+                                                    onChange={handleInputChange}
+                                                    className="form-input with-icon"
+                                                    placeholder="Enter number"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="student-info-summary fade-in" onClick={() => setIsStudentInfoOpen(true)}>
+                                        <div className="summary-item"><strong>{formData.fullName || 'No Name'}</strong></div>
+                                        <div className="summary-item text-muted">{formData.studentId || 'No ID'}</div>
+                                        <div className="summary-item text-muted">{formData.email}</div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="form-section">
