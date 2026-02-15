@@ -1073,11 +1073,12 @@ app.get('/api/tickets', authenticateToken, async (req, res) => {
         // Role-based ticket visibility
         if (req.user.role === 'student') {
             // Students see only their own tickets
-            query = 'SELECT * FROM tickets WHERE user_id = $1 OR email = (SELECT email FROM users WHERE id = $1) ORDER BY created_at DESC';
+            // Use explicit casting to handle UUID vs STRING comparisons
+            query = 'SELECT * FROM tickets WHERE user_id::text = $1 OR email = (SELECT email FROM users WHERE id::text = $1) ORDER BY created_at DESC';
             params = [req.user.id];
         } else if (req.user.role === 'agent') {
             // Agents (Coordinators) see only tickets assigned to them
-            query = 'SELECT * FROM tickets WHERE assigned_to_email = (SELECT email FROM users WHERE id = $1) ORDER BY created_at DESC';
+            query = 'SELECT * FROM tickets WHERE assigned_to_email = (SELECT email FROM users WHERE id::text = $1) ORDER BY created_at DESC';
             params = [req.user.id];
         }
         // Super Admins see all tickets (no filter needed)
@@ -1113,8 +1114,8 @@ app.get('/api/tickets/:id', authenticateToken, async (req, res) => {
 
         res.json(ticket);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch ticket' });
+        console.error('Ticket fetch (detail) error:', err);
+        res.status(500).json({ error: 'Failed to fetch ticket details' });
     }
 });
 
@@ -1139,128 +1140,135 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.array('attachments
         let finalPhoneNumber = phone_number;
 
         if (user_id) {
-            const userRes = await pool.query('SELECT full_name, email, student_id, phone_number FROM users WHERE id = $1', [user_id]);
+            const userRes = await pool.query('SELECT full_name, email, student_id, phone_number FROM users WHERE id::text = $1', [user_id]);
             const officialProfile = userRes.rows[0];
             if (officialProfile) {
-                finalFullName = officialProfile.full_name || finalFullName;
-                finalEmail = officialProfile.email || finalEmail;
-                finalStudentId = officialProfile.student_id || finalStudentId;
+                finalFullName = officialProfile.full_name || finalFullName || '';
+                finalEmail = officialProfile.email || finalEmail || '';
+                finalStudentId = officialProfile.student_id || finalStudentId || '';
                 // Phone is more flexible, but we keep it if already set in profile
-                finalPhoneNumber = officialProfile.phone_number || finalPhoneNumber;
+                finalPhoneNumber = officialProfile.phone_number || finalPhoneNumber || '';
             }
+        }
+
+        // --- NEW: Sanity Check ---
+        if (!finalEmail || !finalFullName) {
+            return res.status(400).json({ error: 'Incomplete user profile. Please ensure name and email are set before submitting.' });
+        }
+    }
         }
 
         // 1. Check Global Locks
         const settingsRes = await pool.query('SELECT * FROM system_settings');
-        const settings = {};
-        settingsRes.rows.forEach(r => settings[r.key] = r.value);
+const settings = {};
+settingsRes.rows.forEach(r => settings[r.key] = r.value);
 
-        if (settings.maintenance_mode === true || settings.maintenance_mode === 'true') {
-            return res.status(503).json({ error: 'Maintenance Mode', message: 'The helpdesk is currently undergoing maintenance. Please try again later.' });
+if (settings.maintenance_mode === true || settings.maintenance_mode === 'true') {
+    return res.status(503).json({ error: 'Maintenance Mode', message: 'The helpdesk is currently undergoing maintenance. Please try again later.' });
+}
+
+if (settings.submissions_locked === true || settings.submissions_locked === 'true') {
+    return res.status(403).json({ error: 'Submissions Locked', message: 'New ticket submissions are currently disabled by the administrator.' });
+}
+
+// 2. Check User Status if logged in
+if (user_id) {
+    const userRes = await pool.query('SELECT is_banned, ban_expires_at, revoked_at FROM users WHERE id = $1', [user_id]);
+    const user = userRes.rows[0];
+
+    if (user?.revoked_at) {
+        return res.status(403).json({ error: 'Account Revoked', message: 'Your account has been revoked. You can no longer submit tickets.' });
+    }
+
+    if (user?.is_banned) {
+        if (!user.ban_expires_at || new Date(user.ban_expires_at) > new Date()) {
+            return res.status(403).json({ error: 'Account Banned', message: 'Misconduct detected. Your submission rights have been suspended.' });
         }
+    }
+}
 
-        if (settings.submissions_locked === true || settings.submissions_locked === 'true') {
-            return res.status(403).json({ error: 'Submissions Locked', message: 'New ticket submissions are currently disabled by the administrator.' });
-        }
-
-        // 2. Check User Status if logged in
-        if (user_id) {
-            const userRes = await pool.query('SELECT is_banned, ban_expires_at, revoked_at FROM users WHERE id = $1', [user_id]);
-            const user = userRes.rows[0];
-
-            if (user?.revoked_at) {
-                return res.status(403).json({ error: 'Account Revoked', message: 'Your account has been revoked. You can no longer submit tickets.' });
-            }
-
-            if (user?.is_banned) {
-                if (!user.ban_expires_at || new Date(user.ban_expires_at) > new Date()) {
-                    return res.status(403).json({ error: 'Account Banned', message: 'Misconduct detected. Your submission rights have been suspended.' });
-                }
-            }
-        }
-
-        // 3. Check Capacity (Queue Control)
-        if (settings.max_open_tickets) {
-            const countRes = await pool.query("SELECT COUNT(*) FROM tickets WHERE status IN ('Open', 'In Progress')");
-            const currentCount = parseInt(countRes.rows[0].count);
-            if (currentCount >= parseInt(settings.max_open_tickets)) {
-                return res.status(429).json({
-                    error: 'System at Capacity',
-                    message: `Our current support queue is full(max ${settings.max_open_tickets} active requests).Please check our FAQ or try again later.`
-                });
-            }
-        }
-
-        // 4. Resource Filter (File size & type)
-        if (req.files && req.files.length > 0 && settings.resource_limits) {
-            const limits = settings.resource_limits;
-
-            for (const file of req.files) {
-                const sizeMB = file.size / (1024 * 1024);
-                if (sizeMB > limits.max_size_mb) {
-                    return res.status(400).json({ error: 'File too large', message: `One of your attachments exceeds the maximum allowed size of ${limits.max_size_mb} MB.` });
-                }
-
-                if (limits.allowed_types && !limits.allowed_types.includes(file.mimetype)) {
-                    return res.status(400).json({ error: 'Unsupported file type', message: `Only the following formats are allowed: ${limits.allowed_types.join(', ')}` });
-                }
-            }
-        }
-
-        // 5. AI Auto-Prioritization (Simulated)
-        let finalPriority = priority || 'Medium';
-        if (!priority) {
-            const sensitivity = parseFloat(settings.ai_sensitivity || 0.7);
-            const urgentKeywords = ['urgent', 'emergency', 'broken', 'cannot', 'blocked', 'fail', 'error'];
-            const content = `${subject} ${description} `.toLowerCase();
-            const keywordScore = urgentKeywords.filter(k => content.includes(k)).length;
-
-            // Higher sensitivity or more keywords increases chance of Urgent/High
-            if (keywordScore * sensitivity >= 1.5) {
-                finalPriority = 'Urgent';
-            } else if (keywordScore * sensitivity >= 0.8) {
-                finalPriority = 'High';
-            }
-        }
-
-        const getSLADeadline = (prio) => {
-            let hours = prio === 'Urgent' ? 4 : prio === 'High' ? 24 : prio === 'Low' ? 72 : 48;
-
-            // Peak Mode: Double SLA hours
-            if (settings.sla_peak_mode === true || settings.sla_peak_mode === 'true') {
-                hours *= 2;
-            }
-
-            const deadline = new Date();
-            deadline.setHours(deadline.getHours() + hours);
-            return deadline;
-        };
-
-        const sla_deadline = getSLADeadline(finalPriority);
-
-        const result = await pool.query(
-            'INSERT INTO tickets (full_name, email, student_id, phone_number, subject, description, type, priority, user_id, sla_deadline, attachment_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
-            [finalFullName, finalEmail, finalStudentId, finalPhoneNumber, subject, description, type, finalPriority, user_id, sla_deadline, attachment_url]
-        );
-
-        // SMS Notification for new ticket
-        if (settings.sms_notifications_enabled && finalPhoneNumber) {
-            const smsMessage = `Hi ${finalFullName}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
-            sendSMS(finalPhoneNumber, smsMessage);
-        }
-
-        // Email Notification for new ticket
-        sendTicketConfirmationEmail(finalEmail, result.rows[0]);
-
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error('Ticket creation error:', err);
-        res.status(500).json({
-            error: 'Ticket creation failed',
-            message: err.message,
-            detail: err.detail
+// 3. Check Capacity (Queue Control)
+if (settings.max_open_tickets) {
+    const countRes = await pool.query("SELECT COUNT(*) FROM tickets WHERE status IN ('Open', 'In Progress')");
+    const currentCount = parseInt(countRes.rows[0].count);
+    if (currentCount >= parseInt(settings.max_open_tickets)) {
+        return res.status(429).json({
+            error: 'System at Capacity',
+            message: `Our current support queue is full(max ${settings.max_open_tickets} active requests).Please check our FAQ or try again later.`
         });
     }
+}
+
+// 4. Resource Filter (File size & type)
+if (req.files && req.files.length > 0 && settings.resource_limits) {
+    const limits = settings.resource_limits;
+
+    for (const file of req.files) {
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > limits.max_size_mb) {
+            return res.status(400).json({ error: 'File too large', message: `One of your attachments exceeds the maximum allowed size of ${limits.max_size_mb} MB.` });
+        }
+
+        if (limits.allowed_types && !limits.allowed_types.includes(file.mimetype)) {
+            return res.status(400).json({ error: 'Unsupported file type', message: `Only the following formats are allowed: ${limits.allowed_types.join(', ')}` });
+        }
+    }
+}
+
+// 5. AI Auto-Prioritization (Simulated)
+let finalPriority = priority || 'Medium';
+if (!priority) {
+    const sensitivity = parseFloat(settings.ai_sensitivity || 0.7);
+    const urgentKeywords = ['urgent', 'emergency', 'broken', 'cannot', 'blocked', 'fail', 'error'];
+    const content = `${subject} ${description} `.toLowerCase();
+    const keywordScore = urgentKeywords.filter(k => content.includes(k)).length;
+
+    // Higher sensitivity or more keywords increases chance of Urgent/High
+    if (keywordScore * sensitivity >= 1.5) {
+        finalPriority = 'Urgent';
+    } else if (keywordScore * sensitivity >= 0.8) {
+        finalPriority = 'High';
+    }
+}
+
+const getSLADeadline = (prio) => {
+    let hours = prio === 'Urgent' ? 4 : prio === 'High' ? 24 : prio === 'Low' ? 72 : 48;
+
+    // Peak Mode: Double SLA hours
+    if (settings.sla_peak_mode === true || settings.sla_peak_mode === 'true') {
+        hours *= 2;
+    }
+
+    const deadline = new Date();
+    deadline.setHours(deadline.getHours() + hours);
+    return deadline;
+};
+
+const sla_deadline = getSLADeadline(finalPriority);
+
+const result = await pool.query(
+    'INSERT INTO tickets (full_name, email, student_id, phone_number, subject, description, type, priority, user_id, sla_deadline, attachment_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+    [finalFullName, finalEmail, finalStudentId, finalPhoneNumber, subject, description, type, finalPriority, user_id, sla_deadline, attachment_url]
+);
+
+// SMS Notification for new ticket
+if (settings.sms_notifications_enabled && finalPhoneNumber) {
+    const smsMessage = `Hi ${finalFullName}, your UCC Helpdesk ticket (#${result.rows[0].id.substring(0, 8)}) has been received. Subject: ${subject}. We'll resolve it soon!`;
+    sendSMS(finalPhoneNumber, smsMessage);
+}
+
+// Email Notification for new ticket
+sendTicketConfirmationEmail(finalEmail, result.rows[0]);
+
+res.json(result.rows[0]);
+    } catch (err) {
+    console.error('Ticket creation error:', err);
+    res.status(500).json({
+        error: 'Ticket creation failed',
+        message: err.message,
+        detail: err.detail
+    });
+}
 });
 
 app.put('/api/tickets/:id', authenticateToken, async (req, res) => {
@@ -1482,6 +1490,24 @@ app.get('/api/public/settings', async (req, res) => {
         res.json(settings);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+});
+
+app.get('/api/system/health', async (req, res) => {
+    try {
+        const ticketCount = await pool.query('SELECT COUNT(*) FROM tickets');
+        const userCount = await pool.query('SELECT COUNT(*) FROM users');
+        res.json({
+            status: 'ok',
+            database: 'connected',
+            counts: {
+                tickets: parseInt(ticketCount.rows[0].count),
+                users: parseInt(userCount.rows[0].count)
+            },
+            time: new Date().toISOString()
+        });
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
     }
 });
 

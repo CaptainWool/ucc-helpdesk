@@ -36,7 +36,12 @@ const StudentDashboard: React.FC = () => {
     const [updatingProfile, setUpdatingProfile] = useState(false);
 
     // Fetch tickets using React Query
-    const { data: tickets = [], isLoading: ticketsLoading } = useTickets({
+    const {
+        data: tickets = [],
+        isLoading: ticketsLoading,
+        isError: ticketsError,
+        error: apiError
+    } = useTickets({
         user: profile || user,
         role: 'student', // Explicitly specify student role to ensure correct query key
         enabled: !!user,
@@ -300,7 +305,16 @@ const StudentDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {ticketsLoading ? (
+                    {ticketsError ? (
+                        <div className="empty-state error-state">
+                            <AlertCircle size={48} color="var(--danger)" />
+                            <p>Failed to load your tickets</p>
+                            <span className="error-message">{String(apiError?.message || apiError || 'Unknown connection error')}</span>
+                            <Button variant="outline" size="sm" onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+                                Try Again
+                            </Button>
+                        </div>
+                    ) : ticketsLoading ? (
                         <div className="empty-state">
                             <Clock className="animate-spin" size={48} />
                             <p>Loading your tickets...</p>
