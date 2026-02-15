@@ -12,7 +12,11 @@ import {
     ChevronLeft,
     Mic,
     Video,
-    Lightbulb
+    Lightbulb,
+    User as UserIcon,
+    Mail,
+    Phone,
+    CreditCard
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -33,6 +37,10 @@ const SubmitTicket: React.FC = () => {
     const { data: faqs = [] } = useFAQs();
 
     const [formData, setFormData] = useState({
+        fullName: profile?.full_name || user?.full_name || '',
+        studentId: profile?.student_id || user?.student_id || '',
+        email: profile?.email || user?.email || '',
+        phoneNumber: profile?.phone_number || user?.phone_number || '',
         subject: '',
         type: 'General Inquiry',
         priority: 'Medium',
@@ -62,7 +70,18 @@ const SubmitTicket: React.FC = () => {
         'Technical Support'
     ];
 
-    const displayUser = profile || user;
+    // Effect to update formData when profile loads
+    useEffect(() => {
+        if (profile || user) {
+            setFormData(prev => ({
+                ...prev,
+                fullName: profile?.full_name || user?.full_name || prev.fullName,
+                studentId: profile?.student_id || user?.student_id || prev.studentId,
+                email: profile?.email || user?.email || prev.email,
+                phoneNumber: profile?.phone_number || user?.phone_number || prev.phoneNumber
+            }));
+        }
+    }, [profile, user]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -143,14 +162,6 @@ const SubmitTicket: React.FC = () => {
         }));
     };
 
-    const handleAudioRecordingComplete = (blob: Blob) => {
-        setAudioBlob(blob);
-        setShowVoiceRecorder(false);
-        const audioFile = new File([blob], `voice-note-${Date.now()}.webm`, { type: 'audio/webm' });
-        setAttachments(prev => [...prev, audioFile]);
-        showSuccess('Voice note attached successfully');
-    };
-
     const handleVideoRecordingComplete = (blob: Blob) => {
         setVideoBlob(blob);
         setShowVideoRecorder(false);
@@ -169,9 +180,10 @@ const SubmitTicket: React.FC = () => {
 
         try {
             const ticketData = new FormData();
-            ticketData.append('student_id', displayUser?.student_id || displayUser?.id || '');
-            ticketData.append('full_name', displayUser?.full_name || '');
-            ticketData.append('email', displayUser?.email || '');
+            ticketData.append('student_id', formData.studentId);
+            ticketData.append('full_name', formData.fullName);
+            ticketData.append('email', formData.email);
+            ticketData.append('phone_number', formData.phoneNumber);
             ticketData.append('subject', formData.subject);
             ticketData.append('type', formData.type);
             ticketData.append('priority', formData.priority);
@@ -204,7 +216,78 @@ const SubmitTicket: React.FC = () => {
                     <Card className="form-card">
                         <form onSubmit={handleSubmit}>
                             <div className="form-section">
-                                <h3 className="section-title"><Info size={18} /> Basic Information</h3>
+                                <h3 className="section-title"><UserIcon size={18} /> Student Information</h3>
+                                <div className="form-row">
+                                    <div className="form-group half">
+                                        <label htmlFor="fullName">Full Name</label>
+                                        <div className="input-with-icon">
+                                            <UserIcon size={16} className="input-icon" />
+                                            <input
+                                                type="text"
+                                                id="fullName"
+                                                name="fullName"
+                                                value={formData.fullName}
+                                                onChange={handleInputChange}
+                                                className="form-input with-icon"
+                                                placeholder="Enter full name"
+                                                required // Assuming name is required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group half">
+                                        <label htmlFor="studentId">Student ID</label>
+                                        <div className="input-with-icon">
+                                            <CreditCard size={16} className="input-icon" />
+                                            <input
+                                                type="text"
+                                                id="studentId"
+                                                name="studentId"
+                                                value={formData.studentId}
+                                                onChange={handleInputChange}
+                                                className="form-input with-icon"
+                                                placeholder="Enter ID"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="form-row">
+                                    <div className="form-group half">
+                                        <label htmlFor="email">Email Address</label>
+                                        <div className="input-with-icon">
+                                            <Mail size={16} className="input-icon" />
+                                            <input
+                                                type="email"
+                                                id="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                className="form-input with-icon"
+                                                placeholder="Enter email"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group half">
+                                        <label htmlFor="phoneNumber">Phone Number</label>
+                                        <div className="input-with-icon">
+                                            <Phone size={16} className="input-icon" />
+                                            <input
+                                                type="tel"
+                                                id="phoneNumber"
+                                                name="phoneNumber"
+                                                value={formData.phoneNumber}
+                                                onChange={handleInputChange}
+                                                className="form-input with-icon"
+                                                placeholder="Enter number"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="section-title"><Info size={18} /> Ticket Details</h3>
 
                                 {/* AI Deflection Box */}
                                 {isSearchingSuggestions && (
