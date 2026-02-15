@@ -11,21 +11,39 @@ import Layout from '@/components/layout/Layout';
 import Loader from '@/components/common/Loader';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
+// Utility to retry lazy imports (fixes ChunkLoadError after deployments)
+const lazyRetry = (componentImport: any) => {
+    return lazy(async () => {
+        try {
+            return await componentImport();
+        } catch (error) {
+            console.error('Chunk load failed:', error);
+            const hasRefreshed = window.sessionStorage.getItem('chunk-load-retry-refreshed');
+            if (!hasRefreshed) {
+                window.sessionStorage.setItem('chunk-load-retry-refreshed', 'true');
+                window.location.reload();
+                return { default: () => null } as any;
+            }
+            throw error;
+        }
+    });
+};
+
 // Lazy load pages for better performance
-const StudentLogin = lazy(() => import('@/pages/StudentLogin'));
-const AdminLogin = lazy(() => import('@/pages/AdminLogin'));
-const StudentDashboard = lazy(() => import('@/pages/StudentDashboard'));
-const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
-const SubmitTicket = lazy(() => import('@/pages/SubmitTicket'));
-const TrackTicket = lazy(() => import('@/pages/TrackTicket'));
-const FAQ = lazy(() => import('@/pages/FAQ'));
-const Forbidden = lazy(() => import('@/pages/Forbidden'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const StudentSignUp = lazy(() => import('@/pages/StudentSignUp'));
-const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
-const Home = lazy(() => import('@/pages/Home'));
+const StudentLogin = lazyRetry(() => import('@/pages/StudentLogin'));
+const AdminLogin = lazyRetry(() => import('@/pages/AdminLogin'));
+const StudentDashboard = lazyRetry(() => import('@/pages/StudentDashboard'));
+const AdminDashboard = lazyRetry(() => import('@/pages/AdminDashboard'));
+const SubmitTicket = lazyRetry(() => import('@/pages/SubmitTicket'));
+const TrackTicket = lazyRetry(() => import('@/pages/TrackTicket'));
+const FAQ = lazyRetry(() => import('@/pages/FAQ'));
+const Forbidden = lazyRetry(() => import('@/pages/Forbidden'));
+const NotFound = lazyRetry(() => import('@/pages/NotFound'));
+const TermsOfService = lazyRetry(() => import('@/pages/TermsOfService'));
+const PrivacyPolicy = lazyRetry(() => import('@/pages/PrivacyPolicy'));
+const StudentSignUp = lazyRetry(() => import('@/pages/StudentSignUp'));
+const ForgotPassword = lazyRetry(() => import('@/pages/ForgotPassword'));
+const Home = lazyRetry(() => import('@/pages/Home'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
