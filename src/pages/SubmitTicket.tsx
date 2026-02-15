@@ -1,5 +1,5 @@
 import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
     Send,
     AlertCircle,
@@ -16,7 +16,9 @@ import {
     User as UserIcon,
     Mail,
     Phone,
-    CreditCard
+    CreditCard,
+    HelpCircle,
+    ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -490,13 +492,12 @@ const SubmitTicket: React.FC = () => {
                 </div>
 
                 <aside className="submit-sidebar">
-                    <Card className="tips-card">
-                        <h3><CheckCircle2 size={18} /> Quick Tips</h3>
-                        <ul>
-                            <li>Include your student ID if it's related to portal access.</li>
-                            <li>Upload screenshots of errors for faster resolution.</li>
-                            <li>A clear subject line helps agents prioritize your request.</li>
-                        </ul>
+                    <Card className="faq-prompt-card">
+                        <h3><HelpCircle size={20} /> Need Immediate Help?</h3>
+                        <p>Check our Knowledge Base for answers to common questions regarding portals, fees, and more.</p>
+                        <Link to="/faq" className="faq-link-btn">
+                            Visit FAQ Page <ArrowRight size={16} />
+                        </Link>
                     </Card>
 
                     <Card className="info-card suggestion-highlight">

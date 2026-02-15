@@ -124,11 +124,12 @@
     border-top: 1px solid #f1f5f9;
 }
 
-/* Sidebar Tips */
-.tips-card {
+/* Sidebar FAQ Prompt */
+.faq-prompt-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 2rem;
+    padding: 2rem;
     position: sticky;
     top: 6rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
@@ -140,41 +141,45 @@
     gap: 1.5rem;
 }
 
-.tips-card h3 {
+.faq-prompt-card h3 {
     color: var(--text-main);
     font-weight: 800;
     font-size: 1.1rem;
-    margin-bottom: 1rem;
-}
-
-.tip-icon {
-    color: var(--primary);
-    margin-right: 0.5rem;
-    vertical-align: text-bottom;
-}
-
-.tips-list {
-    margin-top: 1rem;
-    padding-left: 1.25rem;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1.6;
-}
-
-.tips-list li {
     margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.tips-list a {
+.faq-prompt-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.faq-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     color: var(--primary);
-    text-decoration: none;
+    border: 1px solid #bfdbfe;
+    border-radius: 1rem;
     font-weight: 600;
-    border-bottom: 1px solid transparent;
-    transition: border-color 0.2s;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.tips-list a:hover {
-    border-bottom-color: var(--primary);
+.faq-link-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 /* Success State */
