@@ -13,7 +13,7 @@ const StudentLogin: React.FC = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { signIn, signOut, studentLogin, user, loading: authLoading } = useAuth();
+    const { signIn, signOut, user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -30,12 +30,7 @@ const StudentLogin: React.FC = () => {
         setError('');
         setLoading(true);
 
-        // Master Student Bypass
-        if (email === 'student@ucc.edu.gh' && password === 'israel_student') {
-            studentLogin();
-            navigate('/dashboard', { replace: true });
-            return;
-        }
+
 
         try {
             const { data, error: loginError } = await signIn({ email, password });

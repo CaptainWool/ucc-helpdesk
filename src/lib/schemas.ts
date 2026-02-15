@@ -61,7 +61,8 @@ export const TicketSchema = z.object({
         email: z.boolean().default(true),
         sms: z.boolean().default(false),
         whatsapp: z.boolean().default(false)
-    }).optional()
+    }).optional(),
+    attachment_url: z.string().nullable().optional()
 });
 
 export const StatsSchema = z.object({

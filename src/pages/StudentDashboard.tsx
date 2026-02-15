@@ -300,7 +300,12 @@ const StudentDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {filteredTickets.length === 0 ? (
+                    {ticketsLoading ? (
+                        <div className="empty-state">
+                            <Clock className="animate-spin" size={48} />
+                            <p>Loading your tickets...</p>
+                        </div>
+                    ) : filteredTickets.length === 0 ? (
                         <div className="empty-state">
                             <MessageCircle size={48} />
                             <p>No tickets found. Have a concern?</p>

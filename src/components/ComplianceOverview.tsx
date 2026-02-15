@@ -3,17 +3,22 @@ import { Shield, AlertCircle, CheckCircle, Activity, Info } from 'lucide-react';
 import { checkAccessibility, detectDarkPatterns, calculateHealthScore } from '../lib/compliance';
 import Card from './common/Card';
 import './ComplianceOverview.css';
+import { Ticket } from '../types';
 
-const ComplianceOverview = ({ tickets = [] }) => {
+interface ComplianceOverviewProps {
+    tickets: Ticket[];
+}
+
+const ComplianceOverview: React.FC<ComplianceOverviewProps> = ({ tickets = [] }) => {
     const [score, setScore] = useState(100);
-    const [issues, setIssues] = useState([]);
-    const [darkPatternsFound, setDarkPatternsFound] = useState([]);
+    const [issues, setIssues] = useState<any[]>([]);
+    const [darkPatternsFound, setDarkPatternsFound] = useState<any[]>([]);
 
     useEffect(() => {
         // Perform a quick sweep of the current page and recent tickets
         const pageIssues = checkAccessibility(document.body);
 
-        let foundPatterns = [];
+        let foundPatterns: any[] = [];
         tickets.slice(0, 50).forEach(ticket => {
             const p = detectDarkPatterns(ticket.description || '');
             if (p.length > 0) {
@@ -21,13 +26,12 @@ const ComplianceOverview = ({ tickets = [] }) => {
             }
         });
 
-        const allIssues = [...pageIssues];
         setIssues(pageIssues);
         setDarkPatternsFound(foundPatterns);
-        setScore(calculateHealthScore(allIssues));
+        setScore(calculateHealthScore(pageIssues));
     }, [tickets]);
 
-    const getScoreColor = (s) => {
+    const getScoreColor = (s: number) => {
         if (s >= 90) return 'text-green-500';
         if (s >= 70) return 'text-yellow-500';
         return 'text-red-500';
@@ -79,7 +83,7 @@ const ComplianceOverview = ({ tickets = [] }) => {
                         {darkPatternsFound.map((item, idx) => (
                             <div key={idx} className="pattern-item">
                                 <strong>Ticket #{item.ticketId.substring(0, 8)}:</strong>
-                                <span>{item.patterns.map(p => p.name).join(', ')}</span>
+                                <span>{item.patterns.map((p: any) => p.name).join(', ')}</span>
                             </div>
                         ))}
                     </div>

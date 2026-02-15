@@ -20,21 +20,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [originalUser, setOriginalUser] = useState<User | null>(null);
 
     const checkAuth = async () => {
-        if (localStorage.getItem('master_access') === 'true') {
-            const masterUser: any = { role: 'super_admin', email: 'master@ucc.edu.gh', full_name: 'Master Admin', id: 'master-bypass' };
-            setUser(masterUser);
-            setProfile(masterUser);
-            setLoading(false);
-            return;
-        }
 
-        if (localStorage.getItem('student_access') === 'true') {
-            const studentUser: any = { role: 'student', email: 'student@ucc.edu.gh', full_name: 'Test Student', student_id: '10224055', id: 'student-bypass' };
-            setUser(studentUser);
-            setProfile(studentUser);
-            setLoading(false);
-            return;
-        }
 
         try {
             const token = localStorage.getItem('auth_token');
@@ -67,8 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const signOut = async () => {
         localStorage.removeItem('auth_token');
-        localStorage.removeItem('master_access');
-        localStorage.removeItem('student_access');
+
         setUser(null);
         setProfile(null);
         setImpersonating(false);
@@ -149,20 +134,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 };
                 return { data: null, error: normalizedError };
             }
-        },
-        masterLogin: () => {
-            localStorage.setItem('master_access', 'true');
-            const masterUser: any = { role: 'super_admin', email: 'master@ucc.edu.gh', full_name: 'Master Admin', id: 'master-bypass' };
-            setUser(masterUser);
-            setProfile(masterUser);
-            setLoading(false);
-        },
-        studentLogin: () => {
-            localStorage.setItem('student_access', 'true');
-            const studentUser: any = { role: 'student', email: 'student@ucc.edu.gh', full_name: 'Test Student', student_id: '10224055', id: 'student-bypass' };
-            setUser(studentUser);
-            setProfile(studentUser);
-            setLoading(false);
         },
         signOut,
         impersonateUser: async (userId: string) => {

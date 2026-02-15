@@ -1,12 +1,12 @@
 import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
     Send,
     AlertCircle,
     Paperclip,
     X,
     FileText,
-    CheckCircle2,
+    CheckCircle,
     Loader2,
     Info,
     ChevronLeft,
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { useCreateTicket, useFAQs } from '../hooks/useTickets';
+import { useTicket, useCreateTicket, useFAQs } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -61,7 +61,23 @@ const SubmitTicket: React.FC = () => {
     // Feature: AI Deflection
     const [suggestion, setSuggestion] = useState<DeflectionResult | null>(null);
     const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+    const [searchParams] = useSearchParams();
+    const isSuccess = searchParams.get('success') === 'true';
+    const queryTicketId = searchParams.get('ticketId') || '';
+
+    const { data: fetchTicket, isLoading: loadingTicket } = useTicket(queryTicketId, {
+        enabled: isSuccess && !!queryTicketId
+    });
+
     const [isStudentInfoOpen, setIsStudentInfoOpen] = useState(true);
+    const [isSubmittedLocal, setIsSubmittedLocal] = useState(false);
+    const [submittedTicketLocal, setSubmittedTicketLocal] = useState<any>(null);
+
+    const isSubmitted = isSuccess || isSubmittedLocal;
+    const currentTicket = fetchTicket || submittedTicketLocal;
+
+    // Diagnostic logging
+
 
     const categories = [
         'Portal Access',
@@ -186,6 +202,7 @@ const SubmitTicket: React.FC = () => {
         }
 
         try {
+            console.log('Submitting ticket...');
             const ticketData = new FormData();
             ticketData.append('student_id', formData.studentId);
             ticketData.append('full_name', formData.fullName);
@@ -200,13 +217,85 @@ const SubmitTicket: React.FC = () => {
                 ticketData.append('attachments', file);
             });
 
-            await createTicket(ticketData);
-            navigate('/dashboard');
+            const result = await createTicket(ticketData);
+            console.log('Ticket created successfully:', result);
+
+            // Set local state before navigation to ensure immediate UI update
+            setSubmittedTicketLocal(result);
+            setIsSubmittedLocal(true);
+
+            // Navigate to persistent success URL
+            navigate(`/submit-ticket?success=true&ticketId=${result.id}`, { replace: true });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err: any) {
             console.error('Submission failed:', err);
             showError(err.message || 'Failed to submit ticket');
         }
     };
+
+    if (isSubmitted) {
+        // Only show loading if we don't have ANY ticket data yet
+        if (loadingTicket && !currentTicket) {
+            return (
+                <div className="container submit-loading-overlay">
+                    <div className="loading-card">
+                        <Loader2 className="animate-spin" size={48} />
+                        <p>Confirming your submission...</p>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="container submit-success-page fade-in">
+                <Card className="success-display-card">
+                    <div className="success-icon-wrapper">
+                        <CheckCircle size={80} className="success-check-icon" />
+                    </div>
+                    <div className="success-content">
+                        <h2>Ticket Submitted Successfully!</h2>
+                        <p className="success-main-msg">
+                            Your concern has been registered under <strong>Ticket #{currentTicket?.id?.substring(0, 8) || '...'}</strong>.
+                        </p>
+
+                        <div className="notification-alert-box">
+                            <div className="alert-item">
+                                <Mail size={24} />
+                                <span>A confirmation <strong>email</strong> has been sent to <strong>{currentTicket?.email || formData.email}</strong></span>
+                            </div>
+                            {(currentTicket?.phone_number || formData.phoneNumber) && (
+                                <div className="alert-item">
+                                    <Phone size={24} />
+                                    <span>An <strong>SMS</strong> notification has been sent to <strong>{currentTicket?.phone_number || formData.phoneNumber}</strong></span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="success-next-steps">
+                            <p>Our support team normally responds within 24-48 hours. You can track the progress of this ticket anytime from your dashboard.</p>
+                        </div>
+
+                        <div className="success-actions">
+                            <Button
+                                variant="primary"
+                                onClick={() => navigate('/dashboard')}
+                                className="action-btn"
+                            >
+                                Go to Dashboard <ArrowRight size={18} />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate(`/track-ticket?id=${currentTicket?.id}`)}
+                                className="action-btn"
+                            >
+                                View Ticket Details
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="container submit-ticket-page fade-in">
@@ -250,6 +339,7 @@ const SubmitTicket: React.FC = () => {
                                                     onChange={handleInputChange}
                                                     className="form-input with-icon"
                                                     placeholder="Enter full name"
+                                                    readOnly={!!(profile?.full_name || user?.full_name)}
                                                     required
                                                 />
                                             </div>
@@ -266,6 +356,7 @@ const SubmitTicket: React.FC = () => {
                                                     onChange={handleInputChange}
                                                     className="form-input with-icon"
                                                     placeholder="Enter ID"
+                                                    readOnly={!!(profile?.student_id || user?.student_id)}
                                                     required
                                                 />
                                             </div>
@@ -282,6 +373,7 @@ const SubmitTicket: React.FC = () => {
                                                     onChange={handleInputChange}
                                                     className="form-input with-icon"
                                                     placeholder="Enter email"
+                                                    readOnly={!!(profile?.email || user?.email)}
                                                     required
                                                 />
                                             </div>

@@ -29,9 +29,6 @@ const KnowledgeBaseManager = () => {
         setLoading(true);
         try {
             const data = await api.faq.list();
-            // Since the backend might not have the table yet, 
-            // the API mock in lib/api.js will handle errors.
-            // But let's assume we get some data or an empty array.
             setArticles(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching articles:', error);

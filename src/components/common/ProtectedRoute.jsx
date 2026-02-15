@@ -28,10 +28,7 @@ const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) =>
 
     console.log('ProtectedRoute check:', { user: user?.email, profile: profile?.role, requiredRole, adminOnly });
 
-    // MASTER BYPASS: Always allow the master admin email to skip checks
-    if (user?.email === 'master@ucc.edu.gh') {
-        return children;
-    }
+
 
     if (!user) {
         // Redirect them to the /login page, but save the current location they were

@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useTicket, useAddTicketMessage } from '../hooks/useTickets';
+import { BASE_URL } from '../lib/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import './TrackTicket.css';
@@ -186,6 +187,33 @@ const TrackTicket: React.FC = () => {
                             <span className="label">Assigned Agent</span>
                             <span className="value">{ticket.assigned_to_email || 'Unassigned'}</span>
                         </div>
+                        {ticket.attachment_url && (
+                            <div className="detail-item attachments mt-4 pt-4 border-t">
+                                <span className="label block mb-2"><Paperclip size={14} className="inline mr-1" /> Attachments</span>
+                                <div className="attachment-links flex flex-col gap-1">
+                                    {(() => {
+                                        let urls: string[] = [];
+                                        try {
+                                            const parsed = JSON.parse(ticket.attachment_url);
+                                            urls = Array.isArray(parsed) ? parsed : [ticket.attachment_url];
+                                        } catch (e) {
+                                            urls = [ticket.attachment_url];
+                                        }
+                                        return urls.map((url, idx) => (
+                                            <a
+                                                key={idx}
+                                                href={url.startsWith('http') ? url : `${BASE_URL}${url}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary hover:underline text-xs"
+                                            >
+                                                View Attachment {urls.length > 1 ? idx + 1 : ''}
+                                            </a>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
+                        )}
                     </Card>
 
                     {ticket.status === 'Resolved' && (

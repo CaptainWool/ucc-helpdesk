@@ -98,14 +98,32 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     {ticket.attachment_url && (
                         <div className="attachment-section">
                             <h3>Attached Evidence</h3>
-                            <a
-                                href={ticket.attachment_url.startsWith('http') ? ticket.attachment_url : `${BASE_URL}${ticket.attachment_url}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="attachment-link"
-                            >
-                                <Download size={16} /> Download Attachment
-                            </a>
+                            <div className="attachment-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {(() => {
+                                    let urls: string[] = [];
+                                    try {
+                                        // Try parsing as JSON array (for multiple attachments)
+                                        const parsed = JSON.parse(ticket.attachment_url);
+                                        urls = Array.isArray(parsed) ? parsed : [ticket.attachment_url];
+                                    } catch (e) {
+                                        // Legacy: single URL string
+                                        urls = [ticket.attachment_url];
+                                    }
+
+                                    return urls.map((url, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={url.startsWith('http') ? url : `${BASE_URL}${url}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="attachment-link"
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '0.4rem', border: '1px solid #e2e8f0', color: '#2563eb', fontSize: '0.9rem', textDecoration: 'none' }}
+                                        >
+                                            <Download size={14} /> Attachment {urls.length > 1 ? idx + 1 : ''}
+                                        </a>
+                                    ));
+                                })()}
+                            </div>
                         </div>
                     )}
 

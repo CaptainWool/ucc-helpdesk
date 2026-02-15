@@ -45,7 +45,7 @@ const AdminDashboard: React.FC = () => {
     const queryClient = useQueryClient();
 
     // Fetch tickets with React Query
-    const { data: tickets = [] } = useTickets({
+    const { data: tickets = [], isLoading: ticketsLoading } = useTickets({
         user: profile,
         refetchInterval: 30000
     });
@@ -57,7 +57,7 @@ const AdminDashboard: React.FC = () => {
 
     // Mutations
     const { resolveTicket } = useResolveTicket();
-    const { deleteTicket } = useDeleteTicket();
+    const { mutateAsync: deleteTicket } = useDeleteTicket();
     const { assignTicket } = useAssignTicket();
     const { mutateAsync: updateTicket } = useUpdateTicket();
 
@@ -223,7 +223,7 @@ const AdminDashboard: React.FC = () => {
 
     return (
         <div className="dashboard-layout fade-in">
-            {showTour && <OnboardingTour role="admin" onComplete={() => setShowTour(false)} />}
+            {showTour && <OnboardingTour role={profile?.role === 'super_admin' ? 'super_admin' : 'agent'} onComplete={() => setShowTour(false)} />}
 
             <header className="admin-top-bar">
                 <div className="top-bar-left">
@@ -349,6 +349,7 @@ const AdminDashboard: React.FC = () => {
                     {activeTab === 'tickets' && (
                         <TicketsView
                             tickets={filteredTickets}
+                            isLoading={ticketsLoading}
                             searchTerm={searchTerm}
                             setSearchTerm={setSearchTerm}
                             filter={filter}

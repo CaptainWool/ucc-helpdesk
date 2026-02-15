@@ -13,7 +13,7 @@ const AdminLogin: React.FC = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { signIn, signOut, masterLogin, user, loading: authLoading } = useAuth();
+    const { signIn, signOut, user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -30,12 +30,7 @@ const AdminLogin: React.FC = () => {
         setError('');
         setLoading(true);
 
-        // MASTER BYPASS: Immediate login for master admin
-        if (email.toLowerCase() === 'master@ucc.edu.gh' && password === 'israel_chelsea') {
-            masterLogin();
-            navigate('/admin', { replace: true });
-            return;
-        }
+
 
         try {
             const { data, error: loginError } = await signIn({ email, password });

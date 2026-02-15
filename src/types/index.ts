@@ -18,8 +18,6 @@ export interface AuthContextType {
     impersonating: boolean;
     signUp: (data: any) => Promise<{ data: any; error: any }>;
     signIn: (credentials: { email: string; password: string }) => Promise<{ data: any; error: any }>;
-    masterLogin: () => void;
-    studentLogin: () => void;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
     impersonateUser: (userId: string) => Promise<void>;

@@ -6,6 +6,7 @@ import { Ticket, User } from '../../types';
 
 interface TicketsViewProps {
     tickets: Ticket[];
+    isLoading?: boolean;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
     filter: string;
@@ -28,6 +29,7 @@ interface TicketsViewProps {
 
 const TicketsView: React.FC<TicketsViewProps> = ({
     tickets,
+    isLoading,
     searchTerm,
     setSearchTerm,
     filter,
@@ -120,7 +122,16 @@ const TicketsView: React.FC<TicketsViewProps> = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {tickets.length > 0 ? (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={8} className="empty-table py-20 text-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Search className="animate-spin text-primary opacity-50" size={32} />
+                                            <p className="text-gray-500 font-medium">Fetching active tickets...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : tickets.length > 0 ? (
                                 tickets.map(ticket => {
                                     const sla = getSLAStatus(ticket.sla_deadline, ticket.status);
                                     const text = sla.label;
