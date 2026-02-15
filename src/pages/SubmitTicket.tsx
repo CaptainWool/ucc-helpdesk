@@ -9,7 +9,9 @@ import {
     CheckCircle2,
     Loader2,
     Info,
-    ChevronLeft
+    ChevronLeft,
+    Mic,
+    Video
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -17,6 +19,8 @@ import { useCreateTicket } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
+import VoiceRecorder from '../components/common/VoiceRecorder';
+import VideoRecorder from '../components/common/VideoRecorder';
 import './SubmitTicket.css';
 
 const SubmitTicket: React.FC = () => {
@@ -34,6 +38,10 @@ const SubmitTicket: React.FC = () => {
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [dragActive, setDragActive] = useState(false);
+    const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+    const [showVideoRecorder, setShowVideoRecorder] = useState(false);
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
 
     const categories = [
         'Portal Access',
@@ -92,6 +100,29 @@ const SubmitTicket: React.FC = () => {
         if (e.dataTransfer.files) {
             addFiles(Array.from(e.dataTransfer.files));
         }
+    };
+
+    const handleVoiceTranscript = (transcript: string) => {
+        setFormData(prev => ({
+            ...prev,
+            description: prev.description + (prev.description ? ' ' : '') + transcript
+        }));
+    };
+
+    const handleAudioRecordingComplete = (blob: Blob) => {
+        setAudioBlob(blob);
+        setShowVoiceRecorder(false);
+        const audioFile = new File([blob], `voice-note-${Date.now()}.webm`, { type: 'audio/webm' });
+        setAttachments(prev => [...prev, audioFile]);
+        showSuccess('Voice note attached successfully');
+    };
+
+    const handleVideoRecordingComplete = (blob: Blob) => {
+        setVideoBlob(blob);
+        setShowVideoRecorder(false);
+        const videoFile = new File([blob], `screen-recording-${Date.now()}.webm`, { type: 'video/webm' });
+        setAttachments(prev => [...prev, videoFile]);
+        showSuccess('Screen recording attached successfully');
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -202,6 +233,37 @@ const SubmitTicket: React.FC = () => {
                                         className="form-textarea"
                                     ></textarea>
                                 </div>
+
+                                {/* Voice & Video Recording Options */}
+                                <div className="recording-options">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
+                                        className="option-btn"
+                                    >
+                                        <Mic size={16} /> {showVoiceRecorder ? 'Hide' : 'Add'} Voice Note
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowVideoRecorder(true)}
+                                        className="option-btn"
+                                    >
+                                        <Video size={16} /> Record Screen Issue
+                                    </Button>
+                                </div>
+
+                                {showVoiceRecorder && (
+                                    <div className="recorder-container">
+                                        <VoiceRecorder onTranscriptUpdate={handleVoiceTranscript} />
+                                        <p className="recorder-hint">
+                                            <Info size={14} /> Speak clearly to describe your issue. The transcript will be added to your description automatically.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="form-section">
@@ -278,6 +340,14 @@ const SubmitTicket: React.FC = () => {
                     </Card>
                 </aside>
             </div>
+
+            {/* Video Recorder Modal */}
+            {showVideoRecorder && (
+                <VideoRecorder
+                    onRecordingComplete={handleVideoRecordingComplete}
+                    onCancel={() => setShowVideoRecorder(false)}
+                />
+            )}
         </div>
     );
 };
