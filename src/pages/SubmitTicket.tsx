@@ -492,12 +492,14 @@ const SubmitTicket: React.FC = () => {
                 </div>
 
                 <aside className="submit-sidebar">
-                    <Card className="faq-prompt-card">
-                        <h3><HelpCircle size={20} /> Need Immediate Help?</h3>
-                        <p>Check our Knowledge Base for answers to common questions regarding portals, fees, and more.</p>
-                        <Link to="/faq" className="faq-link-btn">
-                            Visit FAQ Page <ArrowRight size={16} />
-                        </Link>
+                    <Card className="tips-card">
+                        <h3><AlertCircle size={20} className="tip-icon" /> Before you submit</h3>
+                        <ul className="tips-list">
+                            <li>Check the <Link to="/faq">FAQ section</Link> first.</li>
+                            <li>For fee issues, have your receipt number ready.</li>
+                            <li>Use your official student email if possible.</li>
+                            <li>Screenshots can be emailed after initial contact.</li>
+                        </ul>
                     </Card>
 
                     <Card className="info-card suggestion-highlight">
