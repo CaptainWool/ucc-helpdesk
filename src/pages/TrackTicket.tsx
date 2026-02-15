@@ -18,7 +18,6 @@ import { useToast } from '../contexts/ToastContext';
 import { useTicket, useAddTicketMessage } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import LiveChat from '../components/common/LiveChat';
 import './TrackTicket.css';
 
 const TrackTicket: React.FC = () => {
@@ -30,14 +29,10 @@ const TrackTicket: React.FC = () => {
 
     const [message, setMessage] = useState('');
     const [isInternal, setIsInternal] = useState(false);
-    const [showLiveChat, setShowLiveChat] = useState(false);
-
-    const isUrgent = ticket?.priority === 'Urgent';
-    const displayUser = profile || user;
 
     const { data: ticket, isLoading, error } = useTicket(ticketId, {
         enabled: !!ticketId,
-        refetchInterval: isUrgent ? 5000 : 15000 // Faster refresh for urgent tickets
+        refetchInterval: 15000 // Refresh every 15s for active tracking
     });
 
     const { mutateAsync: addMessage, isPending: sending } = useAddTicketMessage();
@@ -86,6 +81,8 @@ const TrackTicket: React.FC = () => {
         );
     }
 
+    const displayUser = profile || user;
+
     return (
         <div className="container track-ticket-page fade-in">
             <header className="page-header">
@@ -109,94 +106,69 @@ const TrackTicket: React.FC = () => {
                 </div>
             </header>
 
-            {/* Live Chat Banner for Urgent Tickets */}
-            {isUrgent && (
-                <div className="live-chat-banner">
-                    <div className="banner-content">
-                        <div className="banner-icon">
-                            <MessageCircle size={24} className="pulsing-icon" />
-                        </div>
-                        <div className="banner-text">
-                            <h4>⚡ Urgent Ticket Detected</h4>
-                            <p>Get instant help with live chat. Connect with an agent in real-time!</p>
-                        </div>
-                    </div>
-                    <Button
-                        onClick={() => setShowLiveChat(!showLiveChat)}
-                        className="toggle-live-chat-btn"
-                    >
-                        {showLiveChat ? 'Hide Live Chat' : 'Start Live Chat'}
-                    </Button>
-                </div>
-            )}
-
             <div className="track-grid">
                 <div className="chat-container">
-                    {isUrgent && showLiveChat ? (
-                        <LiveChat ticket={ticket} />
-                    ) : (
-                        <Card className="chat-card">
-                            <div className="chat-history">
-                                <div className="message-item system-message">
-                                    <div className="message-header">
-                                        <Clock size={14} />
-                                        <span>Ticket Created</span>
-                                        <span>{new Date(ticket.created_at).toLocaleString()}</span>
-                                    </div>
-                                    <div className="message-content">
-                                        <p>Initial Description: {ticket.description}</p>
-                                    </div>
+                    <Card className="chat-card">
+                        <div className="chat-history">
+                            <div className="message-item system-message">
+                                <div className="message-header">
+                                    <Clock size={14} />
+                                    <span>Ticket Created</span>
+                                    <span>{new Date(ticket.created_at).toLocaleString()}</span>
                                 </div>
-
-                                {ticket.messages?.map((msg: any, idx: number) => (
-                                    <div key={idx} className={`message-item ${msg.sender_email === user?.email ? 'sent' : 'received'} ${msg.is_internal ? 'internal' : ''}`}>
-                                        <div className="message-header">
-                                            {msg.is_internal && <Shield size={12} />}
-                                            <span className="sender">{msg.sender_name || msg.sender_email}</span>
-                                            <span className="time">{new Date(msg.created_at).toLocaleString()}</span>
-                                        </div>
-                                        <div className="message-content">
-                                            <p>{msg.message}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                <div className="message-content">
+                                    <p>Initial Description: {ticket.description}</p>
+                                </div>
                             </div>
 
-                            {ticket.status !== 'Resolved' && (
-                                <form onSubmit={handleSendMessage} className="message-input-form">
-                                    {(profile?.role === 'agent' || profile?.role === 'super_admin') && (
-                                        <div className="internal-toggle">
-                                            <label>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isInternal}
-                                                    onChange={(e) => setIsInternal(e.target.checked)}
-                                                />
-                                                Internal Note (Student won't see this)
-                                            </label>
-                                        </div>
-                                    )}
-                                    <div className="input-wrapper">
-                                        <textarea
-                                            placeholder="Type your message here..."
-                                            value={message}
-                                            onChange={(e) => setMessage(e.target.value)}
-                                            rows={3}
-                                        ></textarea>
-                                        <div className="input-actions">
-                                            <Button
-                                                type="submit"
-                                                disabled={sending || !message.trim()}
-                                                className="send-btn"
-                                            >
-                                                {sending ? <Loader size={16} /> : <><Send size={16} /> Send</>}
-                                            </Button>
-                                        </div>
+                            {ticket.messages?.map((msg: any, idx: number) => (
+                                <div key={idx} className={`message-item ${msg.sender_email === user?.email ? 'sent' : 'received'} ${msg.is_internal ? 'internal' : ''}`}>
+                                    <div className="message-header">
+                                        {msg.is_internal && <Shield size={12} />}
+                                        <span className="sender">{msg.sender_name || msg.sender_email}</span>
+                                        <span className="time">{new Date(msg.created_at).toLocaleString()}</span>
                                     </div>
-                                </form>
-                            )}
-                        </Card>
-                    )}
+                                    <div className="message-content">
+                                        <p>{msg.message}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {ticket.status !== 'Resolved' && (
+                            <form onSubmit={handleSendMessage} className="message-input-form">
+                                {(profile?.role === 'agent' || profile?.role === 'super_admin') && (
+                                    <div className="internal-toggle">
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={isInternal}
+                                                onChange={(e) => setIsInternal(e.target.checked)}
+                                            />
+                                            Internal Note (Student won't see this)
+                                        </label>
+                                    </div>
+                                )}
+                                <div className="input-wrapper">
+                                    <textarea
+                                        placeholder="Type your message here..."
+                                        value={message}
+                                        onChange={(e) => setMessage(e.target.value)}
+                                        rows={3}
+                                    ></textarea>
+                                    <div className="input-actions">
+                                        <Button
+                                            type="submit"
+                                            disabled={sending || !message.trim()}
+                                            className="send-btn"
+                                        >
+                                            {sending ? <Loader size={16} /> : <><Send size={16} /> Send</>}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
+                        )}
+                    </Card>
                 </div>
 
                 <aside className="ticket-sidebar">

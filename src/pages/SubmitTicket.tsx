@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
+import React, { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Send,
@@ -9,29 +9,15 @@ import {
     CheckCircle2,
     Loader2,
     Info,
-    ChevronLeft,
-    Sparkles,
-    Lightbulb
+    ChevronLeft
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useCreateTicket } from '../hooks/useTickets';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { findDeflectionAI, DeflectionResult } from '../lib/ai';
-import { api } from '../lib/api';
-import { FAQ } from '../types';
+import Input from '../components/common/Input';
 import './SubmitTicket.css';
-
-const categories = [
-    'Portal Access',
-    'Fee Payment/Financial',
-    'Course Registration',
-    'Academic Records',
-    'Examination Issues',
-    'General Inquiry',
-    'Technical Support'
-];
 
 const SubmitTicket: React.FC = () => {
     const navigate = useNavigate();
@@ -48,41 +34,16 @@ const SubmitTicket: React.FC = () => {
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [dragActive, setDragActive] = useState(false);
-    const [suggestion, setSuggestion] = useState<DeflectionResult | null>(null);
-    const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
-    const [faqs, setFaqs] = useState<FAQ[]>([]);
 
-    useEffect(() => {
-        const fetchFaqs = async () => {
-            try {
-                const data = await api.faq.list();
-                setFaqs(data);
-            } catch (err) {
-                console.error('Failed to fetch FAQs:', err);
-            }
-        };
-        fetchFaqs();
-    }, []);
-
-    useEffect(() => {
-        const timeoutId = setTimeout(async () => {
-            if (formData.subject.length > 5 && faqs.length > 0) {
-                setIsSearchingSuggestions(true);
-                try {
-                    const result = await findDeflectionAI(formData.subject, faqs);
-                    setSuggestion(result);
-                } catch (err) {
-                    console.error('Failed to find deflection:', err);
-                } finally {
-                    setIsSearchingSuggestions(false);
-                }
-            } else {
-                setSuggestion(null);
-            }
-        }, 600);
-
-        return () => clearTimeout(timeoutId);
-    }, [formData.subject, faqs]);
+    const categories = [
+        'Portal Access',
+        'Fee Payment/Financial',
+        'Course Registration',
+        'Academic Records',
+        'Examination Issues',
+        'General Inquiry',
+        'Technical Support'
+    ];
 
     const displayUser = profile || user;
 
@@ -156,7 +117,6 @@ const SubmitTicket: React.FC = () => {
             });
 
             await createTicket(ticketData);
-            showSuccess('Ticket submitted successfully!');
             navigate('/dashboard');
         } catch (err: any) {
             console.error('Submission failed:', err);
@@ -182,48 +142,17 @@ const SubmitTicket: React.FC = () => {
                                 <h3 className="section-title"><Info size={18} /> Basic Information</h3>
                                 <div className="form-group">
                                     <label htmlFor="subject">Subject *</label>
-                                    <div className="subject-input-wrapper">
-                                        <input
-                                            type="text"
-                                            id="subject"
-                                            name="subject"
-                                            placeholder="What is the issue about? (e.g., Cannot access portal)"
-                                            value={formData.subject}
-                                            onChange={handleInputChange}
-                                            required
-                                            className="form-input"
-                                        />
-                                        {isSearchingSuggestions && (
-                                            <div className="searching-spinner">
-                                                <Loader2 className="animate-spin" size={16} />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <input
+                                        type="text"
+                                        id="subject"
+                                        name="subject"
+                                        placeholder="What is the issue about? (e.g., Cannot access portal)"
+                                        value={formData.subject}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="form-input"
+                                    />
                                 </div>
-
-                                {suggestion && (
-                                    <div className="ai-suggestion-card fade-in">
-                                        <div className="suggestion-header">
-                                            <Sparkles size={16} className="sparkle-icon" />
-                                            <span>Instant AI Solution Found</span>
-                                        </div>
-                                        <div className="suggestion-body">
-                                            <h4>{suggestion.question}</h4>
-                                            <p>{suggestion.answer}</p>
-                                        </div>
-                                        <div className="suggestion-footer">
-                                            <p>Does this resolve your issue?</p>
-                                            <div className="suggestion-actions">
-                                                <Button size="sm" variant="outline" onClick={() => navigate('/faq')}>
-                                                    View Full FAQ
-                                                </Button>
-                                                <Button size="sm" onClick={() => setSuggestion(null)}>
-                                                    Still need help
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
 
                                 <div className="form-row">
                                     <div className="form-group half">
@@ -340,11 +269,6 @@ const SubmitTicket: React.FC = () => {
                             <li>Upload screenshots of errors for faster resolution.</li>
                             <li>A clear subject line helps agents prioritize your request.</li>
                         </ul>
-                    </Card>
-
-                    <Card className="info-card suggestion-highlight">
-                        <h3><Lightbulb size={18} /> Did you know?</h3>
-                        <p>Our AI analyzes your subject in real-time to suggest instant fixes from our FAQ database.</p>
                     </Card>
 
                     <Card className="info-card">
