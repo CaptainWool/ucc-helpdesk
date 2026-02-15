@@ -43,6 +43,7 @@ const TermsOfService = lazyRetry(() => import('@/pages/TermsOfService'));
 const PrivacyPolicy = lazyRetry(() => import('@/pages/PrivacyPolicy'));
 const StudentSignUp = lazyRetry(() => import('@/pages/StudentSignUp'));
 const ForgotPassword = lazyRetry(() => import('@/pages/ForgotPassword'));
+const AdminSignUp = lazyRetry(() => import('@/pages/AdminSignUp'));
 const Home = lazyRetry(() => import('@/pages/Home'));
 
 const queryClient = new QueryClient({
@@ -118,6 +119,11 @@ const App: React.FC = () => {
                                                 <Route path="/admin" element={
                                                     <ProtectedRoute roles={['agent', 'super_admin']}>
                                                         <AdminDashboard />
+                                                    </ProtectedRoute>
+                                                } />
+                                                <Route path="/admin-signup" element={
+                                                    <ProtectedRoute roles={['super_admin']}>
+                                                        <AdminSignUp />
                                                     </ProtectedRoute>
                                                 } />
 
