@@ -1103,9 +1103,15 @@ app.get('/api/tickets/:id', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment')], async (req, res) => {
+app.post('/api/tickets', [authenticateToken, uploadAttachment.array('attachments', 10)], async (req, res) => {
     const { full_name, email, student_id, phone_number, subject, description, type, priority } = req.body;
-    const attachment_url = req.file ? `/ uploads / attachments / ${req.file.filename} ` : null;
+
+    let attachment_url = null;
+    if (req.files && req.files.length > 0) {
+        // Store as JSON array string to handle multiple files
+        const paths = req.files.map(f => `/uploads/attachments/${f.filename}`);
+        attachment_url = JSON.stringify(paths);
+    }
 
     try {
         const user_id = req.user?.id;
@@ -1152,16 +1158,18 @@ app.post('/api/tickets', [authenticateToken, uploadAttachment.single('attachment
         }
 
         // 4. Resource Filter (File size & type)
-        if (req.file && settings.resource_limits) {
+        if (req.files && req.files.length > 0 && settings.resource_limits) {
             const limits = settings.resource_limits;
-            const sizeMB = req.file.size / (1024 * 1024);
 
-            if (sizeMB > limits.max_size_mb) {
-                return res.status(400).json({ error: 'File too large', message: `The attachment exceeds the maximum allowed size of ${limits.max_size_mb} MB.` });
-            }
+            for (const file of req.files) {
+                const sizeMB = file.size / (1024 * 1024);
+                if (sizeMB > limits.max_size_mb) {
+                    return res.status(400).json({ error: 'File too large', message: `One of your attachments exceeds the maximum allowed size of ${limits.max_size_mb} MB.` });
+                }
 
-            if (limits.allowed_types && !limits.allowed_types.includes(req.file.mimetype)) {
-                return res.status(400).json({ error: 'Unsupported file type', message: `Only the following formats are allowed: ${limits.allowed_types.join(', ')} ` });
+                if (limits.allowed_types && !limits.allowed_types.includes(file.mimetype)) {
+                    return res.status(400).json({ error: 'Unsupported file type', message: `Only the following formats are allowed: ${limits.allowed_types.join(', ')}` });
+                }
             }
         }
 
