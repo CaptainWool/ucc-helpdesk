@@ -218,12 +218,12 @@ const SubmitTicket: React.FC = () => {
                     <Card className="form-card">
                         <form onSubmit={handleSubmit}>
                             <div className="form-section">
-                                <h3 className="section-title"><UserIcon size={18} /> Student Information</h3>
-                                <div className="form-row">
-                                    <div className="form-group half">
+                                <h3 className="section-title"><UserIcon size={16} /> Student Information</h3>
+                                <div className="compact-grid">
+                                    <div className="form-group">
                                         <label htmlFor="fullName">Full Name</label>
                                         <div className="input-with-icon">
-                                            <UserIcon size={16} className="input-icon" />
+                                            <UserIcon size={14} className="input-icon" />
                                             <input
                                                 type="text"
                                                 id="fullName"
@@ -232,14 +232,14 @@ const SubmitTicket: React.FC = () => {
                                                 onChange={handleInputChange}
                                                 className="form-input with-icon"
                                                 placeholder="Enter full name"
-                                                required // Assuming name is required
+                                                required
                                             />
                                         </div>
                                     </div>
-                                    <div className="form-group half">
+                                    <div className="form-group">
                                         <label htmlFor="studentId">Student ID</label>
                                         <div className="input-with-icon">
-                                            <CreditCard size={16} className="input-icon" />
+                                            <CreditCard size={14} className="input-icon" />
                                             <input
                                                 type="text"
                                                 id="studentId"
@@ -252,12 +252,10 @@ const SubmitTicket: React.FC = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
-                                <div className="form-row">
-                                    <div className="form-group half">
+                                    <div className="form-group">
                                         <label htmlFor="email">Email Address</label>
                                         <div className="input-with-icon">
-                                            <Mail size={16} className="input-icon" />
+                                            <Mail size={14} className="input-icon" />
                                             <input
                                                 type="email"
                                                 id="email"
@@ -270,10 +268,10 @@ const SubmitTicket: React.FC = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div className="form-group half">
+                                    <div className="form-group">
                                         <label htmlFor="phoneNumber">Phone Number</label>
                                         <div className="input-with-icon">
-                                            <Phone size={16} className="input-icon" />
+                                            <Phone size={14} className="input-icon" />
                                             <input
                                                 type="tel"
                                                 id="phoneNumber"
@@ -393,7 +391,7 @@ const SubmitTicket: React.FC = () => {
                                     <textarea
                                         id="description"
                                         name="description"
-                                        rows={6}
+                                        rows={4}
                                         placeholder="Please provide as much detail as possible..."
                                         value={formData.description}
                                         onChange={handleInputChange}
