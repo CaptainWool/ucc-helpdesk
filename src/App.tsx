@@ -2,30 +2,30 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ToastProvider } from './contexts/ToastContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { SettingsProvider } from './contexts/SettingsContext';
-import { LanguageProvider } from './contexts/LanguageContext';
-import Layout from './components/layout/Layout';
-import Loader from './components/common/Loader';
-import ErrorBoundary from './components/common/ErrorBoundary';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { SettingsProvider } from '@/contexts/SettingsContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import Layout from '@/components/layout/Layout';
+import Loader from '@/components/common/Loader';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 // Lazy load pages for better performance
-const StudentLogin = lazy(() => import('./pages/StudentLogin'));
-const AdminLogin = lazy(() => import('./pages/AdminLogin'));
-const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const SubmitTicket = lazy(() => import('./pages/SubmitTicket'));
-const TrackTicket = lazy(() => import('./pages/TrackTicket'));
-const FAQ = lazy(() => import('./pages/FAQ'));
-const Forbidden = lazy(() => import('./pages/Forbidden'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const StudentSignUp = lazy(() => import('./pages/StudentSignUp'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const Home = lazy(() => import('./pages/Home'));
+const StudentLogin = lazy(() => import('@/pages/StudentLogin'));
+const AdminLogin = lazy(() => import('@/pages/AdminLogin'));
+const StudentDashboard = lazy(() => import('@/pages/StudentDashboard'));
+const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const SubmitTicket = lazy(() => import('@/pages/SubmitTicket'));
+const TrackTicket = lazy(() => import('@/pages/TrackTicket'));
+const FAQ = lazy(() => import('@/pages/FAQ'));
+const Forbidden = lazy(() => import('@/pages/Forbidden'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const StudentSignUp = lazy(() => import('@/pages/StudentSignUp'));
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
+const Home = lazy(() => import('@/pages/Home'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
