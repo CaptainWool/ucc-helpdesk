@@ -83,6 +83,22 @@ button {
   font-family: inherit;
 }
 
+.details-link {
+  color: var(--primary);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.details-link:hover {
+  gap: 0.4rem;
+  color: var(--primary-dark);
+}
+
 input,
 textarea,
 select {

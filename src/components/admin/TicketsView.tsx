@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Trash2, Eye, User as UserIcon, CheckCircle } from 'lucide-react';
+import { Search, Trash2, Eye, User as UserIcon, CheckCircle, ChevronRight } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import { Ticket, User } from '../../types';
@@ -175,9 +175,14 @@ const TicketsView: React.FC<TicketsViewProps> = ({
                                             </td>
                                             <td>
                                                 <div className="action-btns">
-                                                    <Button size="sm" variant="ghost" onClick={() => (window.location.href = `/track-ticket?id=${ticket.id}`)} title="View & Reply">
-                                                        <Eye size={14} />
-                                                    </Button>
+                                                    <span
+                                                        className="details-link"
+                                                        onClick={() => (window.location.href = `/track-ticket?id=${ticket.id}`)}
+                                                        title="View & Reply"
+                                                        style={{ marginRight: '0.75rem' }}
+                                                    >
+                                                        View Details <ChevronRight size={14} />
+                                                    </span>
                                                     {(profile?.role === 'super_admin' || profile?.role === 'agent') && (
                                                         <Button
                                                             size="sm"

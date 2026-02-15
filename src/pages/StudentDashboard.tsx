@@ -351,13 +351,12 @@ const StudentDashboard: React.FC = () => {
                                             </td>
                                             <td>{new Date(ticket.created_at).toLocaleDateString()}</td>
                                             <td>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
+                                                <span
+                                                    className="details-link"
                                                     onClick={() => navigate(`/track-ticket?id=${ticket.id}`)}
                                                 >
                                                     View Details <ChevronRight size={16} />
-                                                </Button>
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
