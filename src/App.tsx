@@ -22,6 +22,9 @@ const FAQ = lazy(() => import('./pages/FAQ'));
 const Forbidden = lazy(() => import('./pages/Forbidden'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const StudentSignUp = lazy(() => import('./pages/StudentSignUp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Home = lazy(() => import('./pages/Home'));
 
 const queryClient = new QueryClient({
@@ -69,9 +72,12 @@ const App: React.FC = () => {
                                                 {/* Public Routes */}
                                                 <Route path="/" element={<Home />} />
                                                 <Route path="/login" element={<StudentLogin />} />
+                                                <Route path="/student-signup" element={<StudentSignUp />} />
+                                                <Route path="/forgot-password" element={<ForgotPassword />} />
                                                 <Route path="/admin/login" element={<AdminLogin />} />
                                                 <Route path="/faq" element={<FAQ />} />
                                                 <Route path="/terms" element={<TermsOfService />} />
+                                                <Route path="/privacy" element={<PrivacyPolicy />} />
 
                                                 {/* Student Routes */}
                                                 <Route path="/dashboard" element={

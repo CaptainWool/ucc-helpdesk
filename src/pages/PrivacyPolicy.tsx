@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PrivacyPolicy = () => {
+const PrivacyPolicy: React.FC = () => {
     return (
         <div className="container" style={{ padding: '3rem 1.5rem', maxWidth: '800px' }}>
             <h1>Privacy Policy</h1>
