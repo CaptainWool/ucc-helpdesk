@@ -22,7 +22,7 @@ export const sendTicketUpdateNotification = async (ticket, oldStatus, newStatus,
         const templateParams = {
             to_email: ticket.email,
             to_name: ticket.full_name,
-            ticket_id: ticket.id.substring(0, 8),
+            ticket_id: String(ticket.id || '').substring(0, 8),
             ticket_subject: ticket.subject,
             old_status: oldStatus,
             new_status: newStatus,
@@ -61,12 +61,12 @@ export const sendNewMessageNotification = async (ticket, message) => {
         const templateParams = {
             to_email: ticket.email,
             to_name: ticket.full_name,
-            ticket_id: ticket.id.substring(0, 8),
+            ticket_id: String(ticket.id || '').substring(0, 8),
             ticket_subject: ticket.subject,
             message_from: message.sender_name,
             message_content: message.message,
             tracking_link: `${window.location.origin}/track-ticket?id=${ticket.id}`,
-            message: `New message from ${message.sender_name}: ${message.message.substring(0, 100)}...`
+            message: `New message from ${message.sender_name}: ${String(message.message || '').substring(0, 100)}...`
         };
 
         const response = await emailjs.send(

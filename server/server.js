@@ -590,7 +590,7 @@ app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
         }
     }
 
-    const avatar_url = req.file ? `/ uploads / avatars / ${req.file.filename} ` : null;
+    const avatar_url = req.file ? `/uploads/avatars/${req.file.filename}` : null;
 
     try {
         // Check if user already exists
@@ -964,7 +964,7 @@ app.post('/api/users/:id/avatar', authenticateToken, upload.single('avatar'), as
     if (!req.file) {
         return res.status(400).json({ error: 'No avatar image provided' });
     }
-    const avatar_url = `/ uploads / avatars / ${req.file.filename} `;
+    const avatar_url = `/uploads/avatars/${req.file.filename}`;
     try {
         await pool.query('UPDATE users SET avatar_url = $1, updated_at = NOW() WHERE id = $2', [avatar_url, id]);
         res.json({ success: true, avatar_url });
@@ -1068,6 +1068,8 @@ app.get('/api/tickets', authenticateToken, async (req, res) => {
         let query = 'SELECT * FROM tickets ORDER BY created_at DESC';
         let params = [];
 
+        console.log(`[DIAGNOSTIC] Fetching tickets for user: ${req.user.id}, Role: ${req.user.role}`);
+
         // Role-based ticket visibility
         if (req.user.role === 'student') {
             // Students see only their own tickets
@@ -1081,9 +1083,10 @@ app.get('/api/tickets', authenticateToken, async (req, res) => {
         // Super Admins see all tickets (no filter needed)
 
         const result = await pool.query(query, params);
+        console.log(`[DIAGNOSTIC] Found ${result.rowCount} tickets for ${req.user.role} ${req.user.id}`);
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
+        console.error('Ticket fetch error:', err);
         res.status(500).json({ error: 'Failed to fetch tickets' });
     }
 });

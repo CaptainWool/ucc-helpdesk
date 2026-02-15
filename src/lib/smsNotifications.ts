@@ -53,12 +53,12 @@ export const sendSmsNotification = async (to: string, content: string, channel: 
  * Format a status update message
  */
 export const formatStatusUpdateMessage = (ticketId: string, subject: string, oldStatus: string, newStatus: string): string => {
-    return `📋 UCC Helpdesk: Ticket #${ticketId.substring(0, 8)} (${subject}) has been updated:\n\nStatus: ${newStatus}\n\nTrack here: ${window.location.origin}/track-ticket?id=${ticketId}`;
+    return `📋 UCC Helpdesk: Ticket #${String(ticketId || '').substring(0, 8)} (${subject}) has been updated:\n\nStatus: ${newStatus}\n\nTrack here: ${window.location.origin}/track-ticket?id=${ticketId}`;
 };
 
 /**
  * Format a resolution message
  */
 export const formatResolutionMessage = (ticketId: string, subject: string): string => {
-    return `✅ UCC Helpdesk: Great news! Your ticket #${ticketId.substring(0, 8)} (${subject}) has been RESOLVED.\n\nWe hope this helps! If you still need assistance, feel free to reply or log in to the portal.\n\nView Details: ${window.location.origin}/track-ticket?id=${ticketId}`;
+    return `✅ UCC Helpdesk: Great news! Your ticket #${String(ticketId || '').substring(0, 8)} (${subject}) has been RESOLVED.\n\nWe hope this helps! If you still need assistance, feel free to reply or log in to the portal.\n\nView Details: ${window.location.origin}/track-ticket?id=${ticketId}`;
 };

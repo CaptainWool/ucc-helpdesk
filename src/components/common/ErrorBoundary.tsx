@@ -41,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
                     <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
                         We've encountered an unexpected error. Don't worry, your data is safe.
                     </p>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                         <Button onClick={() => window.location.reload()}>
                             <RefreshCw size={18} /> Reload Application
                         </Button>
@@ -49,6 +49,20 @@ class ErrorBoundary extends Component<Props, State> {
                             Try Again
                         </Button>
                     </div>
+                    {this.state.error && (
+                        <div style={{ marginTop: '32px', textAlign: 'left', background: '#fef2f2', padding: '16px', borderRadius: '8px', border: '1px solid #fee2e2', maxWidth: '600px', width: '100%' }}>
+                            <p style={{ color: '#991b1b', margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>Error Details:</p>
+                            <pre style={{ fontSize: '12px', color: '#b91c1c', margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+                                {this.state.error.message || String(this.state.error)}
+                            </pre>
+                            {this.state.error.stack && (
+                                <details style={{ marginTop: '12px' }}>
+                                    <summary style={{ fontSize: '11px', color: '#7f1d1d', cursor: 'pointer' }}>View Stack Trace</summary>
+                                    <pre style={{ fontSize: '10px', color: '#7f1d1d', marginTop: '8px', opacity: 0.7 }}>{this.state.error.stack}</pre>
+                                </details>
+                            )}
+                        </div>
+                    )}
                 </div>
             );
         }

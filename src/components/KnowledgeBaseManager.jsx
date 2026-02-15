@@ -124,7 +124,7 @@ const KnowledgeBaseManager = () => {
                                     }
                                 </div>
                                 <h4>{article.question}</h4>
-                                <p>{article.answer.substring(0, 100)}...</p>
+                                <p>{String(article.answer || '').substring(0, 100)}...</p>
                                 <div className="article-stats">
                                     <span><Eye size={12} /> {article.views || 0} views</span>
                                     <span><HelpCircle size={12} /> {article.helpfulness_score || 0}%</span>

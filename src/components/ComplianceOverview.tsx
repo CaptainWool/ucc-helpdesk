@@ -21,7 +21,7 @@ const ComplianceOverview: React.FC<ComplianceOverviewProps> = ({ tickets = [] })
         let foundPatterns: any[] = [];
         tickets.slice(0, 50).forEach(ticket => {
             const p = detectDarkPatterns(ticket.description || '');
-            if (p.length > 0) {
+            if (p.length > 0 && ticket.id) {
                 foundPatterns.push({ ticketId: ticket.id, patterns: p });
             }
         });
@@ -82,7 +82,7 @@ const ComplianceOverview: React.FC<ComplianceOverviewProps> = ({ tickets = [] })
                     <div className="patterns-list">
                         {darkPatternsFound.map((item, idx) => (
                             <div key={idx} className="pattern-item">
-                                <strong>Ticket #{item.ticketId.substring(0, 8)}:</strong>
+                                <strong>Ticket #{String(item.ticketId || '').substring(0, 8)}:</strong>
                                 <span>{item.patterns.map((p: any) => p.name).join(', ')}</span>
                             </div>
                         ))}

@@ -220,6 +220,10 @@ const SubmitTicket: React.FC = () => {
             const result = await createTicket(ticketData);
             console.log('Ticket created successfully:', result);
 
+            if (!result || !result.id) {
+                throw new Error('Server returned success but no ticket ID was found.');
+            }
+
             // Set local state before navigation to ensure immediate UI update
             setSubmittedTicketLocal(result);
             setIsSubmittedLocal(true);
@@ -255,7 +259,7 @@ const SubmitTicket: React.FC = () => {
                     <div className="success-content">
                         <h2>Ticket Submitted Successfully!</h2>
                         <p className="success-main-msg">
-                            Your concern has been registered under <strong>Ticket #{currentTicket?.id?.substring(0, 8) || '...'}</strong>.
+                            Your concern has been registered under <strong>Ticket #{String(currentTicket?.id || '').substring(0, 8) || '...'}</strong>.
                         </p>
 
                         <div className="notification-alert-box">
