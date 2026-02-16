@@ -1,12 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import { Video, StopCircle, Play, Trash2, UploadCloud, X, Monitor } from 'lucide-react';
+import { Video, StopCircle, Trash2, UploadCloud, X, Monitor } from 'lucide-react';
 import { useScreenRecorder } from '../../hooks/useScreenRecorder';
-import Button from './Button';
 import './VideoRecorder.css';
 
-const VideoRecorder = ({ onRecordingComplete, onCancel }) => {
+interface VideoRecorderProps {
+    onRecordingComplete: (blob: Blob) => void;
+    onCancel: () => void;
+}
+
+const VideoRecorder = ({ onRecordingComplete, onCancel }: VideoRecorderProps) => {
     const { isRecording, mediaBlob, error, recordingTime, startRecording, stopRecording, clearRecording } = useScreenRecorder();
-    const videoRef = useRef(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         if (mediaBlob && videoRef.current) {
@@ -14,7 +18,7 @@ const VideoRecorder = ({ onRecordingComplete, onCancel }) => {
         }
     }, [mediaBlob]);
 
-    const formatTime = (seconds) => {
+    const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -68,25 +72,25 @@ const VideoRecorder = ({ onRecordingComplete, onCancel }) => {
 
                 <div className="controls-area">
                     {!isRecording && !mediaBlob && (
-                        <Button onClick={startRecording} variant="primary" size="lg">
+                        <button onClick={startRecording} className="btn-primary-lg">
                             <Video size={18} className="mr-2" /> Start Sharing Screen
-                        </Button>
+                        </button>
                     )}
 
                     {isRecording && (
-                        <Button onClick={stopRecording} variant="danger" size="lg" className="stop-btn">
+                        <button onClick={stopRecording} className="btn-danger-lg stop-btn">
                             <StopCircle size={18} className="mr-2" /> Stop Recording
-                        </Button>
+                        </button>
                     )}
 
                     {mediaBlob && (
                         <div className="flex gap-3 w-full">
-                            <Button onClick={clearRecording} variant="ghost" className="flex-1">
+                            <button onClick={clearRecording} className="btn-ghost flex-1">
                                 <Trash2 size={16} className="mr-2" /> Retake
-                            </Button>
-                            <Button onClick={handleUpload} variant="primary" className="flex-2">
+                            </button>
+                            <button onClick={handleUpload} className="btn-primary flex-2">
                                 <UploadCloud size={16} className="mr-2" /> Use This Recording
-                            </Button>
+                            </button>
                         </div>
                     )}
                 </div>

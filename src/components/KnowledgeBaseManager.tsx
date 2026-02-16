@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Eye, HelpCircle, CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Eye, HelpCircle, CheckCircle, Clock } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import Card from './common/Card';
+import { FAQ } from '../types';
 import './KnowledgeBaseManager.css';
 
 const KnowledgeBaseManager = () => {
     const { showSuccess, showError } = useToast();
-    const [articles, setArticles] = useState([]);
+    const [articles, setArticles] = useState<FAQ[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [editingArticle, setEditingArticle] = useState(null);
+    const [editingArticle, setEditingArticle] = useState<FAQ | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -32,14 +33,13 @@ const KnowledgeBaseManager = () => {
             setArticles(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching articles:', error);
-            // Fallback to empty if not implemented
             setArticles([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSave = async (e) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             if (editingArticle) {
@@ -58,7 +58,7 @@ const KnowledgeBaseManager = () => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm('Delete this article?')) return;
         try {
             await api.faq.delete(id);
@@ -69,13 +69,13 @@ const KnowledgeBaseManager = () => {
         }
     };
 
-    const openEdit = (article) => {
+    const openEdit = (article: FAQ) => {
         setEditingArticle(article);
         setFormData({
             question: article.question,
             answer: article.answer,
             category: article.category || 'General',
-            status: article.status || 'published'
+            status: (article as any).status || 'published'
         });
         setIsFormOpen(true);
     };
@@ -118,7 +118,7 @@ const KnowledgeBaseManager = () => {
                             <div className="article-content">
                                 <div className="article-meta">
                                     <span className="category-pill">{article.category}</span>
-                                    {article.status === 'published' ?
+                                    {(article as any).status === 'published' ?
                                         <span className="status-pill live"><CheckCircle size={12} /> Live</span> :
                                         <span className="status-pill draft"><Clock size={12} /> Draft</span>
                                     }
@@ -179,7 +179,7 @@ const KnowledgeBaseManager = () => {
                                 <label>Answer / Content</label>
                                 <textarea
                                     required
-                                    rows="6"
+                                    rows={6}
                                     value={formData.answer}
                                     onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                                 />

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Eye, X, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
-import { checkAccessibility } from '../../lib/compliance';
-import Button from './Button';
+import { checkAccessibility, ComplianceIssue } from '../../lib/compliance';
 import './AccessibilityChecker.css';
 
 const AccessibilityChecker = () => {
-    const [issues, setIssues] = useState(null);
+    const [issues, setIssues] = useState<ComplianceIssue[] | null>(null);
     const [isOpen, setIsOpen] = useState(false);
 
     const runCheck = () => {
@@ -44,7 +43,7 @@ const AccessibilityChecker = () => {
             <div className="panel-content">
                 {issues && issues.length === 0 ? (
                     <div className="success-state">
-                        <CheckCircle size={32} className="text-green-500 mb-2" />
+                        <CheckCircle size={32} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
                         <p>No major issues found!</p>
                     </div>
                 ) : (

@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { AlertCircle, Home, LogIn, RefreshCw, LogOut } from 'lucide-react';
 
-const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) => {
+interface ProtectedRouteProps {
+    children: ReactNode;
+    adminOnly?: boolean;
+    requiredRole?: string | null;
+}
+
+const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }: ProtectedRouteProps) => {
     const { user, profile, signOut, loading } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
@@ -26,14 +32,9 @@ const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) =>
         );
     }
 
-    console.log('ProtectedRoute check:', { user: user?.email, profile: profile?.role, requiredRole, adminOnly });
-
-
-
     if (!user) {
         // Redirect them to the /login page, but save the current location they were
-        // trying to go to when they were redirected. This allows us to send them
-        // along to that page after they login, which is a nicer user experience.
+        // trying to go to when they were redirected.
         return <Navigate to={adminOnly ? "/login" : "/student-login"} state={{ from: location }} replace />;
     }
 
@@ -62,9 +63,6 @@ const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) =>
                 <h2 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Profile Loading</h2>
                 <p style={{ color: 'var(--text-muted)', marginBottom: '0.5rem', maxWidth: '500px' }}>
                     Your profile is being initialized. This usually takes a few seconds.
-                </p>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', maxWidth: '500px', fontSize: '0.9rem' }}>
-                    If this persists, try refreshing the page or logging out and back in.
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                     <button onClick={handleRetry} style={{
@@ -95,19 +93,6 @@ const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) =>
                     }}>
                         <LogOut size={18} /> Logout & Retry
                     </button>
-                    <Link to="/" style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        background: 'transparent',
-                        color: 'var(--text-muted)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '6px',
-                        textDecoration: 'none'
-                    }}>
-                        <Home size={18} /> Go Home
-                    </Link>
                 </div>
                 <p style={{ marginTop: '2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                     Logged in as: <strong>{user?.email}</strong>
@@ -168,9 +153,6 @@ const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) =>
                 <p style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                     You do not have the required permissions to view this page.
                 </p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                    Required: <strong>{requiredRole}</strong> | Your role: <strong>{profile?.role || 'None'}</strong>
-                </p>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <Link to="/" style={{
                         display: 'inline-flex',
@@ -204,7 +186,7 @@ const ProtectedRoute = ({ children, adminOnly = false, requiredRole = null }) =>
         );
     }
 
-    return children;
+    return <>{children}</>;
 };
 
 export default ProtectedRoute;

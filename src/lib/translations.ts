@@ -1,4 +1,22 @@
-export const translations = {
+export interface TranslationSet {
+    nav_home: string;
+    nav_submit: string;
+    nav_track: string;
+    nav_faq: string;
+    nav_login: string;
+    nav_logout: string;
+    hero_title: string;
+    hero_subtitle: string;
+    btn_submit: string;
+    btn_track: string;
+    footer_rights: string;
+    status_open: string;
+    status_resolved: string;
+}
+
+export type LanguageCode = 'en' | 'fr' | 'tw';
+
+export const translations: Record<LanguageCode, TranslationSet> = {
     en: {
         nav_home: "Home",
         nav_submit: "Submit Ticket",

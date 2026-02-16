@@ -1,4 +1,12 @@
-export const FAQS = [
+export interface GroupedFAQ {
+    category: string;
+    items: {
+        question: string;
+        answer: string;
+    }[];
+}
+
+export const FAQS: GroupedFAQ[] = [
     {
         category: 'Student Portal & Registration',
         items: [

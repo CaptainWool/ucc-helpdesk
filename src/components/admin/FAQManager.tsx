@@ -4,14 +4,14 @@ import { api } from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext';
 import Button from '../common/Button';
 import Card from '../common/Card';
-import Input from '../common/Input';
+import { FAQ } from '../../types';
 import './FAQManager.css';
 
 const FAQManager = () => {
-    const [faqs, setFaqs] = useState([]);
+    const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [editingId, setEditingId] = useState(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [isAdding, setIsAdding] = useState(false);
     const [formData, setFormData] = useState({
         question: '',
@@ -55,7 +55,7 @@ const FAQManager = () => {
         });
     };
 
-    const handleEdit = (faq) => {
+    const handleEdit = (faq: FAQ) => {
         setEditingId(faq.id);
         setIsAdding(false);
         setFormData({
@@ -97,7 +97,7 @@ const FAQManager = () => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this FAQ? This action cannot be undone.')) {
             return;
         }
@@ -118,7 +118,7 @@ const FAQManager = () => {
         faq.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const groupedFAQs = categories.reduce((acc, category) => {
+    const groupedFAQs = categories.reduce((acc: Record<string, FAQ[]>, category) => {
         acc[category] = filteredFAQs.filter(faq => faq.category === category);
         return acc;
     }, {});
@@ -142,7 +142,7 @@ const FAQManager = () => {
                         <p>Manage FAQ articles to help students self-serve common inquiries</p>
                     </div>
                 </div>
-                <Button onClick={handleAdd} disabled={isAdding || editingId}>
+                <Button onClick={handleAdd} disabled={isAdding || !!editingId}>
                     <Plus size={18} /> Add New FAQ
                 </Button>
             </div>
@@ -251,7 +251,7 @@ const FAQManager = () => {
                                                 <button
                                                     className="action-btn edit-btn"
                                                     onClick={() => handleEdit(faq)}
-                                                    disabled={isAdding || (editingId && editingId !== faq.id)}
+                                                    disabled={isAdding || (!!editingId && editingId !== faq.id)}
                                                     title="Edit FAQ"
                                                 >
                                                     <Edit2 size={16} />
@@ -259,7 +259,7 @@ const FAQManager = () => {
                                                 <button
                                                     className="action-btn delete-btn"
                                                     onClick={() => handleDelete(faq.id)}
-                                                    disabled={isAdding || editingId}
+                                                    disabled={isAdding || !!editingId}
                                                     title="Delete FAQ"
                                                 >
                                                     <Trash2 size={16} />

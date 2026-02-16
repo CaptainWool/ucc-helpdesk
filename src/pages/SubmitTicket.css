@@ -1,6 +1,6 @@
 :root {
-    --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    --gradient-glow: linear-gradient(135deg, rgba(37, 99, 235, 0.4) 0%, rgba(29, 78, 216, 0) 100%);
+    --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    --gradient-glow: linear-gradient(135deg, var(--primary-glow) 0%, rgba(29, 78, 216, 0) 100%);
     --gradient-success: linear-gradient(135deg, #059669 0%, #10b981 100%);
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
@@ -110,6 +110,90 @@
     }
 }
 
+/* Wizard Progress */
+.wizard-progress-container {
+    margin-bottom: 2.5rem;
+}
+
+.wizard-progress-bar {
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 0 15px var(--primary-glow);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wizard-steps-indicators {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.wizard-step-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1.25rem;
+    opacity: 0.4;
+    transition: all 0.4s ease;
+}
+
+.wizard-step-pill.active {
+    opacity: 1;
+    border-color: var(--primary);
+    background: rgba(0, 68, 143, 0.05);
+}
+
+[data-theme="dark"] .wizard-step-pill.active {
+    background: rgba(0, 68, 143, 0.2);
+}
+
+.wizard-step-pill.current {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+    border-width: 2px;
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--text-muted);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.wizard-step-pill.active .step-num {
+    background: var(--primary);
+    box-shadow: 0 4px 10px var(--primary-glow);
+}
+
+.step-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.wizard-step-pill.active .step-label {
+    color: var(--text-primary);
+}
+
 /* Header */
 .page-header {
     text-align: center;
@@ -164,23 +248,26 @@
 
 /* Main Card */
 .form-card {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: var(--bg-card);
+    border-radius: 2rem;
+    border: 1px solid var(--border-color);
     box-shadow: var(--shadow-card);
     overflow: hidden;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
     transition: var(--transition);
 }
 
-.form-card:hover {
-    box-shadow: var(--shadow-hover);
-    transform: translateY(-2px);
+.form-card.wizard-card {
+    border: 1px solid var(--primary-light);
+}
+
+.wizard-section {
+    padding: 1rem 0;
 }
 
 .form-section {
-    padding: 2rem;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    padding: 2.5rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .form-section:last-of-type {
@@ -226,8 +313,81 @@
 /* Grouping and Grid */
 .compact-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.step-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    border-left: 5px solid var(--primary);
+}
+
+/* Review Flow */
+.review-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.review-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.review-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+}
+
+.review-value-card {
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 1.25rem;
+    border: 1px solid var(--border-color);
+}
+
+.review-value-card h4 {
+    font-size: 1.25rem;
+    margin: 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.review-value-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.attachment-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.final-confirmation-notice {
+    padding: 1.25rem;
+    background: rgba(16, 185, 129, 0.08);
+    border-radius: 1rem;
+    border: 1px dashed rgba(16, 185, 129, 0.5);
+    font-size: 0.95rem;
+    color: #059669;
 }
 
 .form-group {
@@ -364,6 +524,54 @@
 }
 
 /* Footer & Buttons */
+/* Wizard Footer & Buttons */
+.wizard-footer {
+    padding: 2rem 2.5rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wizard-btn-next,
+.wizard-btn-submit {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 1rem 2.5rem;
+    font-weight: 800;
+    border-radius: 1.25rem;
+    box-shadow: 0 10px 25px var(--primary-glow);
+    transition: var(--transition);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.wizard-btn-next:hover,
+.wizard-btn-submit:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 35px var(--primary-glow);
+}
+
+.wizard-btn-back {
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    transition: var(--transition);
+}
+
+.wizard-btn-back:hover {
+    color: var(--primary);
+    background: rgba(0, 68, 143, 0.05);
+}
+
 .form-footer {
     padding: 1.5rem 2rem;
     background: #f8fafc;
@@ -797,6 +1005,87 @@
 .alert-item svg {
     color: #2563eb;
     flex-shrink: 0;
+}
+
+/* Success Screen Actions */
+.success-actions-section {
+    margin-top: 2rem;
+}
+
+.success-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+}
+
+.action-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-tile:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+}
+
+.tile-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.tile-icon.blue {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+.tile-icon.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.tile-icon.purple {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+.action-tile:hover .tile-icon.blue {
+    background: #2563eb;
+    color: white;
+}
+
+.action-tile:hover .tile-icon.green {
+    background: #059669;
+    color: white;
+}
+
+.action-tile:hover .tile-icon.purple {
+    background: #8b5cf6;
+    color: white;
+}
+
+.tile-text strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.tile-text span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .success-next-steps {

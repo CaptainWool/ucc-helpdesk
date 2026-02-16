@@ -1,9 +1,24 @@
 import React, { useState } from 'react';
-import { Sparkles, AlertTriangle, Check, X, ChevronUp, ChevronDown, ShieldAlert } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronUp, ChevronDown, ShieldAlert } from 'lucide-react';
 import { detectDarkPatterns } from '../../lib/compliance';
 import './ResponseQualityIndicator.css';
 
-const ResponseQualityIndicator = ({ analysis, loading, draftText }) => {
+export interface QualityAnalysis {
+    score: number;
+    empathyScore: number;
+    clarityScore: number;
+    isProfessional: boolean;
+    darkPatternsDetected: string[];
+    suggestions: string[];
+}
+
+interface ResponseQualityIndicatorProps {
+    analysis?: QualityAnalysis | null;
+    loading: boolean;
+    draftText: string;
+}
+
+const ResponseQualityIndicator = ({ analysis, loading, draftText }: ResponseQualityIndicatorProps) => {
     const [expanded, setExpanded] = useState(false);
 
     // Quick local check even if AI hasn't responded or no analysis yet
@@ -33,7 +48,7 @@ const ResponseQualityIndicator = ({ analysis, loading, draftText }) => {
     const combinedPatterns = [...new Set([...darkPatternsDetected, ...localIssues.map(p => p.name)])];
     const isGood = score >= 80 && combinedPatterns.length === 0;
 
-    const getScoreColor = (s) => {
+    const getScoreColor = (s: number) => {
         if (s >= 80) return 'text-green-600 bg-green-50 border-green-200';
         if (s >= 60) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
         return 'text-red-600 bg-red-50 border-red-200';
@@ -54,7 +69,7 @@ const ResponseQualityIndicator = ({ analysis, loading, draftText }) => {
                     </span>
                 </div>
 
-                {darkPatternsDetected && darkPatternsDetected.length > 0 && (
+                {combinedPatterns.length > 0 && (
                     <div className="flex items-center text-xs text-red-600 font-bold gap-1 px-2 py-1 bg-red-100 rounded-full">
                         <AlertTriangle size={12} />
                         <span>Flagged</span>

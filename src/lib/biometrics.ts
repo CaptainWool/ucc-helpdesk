@@ -3,13 +3,22 @@
  * Implements FIDO2 / WebAuthn logic for UCC Helpdesk.
  */
 
-export const registerBiometrics = async (userId, email) => {
+export interface BiometricRegistrationResult {
+    success: boolean;
+    credentialId?: string;
+}
+
+export interface BiometricLoginResult {
+    success: boolean;
+    userId?: string;
+}
+
+export const registerBiometrics = async (userId: string, email: string): Promise<BiometricRegistrationResult> => {
     if (!window.PublicKeyCredential) {
         throw new Error("Biometrics not supported in this browser.");
     }
 
     // SIMULATION MODE for development/antigravity
-    // In a production HTTPS environment, this would call navigator.credentials.create
     return new Promise((resolve) => {
         setTimeout(() => {
             console.info("Biometric registration simulated for:", email);
@@ -19,8 +28,7 @@ export const registerBiometrics = async (userId, email) => {
     });
 };
 
-export const loginWithBiometrics = async () => {
-    // navigator.credentials.get replacement
+export const loginWithBiometrics = async (): Promise<BiometricLoginResult> => {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             const hasKey = Object.keys(localStorage).some(k => k.startsWith('biometric_key_'));

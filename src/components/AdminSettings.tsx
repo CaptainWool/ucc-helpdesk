@@ -27,7 +27,7 @@ const AdminSettings = () => {
             label: 'Maintenance Mode',
             desc: 'Disable ticket submission while performing system updates.'
         }
-    ];
+    ] as const;
 
     return (
         <div className="admin-settings-panel fade-in">
@@ -42,8 +42,8 @@ const AdminSettings = () => {
                             <p className="settings-desc">{item.desc}</p>
                         </div>
                         <div
-                            className={`settings-toggle ${settings[item.key] ? 'active' : ''}`}
-                            onClick={() => updateSetting(item.key, !settings[item.key])}
+                            className={`settings-toggle ${(settings as any)[item.key] ? 'active' : ''}`}
+                            onClick={() => updateSetting(item.key, !(settings as any)[item.key])}
                         >
                             <div className="toggle-thumb"></div>
                         </div>

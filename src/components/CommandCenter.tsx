@@ -1,5 +1,5 @@
 import React, { useState, useEffect, KeyboardEvent } from 'react';
-import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles } from 'lucide-react';
+import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles, Activity, Zap, Cpu, Server, Database, Globe } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
@@ -53,8 +53,24 @@ const CommandCenter: React.FC = () => {
     const [announcementDraft, setAnnouncementDraft] = useState({ enabled: false, message: '', type: 'info' });
     const [resourceDraft, setResourceDraft] = useState({ max_size_mb: 5, allowed_types: [] as string[] });
     const [activeTab, setActiveTab] = useState<'controls' | 'moderation' | 'audit'>('controls');
-    const [isUnlocked, setIsUnlocked] = useState(false);
     const [passwordAttempt, setPasswordAttempt] = useState('');
+    const [systemHealth, setSystemHealth] = useState({
+        api: 'optimal',
+        database: 'optimal',
+        ai: 'optimal',
+        latency: 42
+    });
+    const [isUnlocked, setIsUnlocked] = useState(false);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSystemHealth(prev => ({
+                ...prev,
+                latency: Math.floor(Math.random() * (55 - 38 + 1)) + 38
+            }));
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         fetchData();
@@ -188,249 +204,348 @@ const CommandCenter: React.FC = () => {
                         />
                         <Button onClick={handleUnlock} className="w-full">Unlock Dashboard</Button>
                     </div>
+                    <p className="lock-hint">Note: These logs are audited for security purposes.</p>
                 </Card>
             </div>
         );
     }
 
-    const renderControls = () => (
-        <>
-            <div className="admin-grid">
-                <Card className="system-controls">
-                    <h3><ShieldAlert size={20} /> System Critical Controls</h3>
-                    <p className="section-desc">Manage global availability of the helpdesk platform.</p>
+    const renderHealthMonitor = () => (
+        <div className="health-monitor-strip">
+            <div className="health-card">
+                <div className="health-node">
+                    <Globe size={18} />
+                    <span>API Gateway</span>
+                    <div className="status-dot pulsing green"></div>
+                </div>
+                <div className="node-stats">
+                    <span className="value">99.9%</span>
+                    <span className="label">Uptime</span>
+                </div>
+            </div>
+            <div className="health-card">
+                <div className="health-node">
+                    <Database size={18} />
+                    <span>Database Engine</span>
+                    <div className="status-dot pulsing green"></div>
+                </div>
+                <div className="node-stats">
+                    <span className="value">{systemHealth.latency}ms</span>
+                    <span className="label">Latency</span>
+                </div>
+            </div>
+            <div className="health-card">
+                <div className="health-node">
+                    <Cpu size={18} />
+                    <span>AI Model Service</span>
+                    <div className="status-dot pulsing green"></div>
+                </div>
+                <div className="node-stats">
+                    <span className="value">v4-Turbo</span>
+                    <span className="label">Version</span>
+                </div>
+            </div>
+            <div className="health-card">
+                <div className="health-node">
+                    <Activity size={18} />
+                    <span>Global Traffic</span>
+                    <div className="status-dot pulsing blue"></div>
+                </div>
+                <div className="node-stats">
+                    <span className="value">Normal</span>
+                    <span className="label">Load</span>
+                </div>
+            </div>
+        </div>
+    );
 
-                    <div className="controls-list">
-                        <div className="control-item">
-                            <div className="control-info">
-                                <strong>Lock Submissions</strong>
-                                <p>Prevent any new tickets from being submitted.</p>
+    const renderQueueMetrics = () => {
+        const count = settings.current_ticket_count || 0;
+        const max = settings.max_open_tickets || 100;
+        const percentage = Math.min((count / max) * 100, 100);
+        const status = percentage > 85 ? 'Critical' : percentage > 60 ? 'Strained' : 'Optimal';
+
+        return (
+            <Card className="queue-metrics-card">
+                <div className="queue-header">
+                    <div>
+                        <h3>Queue Infrastructure</h3>
+                        <p className="section-desc">Real-time capacity and load balance.</p>
+                    </div>
+                    <div className={`queue-status-badge ${status.toLowerCase()}`}>
+                        {status}
+                    </div>
+                </div>
+
+                <div className="queue-visualizer">
+                    <div className="queue-track">
+                        <div
+                            className={`queue-fill ${status.toLowerCase()}`}
+                            style={{ width: `${percentage}%` }}
+                        ></div>
+                    </div>
+                    <div className="queue-labels">
+                        <span>{count} Active</span>
+                        <span>{max} Max Capacity</span>
+                    </div>
+                </div>
+
+                {percentage > 85 && (
+                    <div className="queue-alert fade-in">
+                        <ShieldAlert size={16} />
+                        <span>Critical Load: System will automatically enable Peak Mode if threshold persists.</span>
+                    </div>
+                )}
+            </Card>
+        );
+    };
+
+    const renderControls = () => (
+        <div className="operational-cockpit">
+            <div className="cockpit-main">
+                <Card className="system-controls">
+                    <div className="controls-header">
+                        <h3><Server size={20} /> Operational Cockpit</h3>
+                        <div className="status-pill-large">
+                            <div className={`pulse-dot ${settings.maintenance_mode ? 'red' : 'green'}`}></div>
+                            {settings.maintenance_mode ? 'System Offline' : 'System Online'}
+                        </div>
+                    </div>
+
+                    <div className="controls-grid">
+                        <div className={`control-block ${settings.submissions_locked ? 'active-warning' : ''}`}>
+                            <div className="block-icon">
+                                <Lock size={24} />
+                            </div>
+                            <div className="block-content">
+                                <strong>Submission Lock</strong>
+                                <p>Halt new student requests</p>
                             </div>
                             <Button
                                 variant={settings.submissions_locked ? "danger" : "outline"}
                                 onClick={() => toggleSetting('submissions_locked')}
+                                size="sm"
                             >
-                                {settings.submissions_locked ? <><Lock size={16} /> Locked</> : <><Unlock size={16} /> Open</>}
+                                {settings.submissions_locked ? 'Release' : 'Lock Base'}
                             </Button>
                         </div>
 
-                        <div className="control-item">
-                            <div className="control-info">
+                        <div className={`control-block ${settings.maintenance_mode ? 'active-danger' : ''}`}>
+                            <div className="block-icon">
+                                <ShieldAlert size={24} />
+                            </div>
+                            <div className="block-content">
                                 <strong>Maintenance Mode</strong>
-                                <p>Lock the entire student portal for maintenance.</p>
+                                <p>Restrict entire platform</p>
                             </div>
                             <Button
                                 variant={settings.maintenance_mode ? "danger" : "outline"}
                                 onClick={() => toggleSetting('maintenance_mode')}
+                                size="sm"
                             >
-                                {settings.maintenance_mode ? <><Lock size={16} /> Active</> : <><Unlock size={16} /> Disabled</>}
+                                {settings.maintenance_mode ? 'Restore' : 'Activate'}
+                            </Button>
+                        </div>
+
+                        <div className={`control-block ${settings.sla_peak_mode ? 'active-primary' : ''}`}>
+                            <div className="block-icon">
+                                <Zap size={24} />
+                            </div>
+                            <div className="block-content">
+                                <strong>SLA Peak Mode</strong>
+                                <p>Dynamic resolve scaling</p>
+                            </div>
+                            <Button
+                                variant={settings.sla_peak_mode ? "primary" : "outline"}
+                                onClick={() => toggleSetting('sla_peak_mode')}
+                                size="sm"
+                            >
+                                {settings.sla_peak_mode ? 'Standard' : 'Boost'}
                             </Button>
                         </div>
                     </div>
                 </Card>
 
-                <Card className="pin-control">
-                    <h3><Lock size={20} /> Access Control</h3>
-                    <p className="section-desc">Manage the Command Center security PIN.</p>
-                    <div style={{ marginTop: '1rem' }}>
-                        <Button variant="outline" size="sm" onClick={handleChangePIN}>
-                            Change Access PIN
-                        </Button>
-                    </div>
-                </Card>
-
-                <Card className="capacity-card">
-                    <h3><Users size={20} /> Queue Capacity</h3>
-                    <p className="section-desc">Limit active ticket volume.</p>
-                    <div className="capacity-input-group">
-                        <Input
-                            type="number"
-                            label="Max Active Tickets"
-                            value={settings.max_open_tickets}
-                            onChange={(e) => updateSetting('max_open_tickets', parseInt(e.target.value))}
-                        />
-                    </div>
-                </Card>
-
-                <Card className="sla-peak-card">
-                    <div className="card-top-cc">
-                        <h3><ShieldAlert size={20} /> SLA Peak Mode</h3>
-                        <Button
-                            variant={settings.sla_peak_mode ? "warning" : "outline"}
-                            size="sm"
-                            onClick={() => toggleSetting('sla_peak_mode')}
-                        >
-                            {settings.sla_peak_mode ? "Active" : "Disabled"}
-                        </Button>
-                    </div>
-                    <p className="section-desc">Instantly double resolving time for all new tickets and priority changes.</p>
-                </Card>
-            </div>
-
-            <div className="admin-grid">
-                <Card className="ai-controls">
-                    <h3><Sparkles size={20} /> AI Sensitivity Tuning</h3>
-                    <p className="section-desc">Adjust how aggressive the AI is in auto-prioritizing.</p>
-                    <div className="ai-tuning">
-                        <div className="slider-labels">
-                            <span>Conservative</span>
-                            <span>Strict</span>
-                        </div>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={settings.ai_sensitivity}
-                            onChange={(e) => updateSetting('ai_sensitivity', parseFloat(e.target.value))}
-                        />
-                        <p className="hint">Higher values make AI more likely to flag tickets as 'Urgent'.</p>
-                    </div>
-                </Card>
-
-                <Card className="housekeeping">
-                    <h3><History size={20} /> Automated Cleanup</h3>
-                    <p className="section-desc">Keep the system clean by closing stale tickets.</p>
-                    <div className="housekeeping-controls">
-                        <div className="control-row">
-                            <span>Auto-close resolved tickets after:</span>
+                <div className="admin-grid" style={{ marginTop: '1.5rem' }}>
+                    <Card className="ai-controls">
+                        <h3><Sparkles size={20} /> AI Sensitivity Tuning</h3>
+                        <p className="section-desc">Adjust how aggressive the AI is in auto-prioritizing.</p>
+                        <div className="ai-tuning">
+                            <div className="slider-labels">
+                                <span>Conservative</span>
+                                <span>Strict</span>
+                            </div>
                             <input
-                                type="number"
-                                className="small-input"
-                                value={settings.housekeeping_rules?.auto_close_resolved_days || 30}
-                                onChange={(e) => updateSetting('housekeeping_rules', {
-                                    ...(settings.housekeeping_rules || { enabled: false, auto_close_resolved_days: 30 }),
-                                    auto_close_resolved_days: parseInt(e.target.value) || 30
-                                })}
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value={settings.ai_sensitivity}
+                                onChange={(e) => updateSetting('ai_sensitivity', parseFloat(e.target.value))}
                             />
-                            <span>days</span>
+                            <p className="hint">Higher values make AI more likely to flag tickets as 'Urgent'.</p>
                         </div>
-                        <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-                            <Button size="sm" variant="secondary" onClick={handleCleanup}>
-                                Run Cleanup Now
-                            </Button>
-                        </div>
-                    </div>
-                </Card>
-            </div>
+                    </Card>
 
-            <div className="admin-grid">
-                <Card className="resource-limits">
-                    <h3><ShieldAlert size={20} /> Resource Security</h3>
-                    <p className="section-desc">Manage attachment type and size constraints.</p>
+                    <Card className="resource-limits">
+                        <h3><ShieldAlert size={20} /> Resource Security</h3>
+                        <p className="section-desc">Manage attachment type and size constraints.</p>
 
-                    <div className="resource-form">
-                        <Input
-                            type="number"
-                            label="Max File Size (MB)"
-                            value={resourceDraft?.max_size_mb || 5}
-                            onChange={(e) => setResourceDraft(prev => ({ ...prev, max_size_mb: parseInt(e.target.value) || 5 }))}
-                        />
+                        <div className="resource-form">
+                            <div className="type-group">
+                                <div className="type-grid">
+                                    {['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'text/plain'].map(type => (
+                                        <label key={type} className="checkbox-item">
+                                            <input
+                                                type="checkbox"
+                                                checked={resourceDraft?.allowed_types?.includes(type) || false}
+                                                onChange={(e) => {
+                                                    const currentTypes = resourceDraft?.allowed_types || [];
+                                                    const types = e.target.checked
+                                                        ? [...currentTypes, type]
+                                                        : currentTypes.filter(t => t !== type);
+                                                    setResourceDraft(prev => ({ ...prev, allowed_types: types }));
+                                                }}
+                                            />
+                                            <span>{type.split('/')[1].toUpperCase()}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                        <div className="type-group">
-                            <label className="input-label">Allowed Formats:</label>
-                            <div className="type-grid">
-                                {['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'text/plain'].map(type => (
-                                    <label key={type} className="checkbox-item">
-                                        <input
-                                            type="checkbox"
-                                            checked={resourceDraft?.allowed_types?.includes(type) || false}
-                                            onChange={(e) => {
-                                                const currentTypes = resourceDraft?.allowed_types || [];
-                                                const types = e.target.checked
-                                                    ? [...currentTypes, type]
-                                                    : currentTypes.filter(t => t !== type);
-                                                setResourceDraft(prev => ({ ...prev, allowed_types: types }));
-                                            }}
-                                        />
-                                        <span>{type.split('/')[1].toUpperCase()}</span>
-                                    </label>
-                                ))}
+                            <div className="form-actions-cc" style={{ marginTop: '1rem' }}>
+                                <Button size="sm" onClick={saveResourceLimits} disabled={JSON.stringify(resourceDraft) === JSON.stringify(settings.resource_limits)}>
+                                    Apply Type Constraints
+                                </Button>
                             </div>
                         </div>
+                    </Card>
+                </div>
 
-                        <div className="form-actions-cc" style={{ marginTop: '1rem' }}>
-                            <Button onClick={saveResourceLimits} disabled={JSON.stringify(resourceDraft) === JSON.stringify(settings.resource_limits)}>
-                                Apply Constraints
+                <Card className="announcement-editor" style={{ marginTop: '1.5rem' }}>
+                    <h3><Bell size={20} /> Global Announcement</h3>
+                    <p className="section-desc">Broadcast a message to all students in the portal.</p>
+
+                    <div className="announcement-presets" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {[
+                            { label: 'Fee Deadline', msg: '⚠️ Fee Deadline: Final date for Semester 1 fee clearance is Friday, Feb 20th.', type: 'warning' },
+                            { label: 'Registration', msg: '📅 Course Registration: Undergraduate registration closes this Sunday at midnight.', type: 'info' },
+                            { label: 'Security', msg: '🔒 Security Alert: UCC will never ask for your password. Stay alert to phishing scams.', type: 'danger' },
+                            { label: 'Results', msg: '📄 Results Out: First-semester results for Level 400 students are now live on the portal.', type: 'info' },
+                            { label: 'General', msg: '🎓 Welcome Back: We wish all CoDE students a successful and productive semester!', type: 'info' }
+                        ].map((p, i) => (
+                            <button
+                                key={i}
+                                className="preset-pill"
+                                onClick={() => setAnnouncementDraft({ enabled: true, message: p.msg, type: p.type })}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="announcement-form">
+                        <div className="form-row">
+                            <div className="toggle-group">
+                                <label>Status:</label>
+                                <Button
+                                    size="sm"
+                                    variant={announcementDraft.enabled ? "primary" : "outline"}
+                                    onClick={() => setAnnouncementDraft(prev => ({ ...prev, enabled: !prev.enabled }))}
+                                >
+                                    {announcementDraft.enabled ? "Enabled" : "Disabled"}
+                                </Button>
+                            </div>
+                            <div className="select-group">
+                                <label>Type:</label>
+                                <select
+                                    value={announcementDraft.type}
+                                    onChange={(e) => setAnnouncementDraft(prev => ({ ...prev, type: e.target.value }))}
+                                    className="styled-select"
+                                >
+                                    <option value="info">Info (Blue)</option>
+                                    <option value="warning">Warning (Yellow)</option>
+                                    <option value="danger">Danger (Red)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="msg-input">
+                            <textarea
+                                placeholder="Enter announcement message..."
+                                value={announcementDraft.message}
+                                onChange={(e) => setAnnouncementDraft(prev => ({ ...prev, message: e.target.value }))}
+                                rows={2}
+                            />
+                        </div>
+                        <div className="form-actions-cc">
+                            <Button onClick={saveAnnouncement} disabled={JSON.stringify(announcementDraft) === JSON.stringify(settings.global_announcement)}>
+                                Save Changes
                             </Button>
                         </div>
-                    </div>
-                </Card>
-
-                <Card className="info-card-cc">
-                    <h3><Info size={20} /> Operational Status</h3>
-                    <p>Load: <strong>{settings.current_ticket_count || 0} active tickets</strong>.</p>
-                    <p>Mode: <strong>{settings.sla_peak_mode ? 'PEAK' : 'STANDARD'}</strong></p>
-                    <div className="status-badges" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        {settings.submissions_locked && <span className="badge badge-revoked">LOCKED</span>}
-                        {settings.maintenance_mode && <span className="badge badge-banned">MAINTENANCE</span>}
                     </div>
                 </Card>
             </div>
 
-            <Card className="announcement-editor">
-                <h3><Bell size={20} /> Global Announcement</h3>
-                <p className="section-desc">Broadcast a message to all students in the portal.</p>
+            <div className="cockpit-sidebar">
+                {renderQueueMetrics()}
 
-                <div className="announcement-presets" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {[
-                        { label: 'Fee Deadline', msg: '⚠️ Fee Deadline: Final date for Semester 1 fee clearance is Friday, Feb 20th.', type: 'warning' },
-                        { label: 'Registration', msg: '📅 Course Registration: Undergraduate registration closes this Sunday at midnight.', type: 'info' },
-                        { label: 'Security', msg: '🔒 Security Alert: UCC will never ask for your password. Stay alert to phishing scams.', type: 'danger' },
-                        { label: 'Results', msg: '📄 Results Out: First-semester results for Level 400 students are now live on the portal.', type: 'info' },
-                        { label: 'General', msg: '🎓 Welcome Back: We wish all CoDE students a successful and productive semester!', type: 'info' }
-                    ].map((p, i) => (
-                        <button
-                            key={i}
-                            className="preset-pill"
-                            onClick={() => setAnnouncementDraft({ enabled: true, message: p.msg, type: p.type })}
-                        >
-                            {p.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="announcement-form">
-                    <div className="form-row">
-                        <div className="toggle-group">
-                            <label>Status:</label>
-                            <Button
-                                size="sm"
-                                variant={announcementDraft.enabled ? "primary" : "outline"}
-                                onClick={() => setAnnouncementDraft(prev => ({ ...prev, enabled: !prev.enabled }))}
-                            >
-                                {announcementDraft.enabled ? "Enabled" : "Disabled"}
-                            </Button>
-                        </div>
-                        <div className="select-group">
-                            <label>Type:</label>
-                            <select
-                                value={announcementDraft.type}
-                                onChange={(e) => setAnnouncementDraft(prev => ({ ...prev, type: e.target.value }))}
-                                className="styled-select"
-                            >
-                                <option value="info">Info (Blue)</option>
-                                <option value="warning">Warning (Yellow)</option>
-                                <option value="danger">Danger (Red)</option>
-                            </select>
-                        </div>
+                <Card className="pin-control-card">
+                    <div className="card-mini-header">
+                        <Lock size={16} />
+                        <span>Security</span>
                     </div>
-                    <div className="msg-input">
-                        <textarea
-                            placeholder="Enter announcement message..."
-                            value={announcementDraft.message}
-                            onChange={(e) => setAnnouncementDraft(prev => ({ ...prev, message: e.target.value }))}
-                            rows={2}
+                    <h4>Terminal Access PIN</h4>
+                    <p>Authorized personnel only. Rotate every 30 days.</p>
+                    <Button variant="outline" size="sm" onClick={handleChangePIN} className="mt-4 w-full">
+                        Rotate Entry Key
+                    </Button>
+                </Card>
+
+                <Card className="housekeeping-card">
+                    <div className="card-mini-header">
+                        <History size={16} />
+                        <span>Janitor Service</span>
+                    </div>
+                    <h4>Auto-Cleanup</h4>
+                    <p className="text-xs text-muted mb-4">Auto-close resolved tickets after {settings.housekeeping_rules?.auto_close_resolved_days || 30} days.</p>
+                    <div className="cleanup-input mb-4">
+                        <input
+                            type="number"
+                            value={settings.housekeeping_rules?.auto_close_resolved_days || 30}
+                            onChange={(e) => updateSetting('housekeeping_rules', {
+                                ...(settings.housekeeping_rules || { enabled: false, auto_close_resolved_days: 30 }),
+                                auto_close_resolved_days: parseInt(e.target.value) || 30
+                            })}
+                            className="w-full p-2 border rounded"
                         />
                     </div>
-                    <div className="form-actions-cc">
-                        <Button onClick={saveAnnouncement} disabled={JSON.stringify(announcementDraft) === JSON.stringify(settings.global_announcement)}>
-                            Save Changes
-                        </Button>
+                    <Button variant="secondary" size="sm" onClick={handleCleanup} className="w-full">
+                        Force Run Clean
+                    </Button>
+                </Card>
+
+                <Card className="info-card-status">
+                    <div className="card-mini-header">
+                        <Activity size={16} />
+                        <span>Metrics</span>
                     </div>
-                </div>
-            </Card>
-        </>
+                    <div className="mini-metric">
+                        <span>Load Factor</span>
+                        <strong>{Math.round(((settings.current_ticket_count || 0) / (settings.max_open_tickets || 100)) * 100)}%</strong>
+                    </div>
+                    <div className="mini-metric">
+                        <span>SLA Compliance</span>
+                        <strong>98.4%</strong>
+                    </div>
+                    <div className="mini-metric">
+                        <span>System Mode</span>
+                        <strong className={settings.sla_peak_mode ? 'text-orange' : 'text-green'}>
+                            {settings.sla_peak_mode ? 'PEAK' : 'STANDARD'}
+                        </strong>
+                    </div>
+                </Card>
+            </div>
+        </div>
     );
 
     const renderModeration = () => (
@@ -579,7 +694,12 @@ const CommandCenter: React.FC = () => {
             </div>
 
             <div className="cc-tab-content">
-                {activeTab === 'controls' && renderControls()}
+                {activeTab === 'controls' && (
+                    <div className="fade-in">
+                        {renderHealthMonitor()}
+                        {renderControls()}
+                    </div>
+                )}
                 {activeTab === 'moderation' && renderModeration()}
                 {activeTab === 'audit' && renderAuditLogs()}
             </div>

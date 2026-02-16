@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Square, RefreshCcw, Sparkles, AlertCircle } from 'lucide-react';
-import Button from './Button';
 import './VoiceRecorder.css';
 
-const VoiceRecorder = ({ onTranscriptUpdate }) => {
+interface VoiceRecorderProps {
+    onTranscriptUpdate: (transcript: string) => void;
+}
+
+const VoiceRecorder = ({ onTranscriptUpdate }: VoiceRecorderProps) => {
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState(null);
-    const recognitionRef = useRef(null);
+    const [error, setError] = useState<string | null>(null);
+    const recognitionRef = useRef<any>(null);
 
     useEffect(() => {
-        // Check browser support
+        // @ts-ignore
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             setError("Your browser doesn't support voice recording. Please use Chrome or Edge.");
@@ -22,7 +25,7 @@ const VoiceRecorder = ({ onTranscriptUpdate }) => {
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
-        recognition.onresult = (event) => {
+        recognition.onresult = (event: any) => {
             let currentTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 currentTranscript += event.results[i][0].transcript;
@@ -31,10 +34,10 @@ const VoiceRecorder = ({ onTranscriptUpdate }) => {
             onTranscriptUpdate(currentTranscript);
         };
 
-        recognition.onerror = (event) => {
+        recognition.onerror = (event: any) => {
             console.error('Speech recognition error:', event.error);
             if (event.error === 'network') {
-                setError("Network failure: Voice transcription requires an active internet connection. Please check your signal.");
+                setError("Network failure: Voice transcription requires an active internet connection.");
             } else if (event.error !== 'no-speech') {
                 setError(`Error: ${event.error}`);
             }
@@ -60,7 +63,7 @@ const VoiceRecorder = ({ onTranscriptUpdate }) => {
                 recognitionRef.current.stop();
             }
         };
-    }, []);
+    }, [isRecording, onTranscriptUpdate]);
 
     const toggleRecording = () => {
         if (isRecording) {
@@ -110,9 +113,9 @@ const VoiceRecorder = ({ onTranscriptUpdate }) => {
 
             {transcript && !isRecording && (
                 <div className="recorder-actions">
-                    <Button variant="ghost" size="sm" onClick={resetTranscript}>
+                    <button className="btn-ghost-sm" onClick={resetTranscript}>
                         <RefreshCcw size={14} /> Reset
-                    </Button>
+                    </button>
                 </div>
             )}
         </div>

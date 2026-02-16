@@ -1,11 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Info, Bell, X } from 'lucide-react';
 import { api } from '../../lib/api';
 import './AnnouncementBanner.css';
 
+interface Announcement {
+    message: string;
+    type: 'warning' | 'info' | 'default';
+    enabled: boolean;
+}
+
 const AnnouncementBanner = () => {
-    const [announcement, setAnnouncement] = useState(null);
+    const [announcement, setAnnouncement] = useState<Announcement | null>(null);
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {

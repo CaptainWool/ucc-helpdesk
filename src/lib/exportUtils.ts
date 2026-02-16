@@ -1,12 +1,13 @@
 // Export utilities for tickets
 import { api } from './api';
+import { Ticket } from '../types';
 
 /**
  * Export tickets to CSV format
- * @param {Array} tickets - Array of ticket objects
+ * @param {Ticket[]} tickets - Array of ticket objects
  * @param {string} filename - Optional filename
  */
-export const exportToCSV = (tickets, filename = 'tickets-export.csv') => {
+export const exportToCSV = (tickets: Ticket[], filename: string = 'tickets-export.csv'): void => {
     if (!tickets || tickets.length === 0) {
         alert('No tickets to export');
         return;
@@ -40,7 +41,7 @@ export const exportToCSV = (tickets, filename = 'tickets-export.csv') => {
         ticket.status,
         ticket.priority || 'Medium',
         new Date(ticket.created_at).toLocaleString(),
-        new Date(ticket.updated_at).toLocaleString(),
+        new Date((ticket as any).updated_at || ticket.created_at).toLocaleString(),
         ticket.resolved_at ? new Date(ticket.resolved_at).toLocaleString() : 'N/A'
     ]);
 
@@ -68,10 +69,10 @@ export const exportToCSV = (tickets, filename = 'tickets-export.csv') => {
 
 /**
  * Export tickets to PDF format
- * @param {Array} tickets - Array of ticket objects
+ * @param {Ticket[]} tickets - Array of ticket objects
  * @param {string} filename - Optional filename
  */
-export const exportToPDF = async (tickets, filename = 'tickets-export.pdf') => {
+export const exportToPDF = async (tickets: Ticket[], _filename: string = 'tickets-export.pdf'): Promise<void> => {
     if (!tickets || tickets.length === 0) {
         alert('No tickets to export');
         return;
@@ -197,7 +198,7 @@ export const exportToPDF = async (tickets, filename = 'tickets-export.pdf') => {
  * Export single ticket with full details including messages
  * @param {string} ticketId - Ticket ID
  */
-export const exportSingleTicketPDF = async (ticketId) => {
+export const exportSingleTicketPDF = async (ticketId: string): Promise<void> => {
     try {
         // Fetch ticket details using api
         const ticket = await api.tickets.get(ticketId);

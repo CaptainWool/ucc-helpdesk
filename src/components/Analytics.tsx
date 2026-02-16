@@ -1,16 +1,21 @@
 import React, { useMemo } from 'react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { BarChart3, PieChart as PieIcon, ShieldCheck, Activity, Users } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart3, PieChart as PieIcon, ShieldCheck, Activity } from 'lucide-react';
 import Card from './common/Card';
+import { Ticket } from '../types';
 import './Analytics.css';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-const Analytics = ({ tickets }) => {
+interface AnalyticsProps {
+    tickets: Ticket[];
+}
+
+const Analytics = ({ tickets }: AnalyticsProps) => {
     // Calculate Status Stats
     const statusData = useMemo(() => {
         if (!Array.isArray(tickets)) return [];
-        const stats = tickets.reduce((acc, ticket) => {
+        const stats = tickets.reduce((acc: Record<string, number>, ticket) => {
             const status = ticket.status || 'Open';
             acc[status] = (acc[status] || 0) + 1;
             return acc;
@@ -24,7 +29,7 @@ const Analytics = ({ tickets }) => {
 
     // Calculate Type Stats
     const typeData = useMemo(() => {
-        const stats = tickets.reduce((acc, ticket) => {
+        const stats = tickets.reduce((acc: Record<string, number>, ticket) => {
             const type = ticket.type || 'Other';
             // Capitalize first letter
             const label = type.charAt(0).toUpperCase() + type.slice(1);
@@ -44,6 +49,7 @@ const Analytics = ({ tickets }) => {
         if (resolved.length === 0) return 0;
 
         const metCount = resolved.filter(t => {
+            if (!t.sla_deadline || !t.resolved_at) return true;
             const deadline = new Date(t.sla_deadline);
             const resolvedTime = new Date(t.resolved_at);
             return resolvedTime <= deadline;
@@ -96,9 +102,9 @@ const Analytics = ({ tickets }) => {
                                     outerRadius={90}
                                     paddingAngle={5}
                                     dataKey="value"
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                    label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
                                 >
-                                    {statusData.map((entry, index) => (
+                                    {statusData.map((_entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>

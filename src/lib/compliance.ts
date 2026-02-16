@@ -1,15 +1,32 @@
-
 /**
  * Compliance and Dark Pattern Prevention Utilities
  */
 
+export interface ComplianceIssue {
+    type: string;
+    severity: 'high' | 'medium' | 'low';
+    element: string;
+    message: string;
+}
+
+export interface DarkPatternInfo {
+    type: 'dark-pattern';
+    name: string;
+    message: string;
+    severity: 'high' | 'medium' | 'low';
+}
+
+export interface DarkPatternRule {
+    name: string;
+    regex: RegExp;
+    message: string;
+}
+
 /**
  * Checks an element for basic accessibility compliance
- * @param {HTMLElement} element - The root element to check
- * @returns {Array} List of accessibility issues
  */
-export const checkAccessibility = (element) => {
-    const issues = [];
+export const checkAccessibility = (element: HTMLElement | null): ComplianceIssue[] => {
+    const issues: ComplianceIssue[] = [];
 
     if (!element) return issues;
 
@@ -43,10 +60,11 @@ export const checkAccessibility = (element) => {
     // Check form inputs for labels
     const inputs = element.querySelectorAll('input, select, textarea');
     inputs.forEach((input, index) => {
-        const id = input.id;
+        const inputEl = input as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        const id = inputEl.id;
         if (id) {
             const label = element.querySelector(`label[for="${id}"]`);
-            if (!label && !input.getAttribute('aria-label')) {
+            if (!label && !inputEl.getAttribute('aria-label')) {
                 issues.push({
                     type: 'accessibility',
                     severity: 'medium',
@@ -54,7 +72,7 @@ export const checkAccessibility = (element) => {
                     message: 'Form input missing associated label'
                 });
             }
-        } else if (!input.getAttribute('aria-label')) {
+        } else if (!inputEl.getAttribute('aria-label')) {
             issues.push({
                 type: 'accessibility',
                 severity: 'medium',
@@ -69,14 +87,12 @@ export const checkAccessibility = (element) => {
 
 /**
  * Detects potential dark patterns in text content
- * @param {string} text - The content to analyze
- * @returns {Array} List of detected patterns
  */
-export const detectDarkPatterns = (text) => {
-    const patterns = [];
+export const detectDarkPatterns = (text: string): DarkPatternInfo[] => {
+    const patterns: DarkPatternInfo[] = [];
     const lowerText = text.toLowerCase();
 
-    const darkPatternRules = [
+    const darkPatternRules: DarkPatternRule[] = [
         {
             name: 'False Urgency',
             regex: /\b(hurry|limited time|act now|running out|exclusive offer|don't miss out|last chance|expired)\b/i,
@@ -120,10 +136,8 @@ export const detectDarkPatterns = (text) => {
 
 /**
  * Calculates a generic compliance health score (0-100)
- * @param {Array} issues - Combined list of accessibility and dark pattern issues
- * @returns {number} Score from 0 to 100
  */
-export const calculateHealthScore = (issues) => {
+export const calculateHealthScore = (issues: (ComplianceIssue | DarkPatternInfo)[]): number => {
     if (!issues || issues.length === 0) return 100;
 
     const penaltyPerHigh = 15;
@@ -136,13 +150,16 @@ export const calculateHealthScore = (issues) => {
     return Math.max(0, 100 - totalPenalty);
 };
 
+export interface UserExportData {
+    profile: any;
+    tickets: any[];
+    messages: any[];
+}
 
 /**
  * Generates a GDPR-compliant data export for a user
- * @param {object} userData - Full user profile and activity data
- * @returns {Blob} JSON blob of user data
  */
-export const generateDataExport = (userData) => {
+export const generateDataExport = (userData: UserExportData): Blob => {
     const exportData = {
         meta: {
             exportDate: new Date().toISOString(),

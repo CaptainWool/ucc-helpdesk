@@ -18,7 +18,9 @@ import {
     Phone,
     CreditCard,
     HelpCircle,
-    ArrowRight
+    ArrowRight,
+    LayoutDashboard,
+    PlusCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -51,6 +53,9 @@ const SubmitTicket: React.FC = () => {
 
     const [attachments, setAttachments] = useState<File[]>([]);
     const [dragActive, setDragActive] = useState(false);
+
+    const [currentStep, setCurrentStep] = useState(1);
+    const totalSteps = 4;
 
     // Feature: Voice/Video Recorders
     const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
@@ -193,11 +198,33 @@ const SubmitTicket: React.FC = () => {
         showSuccess('Screen recording attached successfully');
     };
 
+    const nextStep = () => {
+        if (currentStep === 1) {
+            if (!formData.fullName || !formData.studentId || !formData.email) {
+                showError('Please complete all identity fields');
+                return;
+            }
+        }
+        if (currentStep === 2) {
+            if (!formData.subject || !formData.description) {
+                showError('Please provide a subject and description');
+                return;
+            }
+        }
+        setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const prevStep = () => {
+        setCurrentStep(prev => Math.max(prev - 1, 1));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
-        if (!formData.subject.trim() || !formData.description.trim()) {
-            showError('Please fill in all required fields');
+        if (currentStep < totalSteps) {
+            nextStep();
             return;
         }
 
@@ -275,24 +302,60 @@ const SubmitTicket: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="success-next-steps">
-                            <p>Our support team normally responds within 24-48 hours. You can track the progress of this ticket anytime from your dashboard.</p>
+                        <div className="success-actions-section mt-6 text-left">
+                            <h3 className="text-sm font-bold text-muted uppercase tracking-wider mb-4">What would you like to do next?</h3>
+                            <div className="success-actions-grid">
+                                <div className="action-tile" onClick={() => navigate(`/track-ticket?id=${currentTicket?.id}`)}>
+                                    <div className="tile-icon blue">
+                                        <ArrowRight size={24} />
+                                    </div>
+                                    <div className="tile-text">
+                                        <strong>Track this Ticket</strong>
+                                        <span>Check real-time status</span>
+                                    </div>
+                                </div>
+                                <div className="action-tile" onClick={() => navigate('/dashboard')}>
+                                    <div className="tile-icon green">
+                                        <LayoutDashboard size={24} />
+                                    </div>
+                                    <div className="tile-text">
+                                        <strong>Go to Dashboard</strong>
+                                        <span>View all requests</span>
+                                    </div>
+                                </div>
+                                <div className="action-tile" onClick={() => navigate('/faq')}>
+                                    <div className="tile-icon purple">
+                                        <Lightbulb size={24} />
+                                    </div>
+                                    <div className="tile-text">
+                                        <strong>Visit FAQ Center</strong>
+                                        <span>Find instant answers</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="success-actions">
+                        <div className="success-footer mt-8 pt-6 border-t border-color-soft flex justify-center">
                             <Button
-                                variant="primary"
-                                onClick={() => navigate('/dashboard')}
-                                className="action-btn"
+                                variant="ghost"
+                                onClick={() => {
+                                    setIsSubmittedLocal(false);
+                                    setFormData({
+                                        studentId: profile?.student_id || user?.student_id || '',
+                                        fullName: profile?.full_name || user?.full_name || '',
+                                        email: profile?.email || user?.email || '',
+                                        phoneNumber: '',
+                                        subject: '',
+                                        type: 'Portal Issue',
+                                        priority: 'Medium',
+                                        description: '',
+                                    });
+                                    setAttachments([]);
+                                    setCurrentStep(1);
+                                    navigate('/submit-ticket', { replace: true });
+                                }}
                             >
-                                Go to Dashboard <ArrowRight size={18} />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => navigate(`/track-ticket?id=${currentTicket?.id}`)}
-                                className="action-btn"
-                            >
-                                View Ticket Details
+                                <PlusCircle size={18} /> Submit Another Request
                             </Button>
                         </div>
                     </div>
@@ -313,24 +376,33 @@ const SubmitTicket: React.FC = () => {
 
             <div className="submit-grid">
                 <div className="submit-form-container">
-                    <Card className="form-card">
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-section">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="section-title mb-0"><UserIcon size={16} /> Student Information</h3>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setIsStudentInfoOpen(!isStudentInfoOpen)}
-                                        className="text-xs"
-                                    >
-                                        {isStudentInfoOpen ? 'Collapse' : 'Edit Info'}
-                                    </Button>
+                    <div className="wizard-progress-container">
+                        <div className="wizard-progress-bar">
+                            <div
+                                className="progress-fill"
+                                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                            ></div>
+                        </div>
+                        <div className="wizard-steps-indicators">
+                            {['Identify', 'Describe', 'Evidence', 'Review'].map((label, i) => (
+                                <div
+                                    key={i}
+                                    className={`wizard-step-pill ${currentStep >= i + 1 ? 'active' : ''} ${currentStep === i + 1 ? 'current' : ''}`}
+                                >
+                                    <span className="step-num">{i + 1}</span>
+                                    <span className="step-label">{label}</span>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
 
-                                {isStudentInfoOpen ? (
-                                    <div className="compact-grid fade-in">
+                    <Card className="form-card wizard-card">
+                        <form onSubmit={handleSubmit}>
+                            {/* STEP 1: IDENTITY */}
+                            {currentStep === 1 && (
+                                <div className="form-section wizard-section fade-in">
+                                    <h3 className="section-title"><UserIcon size={18} /> Student Information</h3>
+                                    <div className="compact-grid">
                                         <div className="form-group">
                                             <label htmlFor="fullName">Full Name</label>
                                             <div className="input-with-icon">
@@ -398,213 +470,277 @@ const SubmitTicket: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                ) : (
-                                    <div className="student-info-summary fade-in" onClick={() => setIsStudentInfoOpen(true)}>
-                                        <div className="summary-item"><strong>{formData.fullName || 'No Name'}</strong></div>
-                                        <div className="summary-item text-muted">{formData.studentId || 'No ID'}</div>
-                                        <div className="summary-item text-muted">{formData.email}</div>
+                                    <div className="step-hint mt-6">
+                                        <Info size={14} /> Quick Check: Is this information correct? This ensures we contact the right person.
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
 
-                            <div className="form-section">
-                                <h3 className="section-title"><Info size={18} /> Ticket Details</h3>
+                            {/* STEP 2: DETAILS */}
+                            {currentStep === 2 && (
+                                <div className="form-section wizard-section fade-in">
+                                    <h3 className="section-title"><Info size={18} /> Ticket Details</h3>
 
-                                {/* AI Deflection Box */}
-                                {isSearchingSuggestions && (
-                                    <div className="deflection-box searching-help">
-                                        <div className="pulse-dot"></div> Analyzing your issue...
-                                    </div>
-                                )}
+                                    {/* AI Deflection Box */}
+                                    {isSearchingSuggestions && (
+                                        <div className="deflection-box searching-help">
+                                            <div className="pulse-dot"></div> Analyzing your issue...
+                                        </div>
+                                    )}
 
-                                {suggestion && !isSearchingSuggestions && (
-                                    <div className="deflection-box">
-                                        <div className="ai-deflection-card">
-                                            <div className="card-body" style={{ padding: '1.5rem' }}>
-                                                <div className="deflection-header">
-                                                    <div className="ai-badge">
-                                                        <Lightbulb size={14} /> Instant AI Solution
+                                    {suggestion && !isSearchingSuggestions && (
+                                        <div className="deflection-box">
+                                            <div className="ai-deflection-card">
+                                                <div className="card-body" style={{ padding: '1.5rem' }}>
+                                                    <div className="deflection-header">
+                                                        <div className="ai-badge">
+                                                            <Lightbulb size={14} /> Instant AI Solution
+                                                        </div>
+                                                        <button type="button" className="close-deflection" onClick={() => setSuggestion(null)}>
+                                                            <X size={16} />
+                                                        </button>
                                                     </div>
-                                                    <button type="button" className="close-deflection" onClick={() => setSuggestion(null)}>
-                                                        <X size={16} />
-                                                    </button>
-                                                </div>
-                                                <div className="suggestion-content">
-                                                    <h4>{suggestion.question}</h4>
-                                                    <p>{suggestion.answer}</p>
-                                                </div>
-                                                <div className="suggestion-footer">
-                                                    <span>Was this helpful?</span>
-                                                    <div className="suggestion-actions">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => navigate('/faq')}
-                                                            type="button"
-                                                        >
-                                                            View Full FAQ
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => setSuggestion(null)}
-                                                            type="button"
-                                                        >
-                                                            Still need help
-                                                        </Button>
+                                                    <div className="suggestion-content">
+                                                        <h4>{suggestion.question}</h4>
+                                                        <p>{suggestion.answer}</p>
+                                                    </div>
+                                                    <div className="suggestion-footer">
+                                                        <span>Was this helpful?</span>
+                                                        <div className="suggestion-actions">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => navigate('/faq')}
+                                                                type="button"
+                                                            >
+                                                                View Full FAQ
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => setSuggestion(null)}
+                                                                type="button"
+                                                            >
+                                                                Still need help
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-
-                                <div className="form-group">
-                                    <label htmlFor="subject">Subject *</label>
-                                    <input
-                                        type="text"
-                                        id="subject"
-                                        name="subject"
-                                        placeholder="What is the issue about? (e.g., Cannot access portal)"
-                                        value={formData.subject}
-                                        onChange={handleInputChange}
-                                        required
-                                        className="form-input"
-                                    />
-                                </div>
-
-                                <div className="form-row">
-                                    <div className="form-group half">
-                                        <label htmlFor="type">Category</label>
-                                        <select
-                                            id="type"
-                                            name="type"
-                                            value={formData.type}
-                                            onChange={handleInputChange}
-                                            className="form-select"
-                                        >
-                                            {categories.map(cat => (
-                                                <option key={cat} value={cat}>{cat}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="form-group half">
-                                        <label htmlFor="priority">Urgency Level</label>
-                                        <select
-                                            id="priority"
-                                            name="priority"
-                                            value={formData.priority}
-                                            onChange={handleInputChange}
-                                            className="form-select"
-                                        >
-                                            <option value="Low">Low - General Question</option>
-                                            <option value="Medium">Medium - Affecting my work</option>
-                                            <option value="High">High - Urgent Issue</option>
-                                            <option value="Urgent">Urgent - Critical Blocker</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="form-section">
-                                <h3 className="section-title"><FileText size={18} /> Detailed Description</h3>
-                                <div className="form-group">
-                                    <label htmlFor="description">Message *</label>
-                                    <textarea
-                                        id="description"
-                                        name="description"
-                                        rows={4}
-                                        placeholder="Please provide as much detail as possible..."
-                                        value={formData.description}
-                                        onChange={handleInputChange}
-                                        required
-                                        className="form-textarea"
-                                    ></textarea>
-                                </div>
-
-                                {/* Voice & Video Recording Options */}
-                                <div className="recording-options">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
-                                        className="option-btn"
-                                    >
-                                        <Mic size={16} /> {showVoiceRecorder ? 'Hide' : 'Add'} Voice Note
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowVideoRecorder(true)}
-                                        className="option-btn"
-                                    >
-                                        <Video size={16} /> Record Screen Issue
-                                    </Button>
-                                </div>
-
-                                {showVoiceRecorder && (
-                                    <div className="recorder-container">
-                                        <VoiceRecorder onTranscriptUpdate={handleVoiceTranscript} />
-                                        <p className="recorder-hint">
-                                            <Info size={14} /> Speak clearly to describe your issue. The transcript will be added to your description automatically.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="form-section">
-                                <h3 className="section-title"><Paperclip size={18} /> Attachments (Optional)</h3>
-                                <div
-                                    className={`file-drop-zone ${dragActive ? 'active' : ''}`}
-                                    onDragEnter={handleDrag}
-                                    onDragLeave={handleDrag}
-                                    onDragOver={handleDrag}
-                                    onDrop={handleDrop}
-                                >
-                                    <input
-                                        type="file"
-                                        id="attachments"
-                                        multiple
-                                        hidden
-                                        onChange={handleFileChange}
-                                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                                    />
-                                    <label htmlFor="attachments" className="drop-zone-content">
-                                        <div className="drop-icon"><Paperclip size={32} /></div>
-                                        <p><strong>Click to upload</strong> or drag and drop</p>
-                                        <span>PNG, JPG, PDF, DOC (max. 5MB per file)</span>
-                                    </label>
-                                </div>
-
-                                {attachments.length > 0 && (
-                                    <div className="file-list">
-                                        {attachments.map((file, index) => (
-                                            <div key={index} className="file-item">
-                                                <Paperclip size={14} />
-                                                <span className="file-name">{file.name}</span>
-                                                <span className="file-size">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                                                <button type="button" onClick={() => removeAttachment(index)} className="remove-file">
-                                                    <X size={14} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="form-footer">
-                                <Button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="submit-btn"
-                                >
-                                    {submitting ? (
-                                        <><Loader2 className="animate-spin" size={20} /> Submitting...</>
-                                    ) : (
-                                        <><Send size={20} /> Submit Ticket</>
                                     )}
+
+                                    <div className="form-group">
+                                        <label htmlFor="subject">Subject *</label>
+                                        <input
+                                            type="text"
+                                            id="subject"
+                                            name="subject"
+                                            placeholder="What is the issue about? (e.g., Cannot access portal)"
+                                            value={formData.subject}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="form-input"
+                                        />
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group half">
+                                            <label htmlFor="type">Category</label>
+                                            <select
+                                                id="type"
+                                                name="type"
+                                                value={formData.type}
+                                                onChange={handleInputChange}
+                                                className="form-select"
+                                            >
+                                                {categories.map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="form-group half">
+                                            <label htmlFor="priority">Urgency Level</label>
+                                            <select
+                                                id="priority"
+                                                name="priority"
+                                                value={formData.priority}
+                                                onChange={handleInputChange}
+                                                className="form-select"
+                                            >
+                                                <option value="Low">Low - General Question</option>
+                                                <option value="Medium">Medium - Affecting my work</option>
+                                                <option value="High">High - Urgent Issue</option>
+                                                <option value="Urgent">Urgent - Critical Blocker</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group mt-4">
+                                        <label htmlFor="description">Message *</label>
+                                        <textarea
+                                            id="description"
+                                            name="description"
+                                            rows={6}
+                                            placeholder="Please provide as much detail as possible..."
+                                            value={formData.description}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="form-textarea"
+                                        ></textarea>
+                                    </div>
+
+                                    {/* Voice Recording Option Integrated Here */}
+                                    <div className="mt-4">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Mic size={16} /> {showVoiceRecorder ? 'Hide' : 'Add'} Voice Note (Dictate)
+                                        </Button>
+                                        {showVoiceRecorder && (
+                                            <div className="recorder-container mt-2">
+                                                <VoiceRecorder onTranscriptUpdate={handleVoiceTranscript} />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* STEP 3: EVIDENCE */}
+                            {currentStep === 3 && (
+                                <div className="form-section wizard-section fade-in">
+                                    <h3 className="section-title"><Paperclip size={18} /> Attachments & Evidence</h3>
+                                    <p className="text-muted text-sm mb-4">Adding screenshots or recordings helps our team resolve your issue much faster.</p>
+
+                                    <div
+                                        className={`file-drop-zone ${dragActive ? 'active' : ''}`}
+                                        onDragEnter={handleDrag}
+                                        onDragLeave={handleDrag}
+                                        onDragOver={handleDrag}
+                                        onDrop={handleDrop}
+                                    >
+                                        <input
+                                            type="file"
+                                            id="attachments"
+                                            multiple
+                                            hidden
+                                            onChange={handleFileChange}
+                                            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                        />
+                                        <label htmlFor="attachments" className="drop-zone-content">
+                                            <div className="drop-icon"><Paperclip size={32} /></div>
+                                            <p><strong>Click to upload</strong> or drag and drop</p>
+                                            <span>PNG, JPG, PDF, DOC (max. 5MB per file)</span>
+                                        </label>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => setShowVideoRecorder(true)}
+                                            className="w-full flex justify-center items-center gap-2"
+                                        >
+                                            <Video size={18} /> Record your screen issue instead
+                                        </Button>
+                                    </div>
+
+                                    {attachments.length > 0 && (
+                                        <div className="file-list mt-6">
+                                            <h4>Attached Files ({attachments.length})</h4>
+                                            {attachments.map((file, index) => (
+                                                <div key={index} className="file-item">
+                                                    <Paperclip size={14} />
+                                                    <span className="file-name">{file.name}</span>
+                                                    <span className="file-size">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                                    <button type="button" onClick={() => removeAttachment(index)} className="remove-file">
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* STEP 4: REVIEW */}
+                            {currentStep === 4 && (
+                                <div className="form-section wizard-section fade-in">
+                                    <h3 className="section-title"><CheckCircle size={18} /> Review Your Concern</h3>
+                                    <div className="review-grid">
+                                        <div className="review-block">
+                                            <span className="review-label">Student</span>
+                                            <div className="review-value-card">
+                                                <strong>{formData.fullName}</strong>
+                                                <p>{formData.studentId} • {formData.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="review-block">
+                                            <span className="review-label">Issue Details</span>
+                                            <div className="review-value-card">
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="badge badge-outline">{formData.type}</span>
+                                                    <span className={`badge priority-${formData.priority.toLowerCase()}`}>{formData.priority}</span>
+                                                </div>
+                                                <h4>{formData.subject}</h4>
+                                                <p className="line-clamp-3">{formData.description}</p>
+                                            </div>
+                                        </div>
+                                        <div className="review-block">
+                                            <span className="review-label">Attachments</span>
+                                            <div className="review-value-card">
+                                                {attachments.length === 0 ? (
+                                                    <p className="text-muted italic">No attachments added</p>
+                                                ) : (
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {attachments.map((f, i) => (
+                                                            <span key={i} className="attachment-pill"><Paperclip size={12} /> {f.name.substring(0, 15)}...</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="final-confirmation-notice mt-6">
+                                        <p>By submitting this ticket, you agree that UCC coordinators will review your data to provide resolution. We usually respond within 24-48 hours.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="wizard-footer">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={prevStep}
+                                    className={`wizard-btn-back ${currentStep === 1 ? 'invisible' : ''}`}
+                                >
+                                    <ChevronLeft size={20} /> Back
                                 </Button>
+
+                                {currentStep < totalSteps ? (
+                                    <Button
+                                        type="button"
+                                        onClick={nextStep}
+                                        className="wizard-btn-next"
+                                    >
+                                        Next Stage <ArrowRight size={20} />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        disabled={submitting}
+                                        className="wizard-btn-submit"
+                                    >
+                                        {submitting ? (
+                                            <><Loader2 className="animate-spin" size={20} /> Submitting...</>
+                                        ) : (
+                                            <><Send size={20} /> Confirm & Submit Ticket</>
+                                        )}
+                                    </Button>
+                                )}
                             </div>
                         </form>
                     </Card>

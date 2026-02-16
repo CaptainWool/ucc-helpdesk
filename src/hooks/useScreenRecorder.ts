@@ -1,21 +1,52 @@
 import { useState, useRef, useCallback } from 'react';
 
-export const useScreenRecorder = () => {
+export interface ScreenRecorderHook {
+    isRecording: boolean;
+    mediaBlob: Blob | null;
+    error: string | null;
+    recordingTime: number;
+    startRecording: () => Promise<void>;
+    stopRecording: () => void;
+    clearRecording: () => void;
+}
+
+export const useScreenRecorder = (): ScreenRecorderHook => {
     const [isRecording, setIsRecording] = useState(false);
-    const [mediaBlob, setMediaBlob] = useState(null);
-    const [error, setError] = useState(null);
+    const [mediaBlob, setMediaBlob] = useState<Blob | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [recordingTime, setRecordingTime] = useState(0);
-    const mediaRecorderRef = useRef(null);
-    const streamRef = useRef(null);
-    const chunksRef = useRef([]);
-    const timerRef = useRef(null);
+
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const chunksRef = useRef<Blob[]>([]);
+    const timerRef = useRef<number | null>(null);
+
+    const stopStream = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+    }, []);
+
+    const stopRecording = useCallback(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerRef.current) {
+                window.clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+        }
+    }, []);
 
     const startRecording = useCallback(async () => {
         try {
             setError(null);
             setRecordingTime(0);
+
+            // @ts-ignore - getDisplayMedia might not be in older lib types
             const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { mediaSource: 'screen', frameRate: { ideal: 30, max: 60 } },
+                video: { frameRate: { ideal: 30, max: 60 } },
                 audio: true
             });
 
@@ -36,7 +67,6 @@ export const useScreenRecorder = () => {
                 const blob = new Blob(chunksRef.current, { type: 'video/webm' });
                 setMediaBlob(blob);
                 stopStream();
-                if (timerRef.current) clearInterval(timerRef.current);
             };
 
             // Handle user clicking "Stop Sharing" on browser UI
@@ -48,30 +78,15 @@ export const useScreenRecorder = () => {
             setIsRecording(true);
 
             // Start timer
-            timerRef.current = setInterval(() => {
+            timerRef.current = window.setInterval(() => {
                 setRecordingTime(prev => prev + 1);
             }, 1000);
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error starting screen recording:", err);
             setError(err.message || "Failed to start recording");
         }
-    }, []);
-
-    const stopRecording = useCallback(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            if (timerRef.current) clearInterval(timerRef.current);
-        }
-    }, []);
-
-    const stopStream = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-    };
+    }, [stopRecording, stopStream]);
 
     const clearRecording = useCallback(() => {
         setMediaBlob(null);
