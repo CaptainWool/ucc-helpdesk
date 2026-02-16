@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, FormEvent } from 'react';
-import { Send, User as UserIcon, Shield, Sparkles, Video, Trash2 } from 'lucide-react';
-import { api } from '../lib/api';
+import { Send, User as UserIcon, Shield, Sparkles, Video, Trash2, Loader2 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import Button from './common/Button';
 import { generateSmartReplyAI, analyzeResponseQuality } from '../lib/ai';
 import { requestNotificationPermission, sendNotification } from '../lib/notifications';
@@ -25,6 +25,7 @@ interface TicketChatProps {
 }
 
 const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', ticketData }) => {
+    const { user, profile } = useAuth();
     const { showSuccess, showError, showWarning } = useToast();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -32,9 +33,10 @@ const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', tic
     const [isGenerating, setIsGenerating] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
     const [qualityAnalysis, setQualityAnalysis] = useState<any>(null);
-    const [isAnalyzingQuality, setIsAnalyzingQuality] = useState(false);
-    const [showRecorder, setShowRecorder] = useState(false);
     const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+    const [typingUser, setTypingUser] = useState<string | null>(null);
+    const socketRef = useRef<any>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +77,38 @@ const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', tic
             if (analysisTimeoutRef.current) clearTimeout(analysisTimeoutRef.current);
         };
     }, [newMessage, role, ticketData]);
+
+    useEffect(() => {
+        // Initialize Socket
+        const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        socketRef.current = io(socketUrl);
+
+        socketRef.current.emit('join-ticket', ticketId);
+
+        socketRef.current.on('user-typing', ({ user: typingName }: { user: string }) => {
+            if (typingName !== (profile?.full_name || user?.email)) {
+                setTypingUser(typingName);
+            }
+        });
+
+        socketRef.current.on('user-stop-typing', () => {
+            setTypingUser(null);
+        });
+
+        socketRef.current.on('new-message', (data: Message) => {
+            setMessages(prev => {
+                if (prev.some(m => m.id === data.id)) return prev;
+                return [...prev, data];
+            });
+            scrollToBottom();
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
+    }, [ticketId, profile, user]);
 
     useEffect(() => {
         fetchMessages();
@@ -209,6 +243,12 @@ const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', tic
                         </div>
                     ))
                 )}
+                {typingUser && (
+                    <div className="typing-indicator">
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>{typingUser} is typing...</span>
+                    </div>
+                )}
                 <div ref={messagesEndRef} />
             </div>
 
@@ -293,7 +333,22 @@ const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', tic
                     <input
                         type="text"
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={(e) => {
+                            setNewMessage(e.target.value);
+
+                            // Emit typing
+                            if (socketRef.current) {
+                                socketRef.current.emit('typing', {
+                                    ticketId,
+                                    user: profile?.full_name || user?.full_name || 'Anonymous'
+                                });
+
+                                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                                typingTimeoutRef.current = setTimeout(() => {
+                                    socketRef.current.emit('stop-typing', { ticketId });
+                                }, 3000);
+                            }
+                        }}
                         placeholder="Type your message..."
                         className="chat-input"
                         maxLength={1000}

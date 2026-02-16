@@ -137,7 +137,7 @@ const TrackTicket: React.FC = () => {
 
             <form onSubmit={handleSearch} className="search-form-container">
                 <div className="search-input-group">
-                    <Search size={24} color="var(--primary)" style={{ marginLeft: '1rem' }} />
+                    <Search size={24} color="var(--primary)" className="search-icon-inline" />
                     <input
                         type="text"
                         placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
@@ -150,11 +150,11 @@ const TrackTicket: React.FC = () => {
                 </div>
             </form>
 
-            <div style={{ marginTop: '4rem', display: 'flex', gap: '2rem', color: 'var(--text-muted)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="landing-gadgets">
+                <div className="gadget-item">
                     <Shield size={16} /> Secure Encryption
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="gadget-item">
                     <Clock size={16} /> Real-time Updates
                 </div>
             </div>
@@ -164,9 +164,9 @@ const TrackTicket: React.FC = () => {
     const renderDetailDashboard = () => {
         if (isLoading) {
             return (
-                <div className="track-loading" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="track-loading track-loading-container">
                     <Loader className="animate-spin" size={64} color="var(--primary)" />
-                    <p style={{ marginTop: '1.5rem', fontWeight: 600 }}>Syncing with Service Desk...</p>
+                    <p className="track-loading-text">Syncing with Service Desk...</p>
                 </div>
             );
         }
@@ -180,24 +180,24 @@ const TrackTicket: React.FC = () => {
                         <ArrowLeft size={16} /> Search Another Ticket
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <div className="header-flex-row">
                         <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                            <div className="status-meta-row">
                                 <span className={`badge-service status-${(ticket.status || '').toLowerCase().replace(' ', '-')}`}>
                                     {ticket.status}
                                 </span>
                                 <span className="ticket-id">Track ID: #{String(ticket.id).substring(0, 8)}</span>
                             </div>
-                            <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, letterSpacing: '-0.04em' }}>
+                            <h1 className="ticket-subject-title">
                                 {ticket.subject}
                             </h1>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <Button variant="outline" size="sm" style={{ borderRadius: '1rem' }} onClick={() => window.print()}>
+                        <div className="header-actions-group">
+                            <Button variant="outline" size="sm" className="btn-pill" onClick={() => window.print()}>
                                 <Download size={16} /> Export PDF
                             </Button>
-                            <Button variant="primary" size="sm" style={{ borderRadius: '1rem' }} onClick={() => navigate('/submit-ticket')}>
+                            <Button variant="primary" size="sm" className="btn-pill" onClick={() => navigate('/submit-ticket')}>
                                 New Ticket
                             </Button>
                         </div>
@@ -248,8 +248,8 @@ const TrackTicket: React.FC = () => {
                                         <div className="msg-header">
                                             {msg.is_internal ? <Shield size={12} /> : <User size={12} />}
                                             <span>{msg.sender_name || msg.sender_email}</span>
-                                            <span style={{ opacity: 0.5, fontWeight: 400 }}>•</span>
-                                            <span style={{ fontWeight: 500 }}>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="msg-sep">•</span>
+                                            <span className="msg-timestamp">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         <div className="msg-text">{msg.message}</div>
                                     </div>
@@ -262,17 +262,17 @@ const TrackTicket: React.FC = () => {
                                     {isAdmin && (
                                         <div className="internal-flag">
                                             <input type="checkbox" id="int-note" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
-                                            <label htmlFor="int-note" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <label htmlFor="int-note" className="internal-flag-label">
                                                 <Shield size={14} /> Add as Secure Internal Note
                                             </label>
                                         </div>
                                     )}
                                     <div className="dock-wrapper">
                                         <textarea placeholder="Transmit update to agents..." value={message} onChange={(e) => setMessage(e.target.value)} rows={2} />
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                        <div className="dock-footer">
+                                            <div className="dock-info-row">
                                                 {isAdmin && (
-                                                    <Button type="button" variant="ghost" size="sm" className="ai-draft-btn" onClick={handleGenerateDraft} disabled={isDrafting} style={{ color: 'var(--primary)', padding: '0 0.5rem' }}>
+                                                    <Button type="button" variant="ghost" size="sm" className="ai-draft-btn" onClick={handleGenerateDraft} disabled={isDrafting}>
                                                         {isDrafting ? <Loader className="animate-spin" size={14} /> : <Brain size={14} />}
                                                         <span>Draft with AI</span>
                                                     </Button>
@@ -337,7 +337,7 @@ const TrackTicket: React.FC = () => {
                         )}
 
                         <Card className="intel-card quick-actions-variant">
-                            <h3 style={{ color: 'white' }}><MessageCircle size={20} /> Quick Actions</h3>
+                            <h3 className="white-text"><MessageCircle size={20} /> Quick Actions</h3>
                             <div className="action-grid">
                                 <Button variant="ghost" className="action-btn"><FileText size={16} /> Knowledge Base</Button>
                                 <Button variant="ghost" className="action-btn"><Mail size={16} /> Email Transcript</Button>

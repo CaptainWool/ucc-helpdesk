@@ -12,6 +12,15 @@ require('dotenv').config();
 const logger = require('./logger');
 
 const app = express();
+const http = require('http');
+const { Server } = require('socket.io');
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 const port = process.env.PORT || 3000;
 
 // Middleware
@@ -37,7 +46,7 @@ const pool = new Pool({
     ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : false,
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // How long a client is allowed to sit idle before being closed
-    connectionTimeoutMillis: 2000, // How long to wait for a connection
+    connectionTimeoutMillis: 10000, // How long to wait for a connection
 });
 
 // Initialize SendGrid
@@ -1519,7 +1528,8 @@ app.get('/api/public/settings', async (req, res) => {
 
         res.json(settings);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch settings' });
+        console.error('SERVER ERROR [public/settings]:', err);
+        res.status(500).json({ error: 'Failed to fetch settings', details: err.message });
     }
 });
 
@@ -1541,7 +1551,22 @@ app.get('/api/system/health', async (req, res) => {
     }
 });
 
-const server = app.listen(port, async () => {
+// Socket.io for Real-time Presence
+io.on('connection', (socket) => {
+    socket.on('join-ticket', (ticketId) => {
+        socket.join(ticketId);
+    });
+
+    socket.on('typing', ({ ticketId, user }) => {
+        socket.to(ticketId).emit('user-typing', { user });
+    });
+
+    socket.on('stop-typing', ({ ticketId, user }) => {
+        socket.to(ticketId).emit('user-stop-typing', { user });
+    });
+});
+
+server.listen(port, async () => {
     console.log(`Server running on port ${port}`);
     // Auto-initialize DB on startup
     await initDb();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, KeyboardEvent } from 'react';
-import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles, Activity, Zap, Cpu, Server, Database, Globe } from 'lucide-react';
+import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles, Activity, Zap, Cpu, Server, Database, Globe, Clock, Mail, Phone, Settings } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -9,9 +9,22 @@ import Input from './common/Input';
 import { User } from '../types';
 import './CommandCenter.css';
 
+interface MaintenanceConfig {
+    message_title: string;
+    message_body: string;
+    show_countdown: boolean;
+    estimated_duration_minutes: number;
+    contact_info: {
+        email: string;
+        phone: string;
+        show_contact: boolean;
+    };
+}
+
 interface SystemSettings {
     submissions_locked: boolean;
     maintenance_mode: boolean;
+    maintenance_config?: MaintenanceConfig;
     global_announcement: { enabled: boolean; message: string; type: string };
     max_open_tickets: number;
     sla_peak_mode: boolean;
@@ -54,7 +67,19 @@ const CommandCenter: React.FC = () => {
     const [modifying, setModifying] = useState<string | null>(null);
     const [announcementDraft, setAnnouncementDraft] = useState({ enabled: false, message: '', type: 'info' });
     const [resourceDraft, setResourceDraft] = useState({ max_size_mb: 5, allowed_types: [] as string[] });
+    const [maintenanceDraft, setMaintenanceDraft] = useState<MaintenanceConfig>({
+        message_title: 'System Under Maintenance',
+        message_body: 'We\'re currently performing system maintenance to improve your experience. Please check back shortly.',
+        show_countdown: true,
+        estimated_duration_minutes: 120,
+        contact_info: {
+            email: 'helpdesk@ucc.edu.gh',
+            phone: '+233 XX XXX XXXX',
+            show_contact: true
+        }
+    });
     const [activeTab, setActiveTab] = useState<'controls' | 'moderation' | 'audit'>('controls');
+    const [showMaintenanceConfig, setShowMaintenanceConfig] = useState(false);
     const [passwordAttempt, setPasswordAttempt] = useState('');
     const [systemHealth, setSystemHealth] = useState({
         api: 'optimal',
@@ -95,6 +120,9 @@ const CommandCenter: React.FC = () => {
             setAuditLogs(logs);
             setAnnouncementDraft(s.global_announcement || { enabled: false, message: '', type: 'info' });
             setResourceDraft(s.resource_limits || { max_size_mb: 5, allowed_types: ['image/jpeg', 'image/png', 'application/pdf'] });
+            if (s.maintenance_config) {
+                setMaintenanceDraft(s.maintenance_config);
+            }
             setUsers(u.filter((user: User) => user.role !== 'master'));
         } catch (err) {
             console.error('Failed to fetch command center data:', err);
@@ -146,6 +174,8 @@ const CommandCenter: React.FC = () => {
     const saveAnnouncement = () => updateSetting('global_announcement', announcementDraft);
 
     const saveResourceLimits = () => updateSetting('resource_limits', resourceDraft);
+
+    const saveMaintenanceConfig = () => updateSetting('maintenance_config', maintenanceDraft);
 
     const handleModerate = async (userId: string, data: any) => {
         setModifying(userId);
@@ -345,13 +375,23 @@ const CommandCenter: React.FC = () => {
                                 <strong>Maintenance Mode</strong>
                                 <p>Restrict entire platform</p>
                             </div>
-                            <Button
-                                variant={settings.maintenance_mode ? "danger" : "outline"}
-                                onClick={() => toggleSetting('maintenance_mode')}
-                                size="sm"
-                            >
-                                {settings.maintenance_mode ? 'Restore' : 'Activate'}
-                            </Button>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowMaintenanceConfig(true)}
+                                    size="sm"
+                                >
+                                    <Settings size={16} style={{ marginRight: '0.25rem' }} />
+                                    Configure
+                                </Button>
+                                <Button
+                                    variant={settings.maintenance_mode ? "danger" : "outline"}
+                                    onClick={() => toggleSetting('maintenance_mode')}
+                                    size="sm"
+                                >
+                                    {settings.maintenance_mode ? 'Restore' : 'Activate'}
+                                </Button>
+                            </div>
                         </div>
 
                         <div className={`control-block ${settings.sla_peak_mode ? 'active-primary' : ''}`}>
@@ -710,6 +750,138 @@ const CommandCenter: React.FC = () => {
                 {activeTab === 'moderation' && renderModeration()}
                 {activeTab === 'audit' && renderAuditLogs()}
             </div>
+
+            {/* Maintenance Configuration Modal */}
+            {showMaintenanceConfig && (
+                <div className="modal-overlay" onClick={() => setShowMaintenanceConfig(false)}>
+                    <Card className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflow: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0 }}>
+                                <Settings size={24} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                                Maintenance Configuration
+                            </h3>
+                            <Button variant="ghost" onClick={() => setShowMaintenanceConfig(false)} size="sm">×</Button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {/* Custom Title */}
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                    Maintenance Title
+                                </label>
+                                <Input
+                                    value={maintenanceDraft.message_title}
+                                    onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, message_title: e.target.value }))}
+                                    placeholder="System Under Maintenance"
+                                />
+                            </div>
+
+                            {/* Custom Message */}
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                    Message Body
+                                </label>
+                                <textarea
+                                    value={maintenanceDraft.message_body}
+                                    onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, message_body: e.target.value }))}
+                                    placeholder="Describe what's happening..."
+                                    rows={4}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        borderRadius: '0.5rem',
+                                        border: '1px solid var(--border)',
+                                        fontFamily: 'inherit',
+                                        fontSize: '0.95rem',
+                                        resize: 'vertical'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Countdown Settings */}
+                            <div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={maintenanceDraft.show_countdown}
+                                        onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, show_countdown: e.target.checked }))}
+                                    />
+                                    <Clock size={18} />
+                                    <span style={{ fontWeight: '600' }}>Show Countdown Timer</span>
+                                </label>
+                                {maintenanceDraft.show_countdown && (
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                            Estimated Duration (minutes)
+                                        </label>
+                                        <Input
+                                            type="number"
+                                            value={maintenanceDraft.estimated_duration_minutes}
+                                            onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, estimated_duration_minutes: parseInt(e.target.value) || 0 }))}
+                                            min="1"
+                                            placeholder="120"
+                                        />
+                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                            Duration: {Math.floor(maintenanceDraft.estimated_duration_minutes / 60)}h {maintenanceDraft.estimated_duration_minutes % 60}m
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Contact Information */}
+                            <div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={maintenanceDraft.contact_info.show_contact}
+                                        onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, contact_info: { ...prev.contact_info, show_contact: e.target.checked } }))}
+                                    />
+                                    <Phone size={18} />
+                                    <span style={{ fontWeight: '600' }}>Show Contact Information</span>
+                                </label>
+                                {maintenanceDraft.contact_info.show_contact && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginLeft: '1.75rem' }}>
+                                        <div>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                                <Mail size={16} />
+                                                Email
+                                            </label>
+                                            <Input
+                                                type="email"
+                                                value={maintenanceDraft.contact_info.email}
+                                                onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, contact_info: { ...prev.contact_info, email: e.target.value } }))}
+                                                placeholder="helpdesk@ucc.edu.gh"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                                <Phone size={16} />
+                                                Phone
+                                            </label>
+                                            <Input
+                                                type="tel"
+                                                value={maintenanceDraft.contact_info.phone}
+                                                onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, contact_info: { ...prev.contact_info, phone: e.target.value } }))}
+                                                placeholder="+233 XX XXX XXXX"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                                <Button variant="outline" onClick={() => setShowMaintenanceConfig(false)}>
+                                    Cancel
+                                </Button>
+                                <Button onClick={() => { saveMaintenanceConfig(); setShowMaintenanceConfig(false); }}>
+                                    Save Configuration
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };

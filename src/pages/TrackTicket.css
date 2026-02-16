@@ -98,6 +98,23 @@
     box-shadow: 0 8px 15px rgba(var(--primary-hue), 85%, 20%) !important;
 }
 
+.search-icon-inline {
+    margin-left: 1rem;
+}
+
+.landing-gadgets {
+    margin-top: 4rem;
+    display: flex;
+    gap: 2rem;
+    color: var(--text-muted);
+}
+
+.gadget-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 /* 3. Detail Dashboard State (Split-Pane) */
 .detail-dashboard {
     display: flex;
@@ -140,6 +157,50 @@
 .back-link:hover {
     color: var(--primary);
     transform: translateX(-4px);
+}
+
+.track-loading-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.track-loading-text {
+    margin-top: 1.5rem;
+    font-weight: 600;
+}
+
+.header-flex-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.status-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.ticket-subject-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.04em;
+}
+
+.header-actions-group {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-pill {
+    border-radius: 1rem !important;
 }
 
 /* 5. Intelligence Bar (Agent Only) */
@@ -507,11 +568,45 @@
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     border-radius: 0.75rem !important;
     background: rgba(var(--primary-hue), 85%, 5%) !important;
+    color: var(--primary);
+    padding: 0 0.5rem !important;
 }
 
 .ai-draft-btn:hover {
     background: rgba(var(--primary-hue), 85%, 10%) !important;
     transform: translateY(-1px);
+}
+
+.msg-sep {
+    opacity: 0.5;
+    font-weight: 400;
+}
+
+.msg-timestamp {
+    font-weight: 500;
+}
+
+.internal-flag-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dock-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dock-info-row {
+    display: flex;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.white-text {
+    color: white !important;
 }
 
 .ai-draft-btn:active {

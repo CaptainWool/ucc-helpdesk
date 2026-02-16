@@ -1,0 +1,44 @@
+/* Small Mobile: 480px - Additional refinements for SubmitTicket Wizard */
+@media (max-width: 480px) {
+    .wizard-steps-indicators {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .wizard-step-pill {
+        width: 100%;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    .wizard-footer {
+        padding: 1.5rem 1rem;
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+
+    .wizard-btn-next,
+    .wizard-btn-submit,
+    .wizard-btn-back {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .success-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .success-actions .action-card {
+        width: 100%;
+    }
+}

@@ -55,7 +55,7 @@ export const useCreateTicket = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tickets'] });
             queryClient.invalidateQueries({ queryKey: ['admin-tickets'] });
-            showSuccess('Ticket created successfully');
+            showSuccess('Ticket submitted successfully!');
         },
         onError: (error: any) => {
             console.error('Create ticket failed:', error);

@@ -13,6 +13,8 @@ import {
     Shield,
     AlertTriangle,
     Wrench,
+    Mail,
+    Phone,
 } from 'lucide-react';
 import { BASE_URL, api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,6 +40,8 @@ const StudentDashboard: React.FC = () => {
     const [updatingProfile, setUpdatingProfile] = useState(false);
     const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [loadingSettings, setLoadingSettings] = useState(true);
+    const [maintenanceConfig, setMaintenanceConfig] = useState<any>(null);
+    const [maintenanceStartTime, setMaintenanceStartTime] = useState<number | null>(null);
 
     // Fetch tickets using React Query
     const {
@@ -69,6 +73,11 @@ const StudentDashboard: React.FC = () => {
             try {
                 const settings = await api.system.getSettings();
                 setMaintenanceMode(settings.maintenance_mode || false);
+                setMaintenanceConfig(settings.maintenance_config || null);
+                // Set start time for countdown (using current time as proxy for start)
+                if (settings.maintenance_mode) {
+                    setMaintenanceStartTime(Date.now());
+                }
             } catch (err) {
                 console.error('Failed to fetch system settings:', err);
             } finally {
@@ -171,6 +180,24 @@ const StudentDashboard: React.FC = () => {
 
     // Show maintenance screen if maintenance mode is active
     if (maintenanceMode) {
+        // Calculate time remaining for countdown
+        const [timeRemaining, setTimeRemaining] = React.useState(0);
+
+        React.useEffect(() => {
+            if (maintenanceConfig?.show_countdown && maintenanceStartTime) {
+                const interval = setInterval(() => {
+                    const endTime = maintenanceStartTime + (maintenanceConfig.estimated_duration_minutes * 60 * 1000);
+                    const remaining = Math.max(0, endTime - Date.now());
+                    setTimeRemaining(remaining);
+                }, 1000);
+                return () => clearInterval(interval);
+            }
+        }, [maintenanceStartTime]);
+
+        const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+        const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
         return (
             <div className="maintenance-screen" style={{
                 minHeight: '100vh',
@@ -180,17 +207,70 @@ const StudentDashboard: React.FC = () => {
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 padding: '2rem'
             }}>
-                <Card style={{ maxWidth: '500px', textAlign: 'center', padding: '3rem 2rem' }}>
+                <Card style={{ maxWidth: '600px', textAlign: 'center', padding: '3rem 2rem' }}>
                     <div style={{ marginBottom: '2rem' }}>
                         <Wrench size={64} style={{ color: 'var(--primary)' }} />
                     </div>
                     <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>
-                        System Under Maintenance
+                        {maintenanceConfig?.message_title || 'System Under Maintenance'}
                     </h1>
                     <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                        We're currently performing system maintenance to improve your experience.
-                        Please check back shortly.
+                        {maintenanceConfig?.message_body || 'We\'re currently performing system maintenance to improve your experience. Please check back shortly.'}
                     </p>
+
+                    {/* Countdown Timer */}
+                    {maintenanceConfig?.show_countdown && timeRemaining > 0 && (
+                        <div style={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            padding: '1.5rem',
+                            borderRadius: '1rem',
+                            marginBottom: '1.5rem',
+                            color: 'white'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                <Clock size={20} />
+                                <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>Estimated Time Remaining</span>
+                            </div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: '700', letterSpacing: '0.1em', fontFamily: 'monospace' }}>
+                                {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Contact Information */}
+                    {maintenanceConfig?.contact_info?.show_contact && (
+                        <div style={{
+                            background: '#f8fafc',
+                            padding: '1.5rem',
+                            borderRadius: '0.75rem',
+                            border: '1px solid #e2e8f0',
+                            marginBottom: '1.5rem',
+                            textAlign: 'left'
+                        }}>
+                            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: 'var(--text-dark)' }}>
+                                Need Immediate Assistance?
+                            </h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {maintenanceConfig.contact_info.email && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+                                        <Mail size={18} />
+                                        <a href={`mailto:${maintenanceConfig.contact_info.email}`} style={{ color: 'var(--primary)' }}>
+                                            {maintenanceConfig.contact_info.email}
+                                        </a>
+                                    </div>
+                                )}
+                                {maintenanceConfig.contact_info.phone && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+                                        <Phone size={18} />
+                                        <a href={`tel:${maintenanceConfig.contact_info.phone}`} style={{ color: 'var(--primary)' }}>
+                                            {maintenanceConfig.contact_info.phone}
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div style={{
                         background: '#f8fafc',
                         padding: '1rem',

@@ -380,7 +380,7 @@ const SubmitTicket: React.FC = () => {
                         <div className="wizard-progress-bar">
                             <div
                                 className="progress-fill"
-                                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+                                style={{ '--progress-width': `${(currentStep / totalSteps) * 100}%` } as React.CSSProperties}
                             ></div>
                         </div>
                         <div className="wizard-steps-indicators">
@@ -491,7 +491,7 @@ const SubmitTicket: React.FC = () => {
                                     {suggestion && !isSearchingSuggestions && (
                                         <div className="deflection-box">
                                             <div className="ai-deflection-card">
-                                                <div className="card-body" style={{ padding: '1.5rem' }}>
+                                                <div className="deflection-card-body">
                                                     <div className="deflection-header">
                                                         <div className="ai-badge">
                                                             <Lightbulb size={14} /> Instant AI Solution
