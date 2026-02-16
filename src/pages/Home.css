@@ -1,11 +1,4 @@
 .home-page {
-    /* Scoped Legacy Colors to maintain original design */
-    --primary: var(--legacy-primary);
-    --secondary: var(--legacy-secondary);
-    --accent: var(--legacy-accent);
-    --primary-light: hsl(220, 70%, 96%);
-    --primary-dark: hsl(220, 70%, 40%);
-
     animation: fadeIn 0.5s ease;
 }
 

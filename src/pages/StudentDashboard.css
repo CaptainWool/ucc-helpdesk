@@ -16,11 +16,10 @@
     margin-bottom: 0;
 }
 
-/* Profile Card - Using UCC Navy/Gold accents */
+/* Profile Card */
 .profile-card {
-    background: linear-gradient(135deg, white 0%, var(--bg-body) 100%);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--primary);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
 }
 
 .profile-header {
@@ -32,7 +31,7 @@
 .profile-avatar {
     width: 64px;
     height: 64px;
-    background: var(--primary);
+    background: #0284c7;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -46,15 +45,15 @@
 .profile-info h3 {
     margin: 0;
     font-size: 1.125rem;
-    color: var(--text-main);
+    color: #0c4a6e;
 }
 
 .profile-info .student-id {
     margin: 0.125rem 0;
     font-family: monospace;
     font-size: 0.875rem;
-    color: var(--primary);
-    background: var(--primary-light);
+    color: #0369a1;
+    background: #e0f2fe;
     padding: 2px 6px;
     border-radius: 4px;
     display: inline-block;
@@ -143,7 +142,7 @@
 }
 
 .pill-text strong {
-    color: var(--primary);
+    color: #1e40af;
     font-weight: 700;
 }
 
@@ -210,13 +209,13 @@
 }
 
 .icon-blue {
-    background: var(--primary-light);
-    color: var(--primary);
+    background: #e0f2fe;
+    color: #0284c7;
 }
 
 .icon-yellow {
-    background: var(--secondary-light);
-    color: var(--text-main);
+    background: #fef9c3;
+    color: #a16207;
 }
 
 .icon-green {
