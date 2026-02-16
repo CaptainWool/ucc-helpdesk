@@ -1,6 +1,7 @@
 import React, { useState, useEffect, KeyboardEvent } from 'react';
 import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles, Activity, Zap, Cpu, Server, Database, Globe } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import Card from './common/Card';
@@ -34,6 +35,7 @@ interface AuditLog {
 
 const CommandCenter: React.FC = () => {
     const { showSuccess, showError, showInfo } = useToast();
+    const { user } = useAuth();
     const [settings, setSettings] = useState<SystemSettings>({
         submissions_locked: false,
         maintenance_mode: false,
@@ -60,7 +62,15 @@ const CommandCenter: React.FC = () => {
         ai: 'optimal',
         latency: 42
     });
-    const [isUnlocked, setIsUnlocked] = useState(false);
+    // Auto-unlock for admin/agent users, or check localStorage
+    const [isUnlocked, setIsUnlocked] = useState(() => {
+        // Admin and agent users bypass the lock screen
+        if (user?.role === 'admin' || user?.role === 'agent') {
+            return true;
+        }
+        // Otherwise check if previously unlocked
+        return localStorage.getItem('cc_unlocked') === 'true';
+    });
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -111,6 +121,7 @@ const CommandCenter: React.FC = () => {
         const correctPIN = settings.command_center_password || 'israel@40';
         if (passwordAttempt === correctPIN) {
             setIsUnlocked(true);
+            localStorage.setItem('cc_unlocked', 'true');
             showSuccess('Access Granted: Command Center Unlocked');
         } else {
             showError('Access Denied: Incorrect PIN');

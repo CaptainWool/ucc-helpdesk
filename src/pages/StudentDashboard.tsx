@@ -11,8 +11,10 @@ import {
     HelpCircle,
     User as UserIcon,
     Shield,
+    AlertTriangle,
+    Wrench,
 } from 'lucide-react';
-import { BASE_URL } from '../lib/api';
+import { BASE_URL, api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useTickets } from '../hooks/useTickets';
@@ -34,6 +36,8 @@ const StudentDashboard: React.FC = () => {
     const [isInstallable, setIsInstallable] = useState(false);
     const [showDataSettings, setShowDataSettings] = useState(false);
     const [updatingProfile, setUpdatingProfile] = useState(false);
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
+    const [loadingSettings, setLoadingSettings] = useState(true);
 
     // Fetch tickets using React Query
     const {
@@ -58,6 +62,21 @@ const StudentDashboard: React.FC = () => {
     const avatarUrl = displayUser?.avatar_url
         ? (displayUser.avatar_url.startsWith('http') ? displayUser.avatar_url : `${BASE_URL}${displayUser.avatar_url}`)
         : null;
+
+    // Check maintenance mode
+    useEffect(() => {
+        const checkMaintenanceMode = async () => {
+            try {
+                const settings = await api.system.getSettings();
+                setMaintenanceMode(settings.maintenance_mode || false);
+            } catch (err) {
+                console.error('Failed to fetch system settings:', err);
+            } finally {
+                setLoadingSettings(false);
+            }
+        };
+        checkMaintenanceMode();
+    }, []);
 
     useEffect(() => {
         const handler = (e: any) => {
@@ -149,6 +168,50 @@ const StudentDashboard: React.FC = () => {
         }
     };
 
+
+    // Show maintenance screen if maintenance mode is active
+    if (maintenanceMode) {
+        return (
+            <div className="maintenance-screen" style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: '2rem'
+            }}>
+                <Card style={{ maxWidth: '500px', textAlign: 'center', padding: '3rem 2rem' }}>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <Wrench size={64} style={{ color: 'var(--primary)' }} />
+                    </div>
+                    <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>
+                        System Under Maintenance
+                    </h1>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                        We're currently performing system maintenance to improve your experience.
+                        Please check back shortly.
+                    </p>
+                    <div style={{
+                        background: '#f8fafc',
+                        padding: '1rem',
+                        borderRadius: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        marginBottom: '1.5rem'
+                    }}>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>
+                            <AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                            All existing tickets are safe and will be available once maintenance is complete.
+                        </p>
+                    </div>
+                    <Link to="/login">
+                        <Button variant="outline" size="lg">
+                            Return to Login
+                        </Button>
+                    </Link>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="container student-dashboard">
