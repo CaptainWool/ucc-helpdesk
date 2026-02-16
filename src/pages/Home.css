@@ -1,13 +1,19 @@
 .home-page {
-    background-image: var(--mesh-gradient);
+    /* Scoped Legacy Colors to maintain original design */
+    --primary: var(--legacy-primary);
+    --secondary: var(--legacy-secondary);
+    --accent: var(--legacy-accent);
+    --primary-light: hsl(220, 70%, 96%);
+    --primary-dark: hsl(220, 70%, 40%);
+
     animation: fadeIn 0.5s ease;
 }
 
 /* Hero Section */
 .hero-section {
-    padding: 6rem 0 8rem 0;
-    position: relative;
-    overflow: hidden;
+    padding: 4rem 0 6rem 0;
+    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
 }
 
 .hero-container {
@@ -28,12 +34,11 @@
 }
 
 .text-highlight {
-    background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(120deg, var(--primary) 0%, var(--accent) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 10px 20px var(--primary-glow);
 }
 
 .hero-subtitle {
@@ -52,9 +57,7 @@
 
 .hero-cta {
     gap: 0.5rem;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
-    box-shadow: 0 10px 25px var(--primary-glow);
-    border: none !important;
+    box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
 }
 
 .secondary-link {
@@ -108,9 +111,8 @@
 
 .visual-card {
     position: absolute;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
     transition: transform 0.3s ease;
 }
 
@@ -144,8 +146,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--primary);
-    color: white;
+    background-color: var(--primary-light);
+    color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -246,9 +248,8 @@
 }
 
 .icon-blue {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: white;
-    box-shadow: 0 8px 20px var(--primary-glow);
+    background-color: var(--primary-light);
+    color: var(--primary);
 }
 
 .icon-green {
@@ -257,7 +258,7 @@
 }
 
 [data-theme="dark"] .icon-green {
-    background-color: hsla(145, 60%, 25%, 0.5);
+    background-color: hsl(145, 60%, 25%);
     color: hsl(145, 70%, 70%);
 }
 
@@ -267,7 +268,7 @@
 }
 
 [data-theme="dark"] .icon-purple {
-    background-color: hsla(280, 60%, 25%, 0.5);
+    background-color: hsl(280, 60%, 25%);
     color: hsl(280, 70%, 70%);
 }
 
@@ -284,7 +285,7 @@
 
 .card-link {
     color: var(--primary);
-    font-weight: 700;
+    font-weight: 500;
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
