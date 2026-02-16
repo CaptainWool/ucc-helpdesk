@@ -145,7 +145,7 @@ const Home: React.FC = () => {
             {/* FAQ Section */}
             <section className="faq-teaser-section">
                 <div className="container">
-                    <Card className="faq-teaser-card" style={{ background: 'var(--primary)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2.5rem' }}>
+                    <Card className="faq-teaser-card" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2.5rem', borderRadius: '2.5rem', border: 'none', boxShadow: '0 20px 50px var(--primary-glow)' }}>
                         <div>
                             <h2 style={{ margin: 0 }}>Have a quick question?</h2>
                             <p style={{ opacity: 0.9, marginTop: '0.5rem' }}>Check our frequently asked questions for immediate answers.</p>

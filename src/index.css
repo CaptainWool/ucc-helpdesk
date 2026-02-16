@@ -1,29 +1,36 @@
 :root {
-  /* Legacy/Homepage Colors - Preserving original design for the Home page */
-  --legacy-primary: hsl(220, 85%, 50%);
-  --legacy-secondary: hsl(172, 66%, 50%);
-  --legacy-accent: hsl(330, 80%, 60%);
-
-  /* Brand Colors - Official UCC Ghana Palette (Navy, Gold, Vermilion) */
+  /* Vibrant UCC Brand Tokens - High Saturation & Modern Depths */
   --primary-hue: 211;
-  /* Based on Congress Blue #00448F */
-  --primary: hsl(var(--primary-hue), 100%, 28%);
-  --primary-dark: hsl(var(--primary-hue), 100%, 20%);
-  --primary-light: hsl(var(--primary-hue), 30%, 96%);
+  --primary: hsl(var(--primary-hue), 100%, 45%);
+  /* Electric Sapphire */
+  --primary-dark: hsl(var(--primary-hue), 100%, 25%);
+  --primary-light: hsl(var(--primary-hue), 100%, 96%);
+  --primary-glow: hsla(var(--primary-hue), 100%, 50%, 0.15);
 
-  --secondary: hsl(56, 100%, 50%);
-  --secondary-light: hsl(56, 100%, 96%);
-  /* Aureolin Yellow #FDEE00 */
-  --accent: hsl(1, 99%, 57%);
-  /* Vermilion Red #FE2923 */
+  --secondary: hsl(50, 100%, 55%);
+  /* Neon Gold */
+  --secondary-light: hsl(50, 100%, 96%);
 
+  --accent: hsl(0, 100%, 55%);
+  /* Energetic Vermilion */
+  --accent-glow: hsla(0, 100%, 60%, 0.2);
+
+  /* Modern Backgrounds & Surfaces */
   --bg-hue: 211;
-  --bg-body: hsl(var(--bg-hue), 30%, 98%);
-  --bg-card: hsl(0, 0%, 100%);
+  --bg-body: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.9);
 
-  --text-main: hsl(var(--bg-hue), 40%, 15%);
-  --text-muted: hsl(var(--bg-hue), 20%, 50%);
-  --border: hsl(var(--bg-hue), 20%, 92%);
+  --mesh-gradient: radial-gradient(at 0% 0%, hsla(211, 100%, 50%, 0.05) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(50, 100%, 55%, 0.05) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(0, 100%, 55%, 0.05) 0, transparent 50%);
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(20px) saturate(180%);
+  --glass-border: rgba(255, 255, 255, 0.4);
+
+  --text-main: hsl(var(--bg-hue), 60%, 10%);
+  --text-muted: hsl(var(--bg-hue), 20%, 45%);
+  --border: hsl(var(--bg-hue), 30%, 92%);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
