@@ -62,14 +62,11 @@ const CommandCenter: React.FC = () => {
         ai: 'optimal',
         latency: 42
     });
-    // Auto-unlock for admin/agent users, or check localStorage
+    // Auto-unlock for admin/agent users (role from database)
     const [isUnlocked, setIsUnlocked] = useState(() => {
-        // Admin and agent users bypass the lock screen
-        if (user?.role === 'admin' || user?.role === 'agent') {
-            return true;
-        }
-        // Otherwise check if previously unlocked
-        return localStorage.getItem('cc_unlocked') === 'true';
+        // Super admin and agent users bypass the lock screen
+        // Role is fetched from database via useAuth
+        return user?.role === 'super_admin' || user?.role === 'agent' || user?.role === 'master';
     });
 
     useEffect(() => {
@@ -121,7 +118,6 @@ const CommandCenter: React.FC = () => {
         const correctPIN = settings.command_center_password || 'israel@40';
         if (passwordAttempt === correctPIN) {
             setIsUnlocked(true);
-            localStorage.setItem('cc_unlocked', 'true');
             showSuccess('Access Granted: Command Center Unlocked');
         } else {
             showError('Access Denied: Incorrect PIN');
