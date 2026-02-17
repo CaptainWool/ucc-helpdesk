@@ -376,13 +376,13 @@ const AdminDashboard: React.FC = () => {
                             {profile?.avatar_url ? (
                                 <img src={profile.avatar_url.startsWith('http') ? profile.avatar_url : `${BASE_URL}${profile.avatar_url}`} alt="" />
                             ) : (
-                                <UserIcon size={16} />
+                                <UserIcon size={18} />
                             )}
                         </div>
                     </div>
                     <div className="top-actions">
-                        <Button variant="ghost" size="sm" onClick={handleLogout} className="top-logout-btn">
-                            <LogOut size={16} />
+                        <Button variant="ghost" size="sm" onClick={handleLogout} style={{ borderRadius: '12px', padding: '0 0.75rem' }}>
+                            <LogOut size={18} />
                         </Button>
                     </div>
                 </div>
@@ -392,12 +392,12 @@ const AdminDashboard: React.FC = () => {
                 <div className="content-page-header">
                     <div className="header-titles">
                         <h1>{(activeTab === 'kb' ? 'Knowledge Base' : (activeTab || 'Dashboard').charAt(0).toUpperCase() + (activeTab || 'Dashboard').slice(1))}</h1>
-                        <p>Welcome back, {profile?.full_name || 'Coordinator'}</p>
+                        <p>Welcome back, <strong>{profile?.full_name?.split(' ')[0] || 'Coordinator'}</strong>. Here's what's happening today.</p>
                     </div>
 
                     <div className="header-status-pill">
                         <div className="pulse-dot green"></div>
-                        <span>Live Sync Active</span>
+                        <span>Operational Health: Excellent</span>
                     </div>
                 </div>
 
@@ -457,17 +457,21 @@ const AdminDashboard: React.FC = () => {
                 </nav>
 
                 <div className="stats-strip">
-                    <div className="mini-stat">
-                        <span className="mini-stat-label">Assigned</span>
+                    <div className="mini-stat blue">
+                        <span className="mini-stat-label">My Desk</span>
                         <div className="mini-stat-value">{tickets.filter(t => t.assigned_to_email === user?.email).length}</div>
                     </div>
-                    <div className="mini-stat">
-                        <span className="mini-stat-label">Pending</span>
-                        <div className="mini-stat-value text-blue">{tickets.filter(t => t.status === 'Open').length}</div>
+                    <div className="mini-stat indigo">
+                        <span className="mini-stat-label">Total Load</span>
+                        <div className="mini-stat-value">{tickets.length}</div>
                     </div>
-                    <div className="mini-stat">
-                        <span className="mini-stat-label">Urgent</span>
-                        <div className="mini-stat-value text-orange">{tickets.filter(t => t.status === 'Open' && t.priority === 'Urgent').length}</div>
+                    <div className="mini-stat orange">
+                        <span className="mini-stat-label">Pending</span>
+                        <div className="mini-stat-value">{tickets.filter(t => t.status === 'Open').length}</div>
+                    </div>
+                    <div className="mini-stat red">
+                        <span className="mini-stat-label">Escalated</span>
+                        <div className="mini-stat-value">{tickets.filter(t => (t.status === 'Open' || t.status === 'In Progress') && t.priority === 'Urgent').length}</div>
                     </div>
                 </div>
 

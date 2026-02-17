@@ -20,8 +20,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [originalUser, setOriginalUser] = useState<User | null>(null);
 
     const checkAuth = async () => {
-
-
         try {
             const token = localStorage.getItem('auth_token');
             if (token && token !== 'undefined' && token !== 'null') {
@@ -35,7 +33,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 };
 
                 setUser(normalizedUser);
-                setProfile(normalizedUser);
+
+                // Only reset profile to normalizedUser if NOT impersonating
+                // This prevents losing the impersonated student profile during silent refreshes
+                setProfile(prevProfile => {
+                    if (impersonating && prevProfile) {
+                        return prevProfile;
+                    }
+                    return normalizedUser;
+                });
             }
         } catch (err) {
             console.error('Auth check failed:', err);

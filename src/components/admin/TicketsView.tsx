@@ -175,14 +175,15 @@ const TicketsView: React.FC<TicketsViewProps> = ({
                                             </td>
                                             <td>
                                                 <div className="action-btns">
-                                                    <span
-                                                        className="details-link"
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
                                                         onClick={() => (window.location.href = `/track-ticket?id=${ticket.id}`)}
                                                         title="View & Reply"
-                                                        style={{ marginRight: '0.75rem' }}
+                                                        style={{ color: 'var(--accent-vibrant)', fontWeight: 700 }}
                                                     >
-                                                        View Details <ChevronRight size={14} />
-                                                    </span>
+                                                        Details <ChevronRight size={14} style={{ marginLeft: '4px' }} />
+                                                    </Button>
                                                     {(profile?.role === 'super_admin' || profile?.role === 'agent') && (
                                                         <Button
                                                             size="sm"

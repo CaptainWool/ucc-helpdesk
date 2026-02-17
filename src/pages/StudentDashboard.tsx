@@ -54,6 +54,7 @@ const StudentDashboard: React.FC = () => {
     const {
         data: tickets = [],
         isLoading: ticketsLoading,
+        isFetching: ticketsFetching,
         isError: ticketsError,
         error: apiError
     } = useTickets({
@@ -62,6 +63,16 @@ const StudentDashboard: React.FC = () => {
         enabled: !!user,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
+
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    useEffect(() => {
+        if (ticketsFetching && !ticketsLoading) {
+            setIsSyncing(true);
+            const timer = setTimeout(() => setIsSyncing(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [ticketsFetching, ticketsLoading]);
 
     const { mutateAsync: updateAvatar } = useUpdateAvatar();
 
@@ -408,14 +419,20 @@ const StudentDashboard: React.FC = () => {
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt="" />
                             ) : (
-                                <UserIcon size={16} />
+                                <UserIcon size={14} />
                             )}
                         </div>
                         <span className="pill-text">Welcome back, <strong>{displayUser?.full_name || displayUser?.email?.split('@')[0]}</strong></span>
                     </div>
                     <div className="user-info">
-                        <h2>Hello, {displayUser?.full_name?.split(' ')[0] || 'Student'}! 👋</h2>
-                        <p className="subtitle">Here's what's happening with your support requests.</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                            <h2>Hello, {displayUser?.full_name?.split(' ')[0] || 'Member'}!</h2>
+                            <div className={`live-indicator ${isSyncing ? 'syncing' : ''}`}>
+                                <div className="live-dot" />
+                                <span>{isSyncing ? 'Syncing...' : 'Live Dashboard'}</span>
+                            </div>
+                        </div>
+                        <p className="subtitle">Everything you need to manage your UCC support requests.</p>
                     </div>
                 </div>
 
@@ -425,16 +442,17 @@ const StudentDashboard: React.FC = () => {
                             variant="outline"
                             className="install-app-btn"
                             onClick={handleInstallClick}
+                            style={{ borderRadius: '12px' }}
                         >
                             <PlusCircle size={20} /> Install App
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => setShowDataSettings(!showDataSettings)} className="privacy-btn">
-                        <Shield size={16} /> {showDataSettings ? 'Hide Privacy' : 'My Data'}
+                    <Button variant="outline" onClick={() => setShowDataSettings(!showDataSettings)} className="privacy-btn" style={{ borderRadius: '12px' }}>
+                        <Shield size={16} /> Privacy
                     </Button>
                     <Link to="/submit-ticket">
                         <Button className="new-ticket-btn">
-                            <PlusCircle size={20} /> New Ticket
+                            <PlusCircle size={20} /> New Request
                         </Button>
                     </Link>
                 </div>
@@ -515,45 +533,48 @@ const StudentDashboard: React.FC = () => {
 
                 <div className="stats-grid">
                     <Card className="stat-card">
-                        <div className="stat-icon icon-blue"><Clock size={24} /></div>
+                        <div className="stat-icon icon-blue"><Clock size={28} /></div>
                         <div className="stat-content">
                             <h3>{stats.total}</h3>
-                            <p>Total Requests</p>
+                            <p>Total Submissions</p>
                         </div>
                     </Card>
                     <Card className="stat-card">
-                        <div className="stat-icon icon-yellow"><AlertCircle size={24} /></div>
+                        <div className="stat-icon icon-yellow"><AlertCircle size={28} /></div>
                         <div className="stat-content">
                             <h3>{stats.open}</h3>
-                            <p>Pending Issues</p>
+                            <p>Active Tickets</p>
                         </div>
                     </Card>
                     <Card className="stat-card">
-                        <div className="stat-icon icon-green"><CheckCircle size={24} /></div>
+                        <div className="stat-icon icon-green"><CheckCircle size={28} /></div>
                         <div className="stat-content">
                             <h3>{stats.resolved}</h3>
-                            <p>Resolved</p>
+                            <p>Resolved Cases</p>
                         </div>
                     </Card>
                 </div>
             </div>
 
-            <main className="dashboard-main">
+            <main className="dashboard-main fade-in-up">
                 <Card className="tickets-list-card">
                     <div className="card-header-actions">
-                        <h2>Your Support Tickets</h2>
+                        <div className="section-title">
+                            <h2>Your Support History</h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Track and manage your submitted concerns</p>
+                        </div>
                         <div className="search-bar">
                             <Search size={18} />
                             <input
                                 type="text"
-                                placeholder="Search by subject or ID..."
+                                placeholder="Filter cases by subject or ID..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    {ticketsError ? (
+                    {ticketsError && tickets.length === 0 ? (
                         <div className="empty-state error-state">
                             <AlertCircle size={48} color="var(--danger)" />
                             <p>Failed to load your tickets</p>
@@ -562,7 +583,7 @@ const StudentDashboard: React.FC = () => {
                                 Try Again
                             </Button>
                         </div>
-                    ) : ticketsLoading ? (
+                    ) : (ticketsLoading && tickets.length === 0) ? (
                         <div className="empty-state">
                             <Clock className="animate-spin" size={48} />
                             <p>Loading your tickets...</p>
@@ -599,12 +620,14 @@ const StudentDashboard: React.FC = () => {
                                             </td>
                                             <td>{new Date(ticket.created_at).toLocaleDateString()}</td>
                                             <td>
-                                                <span
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
                                                     className="details-link"
                                                     onClick={() => navigate(`/track-ticket?id=${ticket.id}`)}
                                                 >
-                                                    View Details <ChevronRight size={16} />
-                                                </span>
+                                                    View Case <ChevronRight size={14} />
+                                                </Button>
                                             </td>
                                         </tr>
                                     ))}
