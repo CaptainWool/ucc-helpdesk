@@ -26,6 +26,10 @@ class ErrorBoundary extends Component<Props, State> {
 
     public render() {
         if (this.state.hasError) {
+            const isChunkError = this.state.error?.message?.includes('fetch') ||
+                this.state.error?.message?.includes('import') ||
+                this.state.error?.name === 'ChunkLoadError';
+
             return (
                 <div style={{
                     padding: '40px',
@@ -37,17 +41,24 @@ class ErrorBoundary extends Component<Props, State> {
                     textAlign: 'center'
                 }}>
                     <AlertCircle size={48} color="var(--danger)" style={{ marginBottom: '16px' }} />
-                    <h1>Something went wrong</h1>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-                        We've encountered an unexpected error. Don't worry, your data is safe.
+                    <h1>{isChunkError ? 'Update Required' : 'Something went wrong'}</h1>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '24px', maxWidth: '400px' }}>
+                        {isChunkError
+                            ? 'A new version of the application is available. Please reload to continue.'
+                            : "We've encountered an unexpected error. Don't worry, your data is safe."}
                     </p>
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                        <Button onClick={() => window.location.reload()}>
-                            <RefreshCw size={18} /> Reload Application
+                        <Button onClick={() => {
+                            window.sessionStorage.removeItem('chunk-load-retry-refreshed');
+                            window.location.reload();
+                        }}>
+                            <RefreshCw size={18} /> {isChunkError ? 'Update Now' : 'Reload Application'}
                         </Button>
-                        <Button variant="outline" onClick={() => this.setState({ hasError: false })}>
-                            Try Again
-                        </Button>
+                        {!isChunkError && (
+                            <Button variant="outline" onClick={() => this.setState({ hasError: false })}>
+                                Try Again
+                            </Button>
+                        )}
                     </div>
                     {this.state.error && (
                         <div style={{ marginTop: '32px', textAlign: 'left', background: '#fef2f2', padding: '16px', borderRadius: '8px', border: '1px solid #fee2e2', maxWidth: '600px', width: '100%' }}>

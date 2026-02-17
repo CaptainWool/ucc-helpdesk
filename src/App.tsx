@@ -16,7 +16,9 @@ import ComplianceAuditTool from '@/components/common/ComplianceAuditTool';
 const lazyRetry = (componentImport: any) => {
     return lazy(async () => {
         try {
-            return await componentImport();
+            const component = await componentImport();
+            window.sessionStorage.removeItem('chunk-load-retry-refreshed');
+            return component;
         } catch (error) {
             console.error('Chunk load failed:', error);
             const hasRefreshed = window.sessionStorage.getItem('chunk-load-retry-refreshed');
