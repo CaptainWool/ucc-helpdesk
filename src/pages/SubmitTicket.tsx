@@ -20,7 +20,11 @@ import {
     HelpCircle,
     ArrowRight,
     LayoutDashboard,
-    PlusCircle
+    LayoutDashboard,
+    PlusCircle,
+    ShieldAlert,
+    Clock,
+    UserCheck
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -376,26 +380,57 @@ const SubmitTicket: React.FC = () => {
                 <p>Tell us what's on your mind, and we'll get back to you as soon as possible.</p>
             </header>
 
-            {settings.submissions_locked && (
-                <div className="locked-alert-banner mb-8">
-                    <Card className="locked-card border-amber">
-                        <div className="flex items-start gap-4">
-                            <div className="locked-icon-bg">
-                                <AlertCircle size={24} className="text-amber" />
+            {settings.submissions_locked ? (
+                <div className="locked-state-hero fade-in">
+                    <div className="hero-glass-card">
+                        <div className="hero-icon-stack">
+                            <div className="icon-pulse-blob"></div>
+                            <ShieldAlert size={64} className="main-hero-icon" />
+                        </div>
+
+                        <div className="hero-text-content">
+                            <div className="status-badge">Temporarily Paused</div>
+                            <h2>Submissions are Currently Closed</h2>
+                            <p>
+                                The UCC Helpdesk is currently prioritizing a high volume of existing tickets to maintain our service quality.
+                                We expect to resume new submissions shortly.
+                            </p>
+
+                            <div className="info-bits-grid">
+                                <div className="info-bit">
+                                    <Clock size={18} />
+                                    <span>Expected Wait: ~48h</span>
+                                </div>
+                                <div className="info-bit">
+                                    <UserCheck size={18} />
+                                    <span>Agents Online: {Math.floor(Math.random() * 5) + 3}</span>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold">New Submissions are Temporarily Closed</h3>
-                                <p className="text-muted">The UCC Helpdesk is currently prioritizing existing requests. New ticket submissions have been paused by the administration. Please check our FAQ or try again later.</p>
-                                <Button variant="outline" className="mt-4" onClick={() => navigate('/dashboard')}>
-                                    View My Existing Tickets
+
+                            <div className="hero-actions">
+                                <Button
+                                    onClick={() => navigate('/dashboard')}
+                                    className="primary-hero-btn"
+                                >
+                                    <LayoutDashboard size={20} /> View My Existing Tickets
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => navigate('/faq')}
+                                    className="secondary-hero-btn"
+                                >
+                                    <Lightbulb size={20} /> Browse Help Articles
                                 </Button>
                             </div>
                         </div>
-                    </Card>
-                </div>
-            )}
 
-            {!settings.submissions_locked ? (
+                        <div className="hero-footer-hint">
+                            <AlertCircle size={14} />
+                            <span>Urgent portal access issues? Contact your coordinator directly.</span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
                 <div className="submit-grid">
                     <div className="submit-form-container">
                         <div className="wizard-progress-container">
@@ -791,7 +826,7 @@ const SubmitTicket: React.FC = () => {
                         </Card>
                     </aside>
                 </div>
-            ) : null}
+            )}
 
             {/* Video Recorder Modal */}
             {showVideoRecorder && (
