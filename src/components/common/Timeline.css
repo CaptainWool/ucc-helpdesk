@@ -1,0 +1,115 @@
+.timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 1rem 0;
+}
+
+.timeline-step {
+    display: flex;
+    gap: 1.5rem;
+    position: relative;
+}
+
+.step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.step-line {
+    position: absolute;
+    top: 24px;
+    bottom: -24px;
+    width: 2px;
+    background: var(--border-color);
+    z-index: 1;
+}
+
+.timeline-step:last-child .step-line {
+    display: none;
+}
+
+.step-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.step-icon {
+    color: var(--text-muted);
+}
+
+/* Completed State */
+.timeline-step.completed .step-icon-wrapper {
+    background: #10b981;
+    border-color: #059669;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.timeline-step.completed .step-icon {
+    color: white;
+}
+
+.timeline-step.completed .step-line {
+    background: #10b981;
+}
+
+/* Current State */
+.timeline-step.current .step-icon-wrapper {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+    box-shadow: 0 0 15px var(--primary-glow);
+    transform: scale(1.1);
+}
+
+.timeline-step.current .step-icon {
+    color: white;
+}
+
+.timeline-step.current .step-title {
+    color: var(--primary);
+    font-weight: 800;
+}
+
+/* Content Styles */
+.step-content {
+    padding-bottom: 2.5rem;
+    padding-top: 0.5rem;
+}
+
+.step-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.step-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.step-date {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .step-icon-wrapper {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+}

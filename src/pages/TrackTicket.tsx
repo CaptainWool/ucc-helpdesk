@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import {
     Search,
     Clock,
@@ -23,7 +23,13 @@ import {
     Brain,
     ListChecks,
     TrendingUp,
-    CheckCircle2
+    CheckCircle2,
+    Star,
+    Paperclip,
+    ExternalLink,
+    Image as ImageIcon,
+    File as FileIcon,
+    Lightbulb
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -31,6 +37,7 @@ import { useTicket, useAddTicketMessage } from '../hooks/useTickets';
 import { summarizeTicketThread, SummaryResult, generateSmartReplyAI } from '../lib/ai';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import Timeline, { TimelineStep } from '../components/common/Timeline';
 import './TrackTicket.css';
 
 const TrackTicket: React.FC = () => {
@@ -129,6 +136,49 @@ const TrackTicket: React.FC = () => {
         }
     };
 
+    const handleRateTicket = async (rating: number) => {
+        if (!ticket) return;
+        try {
+            await addMessage({
+                ticketId: ticket.id,
+                message: `User provided a ${rating}-star rating.`,
+                isInternal: true
+            });
+            showSuccess(`Thank you for your ${rating}-star feedback!`);
+        } catch (err) {
+            console.error('Rating failed:', err);
+        }
+    };
+
+    const getTimelineSteps = (status: string): TimelineStep[] => {
+        const steps: TimelineStep[] = [
+            { id: 'submitted', label: 'Ticket Submitted', description: 'Record successfully created in our system.', status: 'completed', date: ticket?.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A' },
+            { id: 'queue', label: 'Analyzing Request', description: 'Our AI and agents are reviewing the case.', status: 'upcoming' },
+            { id: 'active', label: 'Agent Assigned', description: 'A coordinator is actively working on a resolution.', status: 'upcoming' },
+            { id: 'resolved', label: 'Issue Resolved', description: 'A final solution has been provided.', status: 'upcoming' },
+        ];
+
+        const s = (status || '').toLowerCase();
+        if (s === 'new') {
+            steps[1].status = 'current';
+        } else if (s === 'open') {
+            steps[1].status = 'completed';
+            steps[2].status = 'current';
+        } else if (s === 'in progress') {
+            steps[1].status = 'completed';
+            steps[2].status = 'completed';
+            steps[2].label = 'Investigation Active';
+            steps[3].status = 'current';
+        } else if (s === 'resolved') {
+            steps[1].status = 'completed';
+            steps[2].status = 'completed';
+            steps[3].status = 'completed';
+            steps[3].date = ticket?.resolved_at ? new Date(ticket.resolved_at).toLocaleDateString() : 'Just now';
+        }
+
+        return steps;
+    };
+
     // View Components
     const renderSearchLanding = () => (
         <main className="search-landing">
@@ -175,24 +225,11 @@ const TrackTicket: React.FC = () => {
 
         return (
             <div className="detail-dashboard">
-                <header className="page-header">
-                    <div className="back-link" onClick={() => setSearchParams({})}>
-                        <ArrowLeft size={16} /> Search Another Ticket
-                    </div>
-
-                    <div className="header-flex-row">
-                        <div>
-                            <div className="status-meta-row">
-                                <span className={`badge-service status-${(ticket.status || '').toLowerCase().replace(' ', '-')}`}>
-                                    {ticket.status}
-                                </span>
-                                <span className="ticket-id">Track ID: #{String(ticket.id).substring(0, 8)}</span>
-                            </div>
-                            <h1 className="ticket-subject-title">
-                                {ticket.subject}
-                            </h1>
+                <header className="page-header premium-header">
+                    <div className="header-top-nav">
+                        <div className="back-link" onClick={() => setSearchParams({})}>
+                            <ChevronLeft size={18} /> Search Dashboard
                         </div>
-
                         <div className="header-actions-group">
                             <Button variant="outline" size="sm" className="btn-pill" onClick={() => window.print()}>
                                 <Download size={16} /> Export PDF
@@ -202,42 +239,107 @@ const TrackTicket: React.FC = () => {
                             </Button>
                         </div>
                     </div>
+
+                    <div className="header-main-content">
+                        <div className="title-section">
+                            <div className="status-meta-row">
+                                <span className={`badge-service premium-badge status-${(ticket.status || '').toLowerCase().replace(' ', '-')}`}>
+                                    {ticket.status}
+                                </span>
+                                <span className="ticket-id-chip">#{String(ticket.id).split('-')[0].toUpperCase()}</span>
+                            </div>
+                            <h1 className="ticket-subject-title">{ticket.subject}</h1>
+                        </div>
+                    </div>
                 </header>
 
-                <div className={`intelligence-bar ${isAdmin ? 'visible' : 'hidden'}`}>
-                    <div className="intel-shimmer" />
-                    <div className="intel-content">
-                        <div className="intel-icon">
-                            <Brain size={24} className="pulse-brain" />
-                        </div>
-                        <div className="intel-text">
-                            {isGeneratingSummary ? (
-                                <span className="intel-loading">AI is synthesizing case history...</span>
-                            ) : aiSummary ? (
-                                <>
-                                    <span className="intel-label">AI CASE SUMMARY</span>
-                                    <p className="intel-summary">{aiSummary.executiveSummary}</p>
-                                </>
-                            ) : (
-                                <span className="intel-placeholder">AI Summary will appear here to help you get up to speed.</span>
+                {isAdmin && (
+                    <div className={`intelligence-bar visible`}>
+                        <div className="intel-shimmer" />
+                        <div className="intel-content">
+                            <div className="intel-icon">
+                                <Brain size={24} className="pulse-brain" />
+                            </div>
+                            <div className="intel-text">
+                                {isGeneratingSummary ? (
+                                    <span className="intel-loading">AI is synthesizing case history...</span>
+                                ) : aiSummary ? (
+                                    <>
+                                        <span className="intel-label">AI CASE SUMMARY</span>
+                                        <p className="intel-summary">{aiSummary.executiveSummary}</p>
+                                    </>
+                                ) : (
+                                    <span className="intel-placeholder">AI Summary will appear here to help you get up to speed.</span>
+                                )}
+                            </div>
+                            {aiSummary && (
+                                <div className="intel-badges">
+                                    <span className={`intel-status-pill ${aiSummary.urgencyLevel.toLowerCase()}`}>
+                                        {aiSummary.urgencyLevel} Urgency
+                                    </span>
+                                    <span className="intel-status-pill sentiment">
+                                        {aiSummary.sentiment}
+                                    </span>
+                                </div>
                             )}
                         </div>
-                        {aiSummary && (
-                            <div className="intel-badges">
-                                <span className={`intel-status-pill ${aiSummary.urgencyLevel.toLowerCase()}`}>
-                                    {aiSummary.urgencyLevel} Urgency
-                                </span>
-                                <span className="intel-status-pill sentiment">
-                                    {aiSummary.sentiment}
-                                </span>
-                            </div>
-                        )}
                     </div>
-                </div>
+                )}
 
                 <div className="track-grid">
                     <div className="service-hub">
-                        <Card className="hub-card">
+                        <Card className="hub-card timeline-card">
+                            <div className="card-header-simple">
+                                <h3><Clock size={18} /> Resolution Progress</h3>
+                            </div>
+                            <Timeline steps={getTimelineSteps(ticket.status)} />
+                        </Card>
+
+                        {ticket.attachment_url && (
+                            <Card className="hub-card attachment-gallery-card">
+                                <div className="card-header-simple">
+                                    <h3><Paperclip size={18} /> Case Attachments</h3>
+                                </div>
+                                <div className="attachment-grid">
+                                    {(() => {
+                                        try {
+                                            const urls = JSON.parse(ticket.attachment_url);
+                                            return Array.isArray(urls) ? urls.map((url: string, i: number) => {
+                                                const isImg = url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                                                const name = url.split('/').pop() || `File ${i + 1}`;
+                                                const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url}`;
+
+                                                return (
+                                                    <a key={i} href={fullUrl} target="_blank" rel="noopener noreferrer" className="attachment-item-premium">
+                                                        {isImg ? (
+                                                            <div className="attachment-preview-box">
+                                                                <img src={fullUrl} alt={name} loading="lazy" />
+                                                                <div className="preview-overlay">
+                                                                    <ExternalLink size={16} />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="attachment-file-icon">
+                                                                <FileIcon size={32} />
+                                                                <span className="file-ext">{name.split('.').pop()?.toUpperCase()}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="attachment-meta">
+                                                            <span className="attachment-name">{name}</span>
+                                                            <span className="attachment-action">View Full <ArrowRight size={12} /></span>
+                                                        </div>
+                                                    </a>
+                                                );
+                                            }) : null;
+                                        } catch (e) {
+                                            return <p className="text-muted">Unable to parse attachments.</p>;
+                                        }
+                                    })()}
+                                </div>
+                            </Card>
+                        )}
+
+                        <Card className="hub-card chat-card-premium">
                             <div className="chat-scroller">
                                 <div className="msg-bubble msg-system">
                                     <div className="msg-header"><Zap size={14} /> SYSTEM INITIALIZED</div>
@@ -344,6 +446,27 @@ const TrackTicket: React.FC = () => {
                                 <Button variant="ghost" className="action-btn" onClick={() => window.print()}><Download size={16} /> Print Case</Button>
                             </div>
                         </Card>
+
+                        {ticket.status === 'Resolved' && (
+                            <Card className="feedback-card-premium fade-in">
+                                <div className="feedback-content">
+                                    <div className="feedback-icon-bg">
+                                        <Star size={32} className="star-bounce" />
+                                    </div>
+                                    <div className="feedback-text">
+                                        <h3>How was our assistance?</h3>
+                                        <p>Your feedback helps us improve our service for all students.</p>
+                                        <div className="rating-stars">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button key={star} onClick={() => handleRateTicket(star)} className="star-btn">
+                                                    <Star size={24} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        )}
                     </aside>
                 </div>
             </div>
