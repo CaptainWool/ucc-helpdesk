@@ -9,7 +9,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useSettings } from '../../contexts/SettingsContext';
 
 // Include AnnouncementBanner if it exists, otherwise skip
-// import AnnouncementBanner from '../common/AnnouncementBanner';
+import AnnouncementBanner from '../common/AnnouncementBanner';
 
 interface LayoutProps {
     children: ReactNode;
@@ -44,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     return (
         <div className={`layout-wrapper ${isCompactPage ? 'ui-compact' : ''}`}>
-            {/* <AnnouncementBanner /> */}
+            <AnnouncementBanner />
             {impersonating && (
                 <div className="impersonation-banner">
                     <div className="container banner-content">
