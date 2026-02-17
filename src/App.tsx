@@ -84,11 +84,11 @@ const App: React.FC = () => {
     return (
         <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
-                <ThemeProvider>
-                    <LanguageProvider>
-                        <SettingsProvider>
-                            <ToastProvider>
-                                <AuthProvider>
+                <AuthProvider>
+                    <ThemeProvider>
+                        <LanguageProvider>
+                            <SettingsProvider>
+                                <ToastProvider>
                                     <ComplianceAuditTool />
                                     <Layout>
                                         <Suspense fallback={<Loader fullPage />}>
@@ -139,12 +139,11 @@ const App: React.FC = () => {
                                             </Routes>
                                         </Suspense>
                                     </Layout>
-                                </AuthProvider>
-                            </ToastProvider>
-                        </SettingsProvider>
-                    </LanguageProvider>
-                </ThemeProvider>
-
+                                </ToastProvider>
+                            </SettingsProvider>
+                        </LanguageProvider>
+                    </ThemeProvider>
+                </AuthProvider>
             </QueryClientProvider>
         </ErrorBoundary>
     );
