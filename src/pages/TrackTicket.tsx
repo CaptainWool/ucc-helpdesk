@@ -55,16 +55,54 @@ const TrackTicket: React.FC = () => {
     const [aiSummary, setAiSummary] = useState<SummaryResult | null>(null);
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
     const [isDrafting, setIsDrafting] = useState(false);
+    const [slaTime, setSlaTime] = useState<string>('');
+    const [isLive, setIsLive] = useState(true);
 
     // Hooks
     const { data: ticket, isLoading, error } = useTicket(ticketId, {
         enabled: !!ticketId,
-        refetchInterval: 15000
+        refetchInterval: 8000 // High-frequency polling for detail view
     });
 
     const { mutateAsync: addMessage, isPending: sending } = useAddTicketMessage();
 
     const isAdmin = profile?.role === 'agent' || profile?.role === 'super_admin';
+
+    // Live SLA Countdown Effect
+    useEffect(() => {
+        if (!ticket || ticket.status === 'Resolved' || !ticket.sla_deadline) {
+            setSlaTime(ticket?.status === 'Resolved' ? 'RESOLVED' : 'N/A');
+            return;
+        }
+
+        const updateSLA = () => {
+            const deadline = new Date(ticket.sla_deadline).getTime();
+            const now = new Date().getTime();
+            const diff = deadline - now;
+
+            if (diff <= 0) {
+                setSlaTime('OVERDUE');
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setSlaTime(`${hours}h ${minutes}m ${seconds}s remaining`);
+        };
+
+        updateSLA();
+        const interval = setInterval(updateSLA, 1000);
+        return () => clearInterval(interval);
+    }, [ticket?.sla_deadline, ticket?.status]);
+
+    useEffect(() => {
+        if (isLoading) return;
+        setIsLive(true);
+        const timer = setTimeout(() => setIsLive(false), 2000);
+        return () => clearTimeout(timer);
+    }, [ticket, isLoading]);
 
     // Effects
     useEffect(() => {
@@ -227,8 +265,14 @@ const TrackTicket: React.FC = () => {
             <div className="detail-dashboard">
                 <header className="page-header premium-header">
                     <div className="header-top-nav">
-                        <div className="back-link" onClick={() => setSearchParams({})}>
-                            <ChevronLeft size={18} /> Search Dashboard
+                        <div className="nav-left">
+                            <Link to="/dashboard" className="back-link">
+                                <ChevronLeft size={18} /> Dashboard
+                            </Link>
+                            <div className={`live-indicator ${isLive ? 'syncing' : ''}`}>
+                                <div className="live-dot" />
+                                <span>{isLive ? 'Syncing...' : 'Live System'}</span>
+                            </div>
                         </div>
                         <div className="header-actions-group">
                             <Button variant="outline" size="sm" className="btn-pill" onClick={() => window.print()}>
@@ -419,8 +463,8 @@ const TrackTicket: React.FC = () => {
                                 </div>
                                 <div className="meta-item">
                                     <span className="meta-label">SLA Countdown</span>
-                                    <span className={`meta-value sla-text ${(ticket.priority || '').toLowerCase() === 'urgent' ? 'urgent' : ''}`}>
-                                        {ticket.status === 'Resolved' ? 'RESOLVED' : '2h 14m remaining'}
+                                    <span className={`meta-value sla-text ${slaTime === 'OVERDUE' ? 'urgent' : ''}`}>
+                                        {slaTime}
                                     </span>
                                 </div>
                             </div>
