@@ -342,9 +342,13 @@ const TrackTicket: React.FC = () => {
                         <Card className="hub-card chat-card-premium">
                             <div className="chat-scroller">
                                 <div className="msg-bubble msg-system">
-                                    <div className="msg-header"><Zap size={14} /> SYSTEM INITIALIZED</div>
+                                    <div className="msg-header">
+                                        <Zap size={14} />
+                                        <span>SYSTEM INITIALIZED</span>
+                                    </div>
                                     <div className="msg-text">Originating concern: {ticket.description}</div>
                                 </div>
+
                                 {ticket.messages?.map((msg: any, idx: number) => (
                                     <div key={idx} className={`msg-bubble ${msg.sender_email === user?.email ? 'msg-sent' : 'msg-received'} ${msg.is_internal ? 'msg-internal' : ''}`}>
                                         <div className="msg-header">
@@ -359,35 +363,41 @@ const TrackTicket: React.FC = () => {
                                 <div ref={chatEndRef} />
                             </div>
 
-                            {ticket.status !== 'Resolved' && (
-                                <form onSubmit={handleSendMessage} className="input-dock">
-                                    {isAdmin && (
-                                        <div className="internal-flag">
-                                            <input type="checkbox" id="int-note" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
-                                            <label htmlFor="int-note" className="internal-flag-label">
-                                                <Shield size={14} /> Add as Secure Internal Note
-                                            </label>
-                                        </div>
-                                    )}
-                                    <div className="dock-wrapper">
-                                        <textarea placeholder="Transmit update to agents..." value={message} onChange={(e) => setMessage(e.target.value)} rows={2} />
-                                        <div className="dock-footer">
-                                            <div className="dock-info-row">
-                                                {isAdmin && (
-                                                    <Button type="button" variant="ghost" size="sm" className="ai-draft-btn" onClick={handleGenerateDraft} disabled={isDrafting}>
-                                                        {isDrafting ? <Loader className="animate-spin" size={14} /> : <Brain size={14} />}
-                                                        <span>Draft with AI</span>
-                                                    </Button>
-                                                )}
-                                                {!isDrafting && <span><Info size={14} /> Updates are instantaneous</span>}
-                                            </div>
-                                            <Button type="submit" disabled={sending || !message.trim()} className="send-btn">
-                                                {sending ? <Loader className="animate-spin" size={18} /> : <><Send size={18} /> Transmit Update</>}
-                                            </Button>
-                                        </div>
+                            <form onSubmit={handleSendMessage} className="input-dock">
+                                {isAdmin && (
+                                    <div className="internal-flag">
+                                        <input type="checkbox" id="int-note" checked={isInternal} onChange={(e) => setIsInternal(e.target.checked)} />
+                                        <label htmlFor="int-note" className="internal-flag-label">
+                                            <Shield size={14} /> Add as Secure Internal Note
+                                        </label>
                                     </div>
-                                </form>
-                            )}
+                                )}
+                                <div className="dock-wrapper-premium">
+                                    <div className="textarea-container">
+                                        <textarea
+                                            placeholder="Transmit update to agents..."
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            rows={2}
+                                        />
+                                        <div className="textarea-glow" />
+                                    </div>
+                                    <div className="dock-footer-premium">
+                                        <div className="dock-info-row">
+                                            {isAdmin && (
+                                                <Button type="button" variant="ghost" size="sm" className="ai-draft-btn-premium" onClick={handleGenerateDraft} disabled={isDrafting}>
+                                                    {isDrafting ? <Loader className="animate-spin" size={14} /> : <Brain size={14} />}
+                                                    <span>Draft with AI</span>
+                                                </Button>
+                                            )}
+                                            {!isDrafting && <span className="instant-label"><Info size={14} /> Transmission is instantaneous</span>}
+                                        </div>
+                                        <Button type="submit" disabled={sending || !message.trim()} className="send-btn-nexus">
+                                            {sending ? <Loader className="animate-spin" size={18} /> : <><Send size={18} /> Transmit Update</>}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </form>
                         </Card>
                     </div>
 
