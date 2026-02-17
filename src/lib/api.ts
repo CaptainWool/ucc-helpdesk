@@ -259,6 +259,24 @@ export const api = {
                 headers: getHeaders()
             });
             return handleResponse(res);
+        },
+        activateMaintenanceWithWarning: async (minutes: number): Promise<any> => {
+            const res = await fetch(`${API_URL}/maintenance/activate-with-warning`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ warning_minutes: minutes })
+            });
+            return handleResponse(res);
         }
     },
+    maintenance: {
+        subscribe: async (email: string): Promise<any> => {
+            const res = await fetch(`${API_URL}/maintenance/subscribe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            return handleResponse(res);
+        }
+    }
 };

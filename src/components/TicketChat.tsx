@@ -1,7 +1,9 @@
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import { Send, User as UserIcon, Shield, Sparkles, Video, Trash2, Loader2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
 import Button from './common/Button';
 import { generateSmartReplyAI, analyzeResponseQuality } from '../lib/ai';
 import { requestNotificationPermission, sendNotification } from '../lib/notifications';
@@ -12,6 +14,7 @@ import './TicketChat.css';
 
 interface Message {
     id: string;
+    ticket_id: string;
     content: string;
     sender_role: string;
     created_at: string;
@@ -34,6 +37,8 @@ const TicketChat: React.FC<TicketChatProps> = ({ ticketId, role = 'student', tic
     const [showTemplates, setShowTemplates] = useState(false);
     const [qualityAnalysis, setQualityAnalysis] = useState<any>(null);
     const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+    const [showRecorder, setShowRecorder] = useState(false);
+    const [isAnalyzingQuality, setIsAnalyzingQuality] = useState(false);
     const [typingUser, setTypingUser] = useState<string | null>(null);
     const socketRef = useRef<any>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);

@@ -98,7 +98,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         programme: options?.data?.programme || rest.programme || signUpData.programme || '',
                         role: options?.data?.role || rest.role || signUpData.role,
                         department: options?.data?.department || rest.department || signUpData.department || '',
-                        expertise: options?.data?.expertise || rest.expertise || signUpData.expertise || ''
+                        expertise: options?.data?.expertise || rest.expertise || signUpData.expertise || '',
+                        theme: options?.data?.theme || rest.theme || 'light',
+                        biometrics_enabled: options?.data?.biometrics_enabled || rest.biometrics_enabled || false
                     };
                 }
 

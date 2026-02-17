@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
+import { io } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +15,14 @@ import {
     Download,
     BarChart2,
     BookOpen,
-    HelpCircle
+    HelpCircle,
+    CheckCircle,
+    Bell,
+    Wrench,
+    Clock,
+    Mail,
+    Phone,
+    AlertTriangle
 } from 'lucide-react';
 import { api, BASE_URL } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -75,8 +83,15 @@ const AdminDashboard: React.FC = () => {
     const [showTour, setShowTour] = useState(false);
     const [isBulkUpdating, setIsBulkUpdating] = useState(false);
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [maintenanceWarning, setMaintenanceWarning] = useState<any>(null);
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
+    const [isExempt, setIsExempt] = useState(false);
+    const [maintenanceConfig, setMaintenanceConfig] = useState<any>(null);
+    const [subscribeEmail, setSubscribeEmail] = useState('');
+    const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isSubscribed, setIsSubscribed] = useState(false);
 
-    const { showSuccess, showError } = useToast();
+    const { showSuccess, showError, showWarning } = useToast();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -94,6 +109,39 @@ const AdminDashboard: React.FC = () => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, [profile]);
+
+    useEffect(() => {
+        const checkMaintenanceMode = async () => {
+            try {
+                const settings = await api.system.getSettings();
+                setMaintenanceMode(settings.maintenance_mode || false);
+                setIsExempt(settings.is_exempt || false);
+                setMaintenanceConfig(settings.maintenance_config || null);
+            } catch (err) {
+                console.error('Failed to fetch system settings:', err);
+            }
+        };
+        checkMaintenanceMode();
+    }, []);
+
+    useEffect(() => {
+        const newSocket = io(BASE_URL);
+
+        newSocket.on('maintenance-warning', (data: any) => {
+            setMaintenanceWarning(data);
+            showWarning(`System Maintenance: ${data.message} in ${data.minutes_until} minutes.`);
+        });
+
+        // Admins don't get kicked out, but we could notify them
+        newSocket.on('maintenance-activated', () => {
+            showSuccess("System has entered maintenance mode.");
+            // Optionally refresh settings context if used
+        });
+
+        return () => {
+            newSocket.disconnect();
+        };
+    }, []);
 
     const handleResolve = async (id: string) => {
         await resolveTicket(id);
@@ -184,8 +232,130 @@ const AdminDashboard: React.FC = () => {
         document.body.removeChild(link);
     };
 
+    const handleSubscribe = async () => {
+        if (!subscribeEmail || !subscribeEmail.includes('@')) {
+            showError('Please enter a valid email address');
+            return;
+        }
+
+        try {
+            setIsSubscribing(true);
+            await api.maintenance.subscribe(subscribeEmail);
+            setIsSubscribed(true);
+            showSuccess('You will be notified when the system is back online.');
+            setSubscribeEmail('');
+        } catch (err) {
+            console.error('Subscription failed:', err);
+            showError('Failed to subscribe to updates.');
+        } finally {
+            setIsSubscribing(false);
+        }
+    };
+
+    // Show maintenance screen if maintenance mode is active and user is NOT exempt
+    if (maintenanceMode && !isExempt) {
+        return (
+            <div className="maintenance-screen" style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: '2rem'
+            }}>
+                <Card style={{ maxWidth: '600px', textAlign: 'center', padding: '3rem 2rem' }}>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <Wrench size={64} style={{ color: 'var(--primary)' }} />
+                    </div>
+                    <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>
+                        {maintenanceConfig?.message_title || 'System Under Maintenance'}
+                    </h1>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                        {maintenanceConfig?.message_body || 'We\'re currently performing system maintenance to improve your experience. Agents are restricted at this time.'}
+                    </p>
+
+                    {maintenanceConfig?.contact_info?.show_contact && (
+                        <div style={{ marginTop: '2rem', textAlign: 'left', background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem' }}>
+                            <h4 style={{ marginTop: 0 }}>Emergency Contact</h4>
+                            {maintenanceConfig.contact_info.email && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                    <Mail size={16} /> {maintenanceConfig.contact_info.email}
+                                </div>
+                            )}
+                            {maintenanceConfig.contact_info.phone && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Phone size={16} /> {maintenanceConfig.contact_info.phone}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+
+
+                    {/* Subscription Section */}
+                    {
+                        !isSubscribed ? (
+                            <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e2e8f0' }}>
+                                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-muted)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Get Notified
+                                </h4>
+                                <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '400px', margin: '0 auto' }}>
+                                    <input
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        value={subscribeEmail}
+                                        onChange={(e) => setSubscribeEmail(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem',
+                                            borderRadius: '0.5rem',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none'
+                                        }}
+                                    />
+                                    <Button onClick={handleSubscribe} disabled={isSubscribing}>
+                                        {isSubscribing ? '...' : <><Bell size={16} /> Notify Me</>}
+                                    </Button>
+                                </div>
+                                <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                    We'll send a one-time email when the system is back online.
+                                </p>
+                            </div>
+                        ) : (
+                            <div style={{ marginTop: '2rem', padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem', color: '#15803d', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                <CheckCircle size={24} />
+                                <strong>You're subscribed!</strong>
+                                <p style={{ margin: 0, fontSize: '0.9rem' }}>We'll notify you as soon as we're back.</p>
+                            </div>
+                        )
+                    }
+
+                    <div style={{ marginTop: '2rem' }}>
+                        <Button variant="outline" onClick={handleLogout}>Log Out</Button>
+                    </div>
+                </Card >
+            </div >
+        );
+    }
+
     return (
         <div className="dashboard-layout fade-in">
+            {maintenanceMode && isExempt && (
+                <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '0.75rem', textAlign: 'center', color: '#166534', position: 'sticky', top: 0, zIndex: 1000 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <Shield size={18} />
+                        <span><strong>Maintenance Bypass Active:</strong> You have special access ({profile?.role}) during maintenance.</span>
+                    </div>
+                </div>
+            )}
+            {maintenanceWarning && (
+                <div style={{ background: '#fffbeb', borderBottom: '1px solid #fcd34d', padding: '0.75rem', textAlign: 'center', color: '#92400e', position: 'sticky', top: 0, zIndex: 1000 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <span role="img" aria-label="warning">⚠️</span>
+                        <span><strong>System Warning:</strong> {maintenanceWarning.message} (Approx. {maintenanceWarning.minutes_until} mins)</span>
+                    </div>
+                </div>
+            )}
             {showTour && <OnboardingTour role={profile?.role === 'super_admin' ? 'super_admin' : 'agent'} onComplete={() => setShowTour(false)} />}
 
             <header className="admin-top-bar">

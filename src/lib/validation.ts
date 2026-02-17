@@ -10,12 +10,12 @@ import { z } from 'zod';
  * @param {boolean} strict 
  * @returns {any}
  */
-export const validate = (schema, data, contextName = 'Data', strict = false) => {
+export const validate = (schema: z.ZodSchema, data: any, contextName = 'Data', strict = false) => {
     try {
         return schema.parse(data);
     } catch (e) {
         if (e instanceof z.ZodError) {
-            console.warn(`[Validation Warning] ${contextName} schema mismatch:`, e.errors);
+            console.warn(`[Validation Warning] ${contextName} schema mismatch:`, e.issues);
             console.warn('Received data:', data);
         } else {
             console.error(`[Validation Error] ${contextName}:`, e);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
+import { io } from 'socket.io-client';
 import { useNavigate, Link } from 'react-router-dom';
 import {
     Clock,
@@ -15,6 +16,7 @@ import {
     Wrench,
     Mail,
     Phone,
+    Bell,
 } from 'lucide-react';
 import { BASE_URL, api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,7 +32,7 @@ import './StudentDashboard.css';
 
 const StudentDashboard: React.FC = () => {
     const { user, profile, refreshProfile } = useAuth();
-    const { showInfo, showError } = useToast();
+    const { showInfo, showError, showWarning } = useToast();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [showTour, setShowTour] = useState(false);
@@ -42,6 +44,11 @@ const StudentDashboard: React.FC = () => {
     const [loadingSettings, setLoadingSettings] = useState(true);
     const [maintenanceConfig, setMaintenanceConfig] = useState<any>(null);
     const [maintenanceStartTime, setMaintenanceStartTime] = useState<number | null>(null);
+    const [maintenanceWarning, setMaintenanceWarning] = useState<any>(null);
+    const [isExempt, setIsExempt] = useState(false);
+    const [subscribeEmail, setSubscribeEmail] = useState('');
+    const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isSubscribed, setIsSubscribed] = useState(false);
 
     // Fetch tickets using React Query
     const {
@@ -73,6 +80,7 @@ const StudentDashboard: React.FC = () => {
             try {
                 const settings = await api.system.getSettings();
                 setMaintenanceMode(settings.maintenance_mode || false);
+                setIsExempt(settings.is_exempt || false);
                 setMaintenanceConfig(settings.maintenance_config || null);
                 // Set start time for countdown (using current time as proxy for start)
                 if (settings.maintenance_mode) {
@@ -85,6 +93,27 @@ const StudentDashboard: React.FC = () => {
             }
         };
         checkMaintenanceMode();
+    }, []);
+
+    useEffect(() => {
+        const newSocket = io(BASE_URL);
+
+        newSocket.on('maintenance-warning', (data: any) => {
+            setMaintenanceWarning(data);
+            showWarning(`System Maintenance: ${data.message} in ${data.minutes_until} minutes.`);
+        });
+
+        newSocket.on('maintenance-activated', () => {
+            api.system.getSettings().then(settings => {
+                setMaintenanceMode(true);
+                setMaintenanceConfig(settings.maintenance_config);
+                setMaintenanceStartTime(Date.now());
+            });
+        });
+
+        return () => {
+            newSocket.disconnect();
+        };
     }, []);
 
     useEffect(() => {
@@ -138,7 +167,8 @@ const StudentDashboard: React.FC = () => {
     const handleExportData = () => {
         const userData = {
             profile: displayUser,
-            tickets: tickets
+            tickets: tickets,
+            messages: []
         };
         const blob = generateDataExport(userData);
         const url = URL.createObjectURL(blob);
@@ -177,9 +207,29 @@ const StudentDashboard: React.FC = () => {
         }
     };
 
+    const handleSubscribe = async () => {
+        if (!subscribeEmail || !subscribeEmail.includes('@')) {
+            showError('Please enter a valid email address');
+            return;
+        }
+
+        try {
+            setIsSubscribing(true);
+            await api.maintenance.subscribe(subscribeEmail);
+            setIsSubscribed(true);
+            showInfo('You will be notified when the system is back online.');
+            setSubscribeEmail('');
+        } catch (err) {
+            console.error('Subscription failed:', err);
+            showError('Failed to subscribe to updates.');
+        } finally {
+            setIsSubscribing(false);
+        }
+    };
+
 
     // Show maintenance screen if maintenance mode is active
-    if (maintenanceMode) {
+    if (maintenanceMode && !isExempt) {
         // Calculate time remaining for countdown
         const [timeRemaining, setTimeRemaining] = React.useState(0);
 
@@ -241,28 +291,27 @@ const StudentDashboard: React.FC = () => {
                     {maintenanceConfig?.contact_info?.show_contact && (
                         <div style={{
                             background: '#f8fafc',
-                            padding: '1.5rem',
                             borderRadius: '0.75rem',
-                            border: '1px solid #e2e8f0',
-                            marginBottom: '1.5rem',
-                            textAlign: 'left'
+                            padding: '1.25rem',
+                            textAlign: 'left',
+                            marginBottom: '1.5rem'
                         }}>
-                            <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: 'var(--text-dark)' }}>
-                                Need Immediate Assistance?
+                            <h4 style={{ margin: '0 0 0.75rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dark)', fontSize: '0.95rem' }}>
+                                <HelpCircle size={16} /> Need urgent help?
                             </h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {maintenanceConfig.contact_info.email && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                                        <Mail size={18} />
-                                        <a href={`mailto:${maintenanceConfig.contact_info.email}`} style={{ color: 'var(--primary)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <Mail size={16} />
+                                        <a href={`mailto:${maintenanceConfig.contact_info.email}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             {maintenanceConfig.contact_info.email}
                                         </a>
                                     </div>
                                 )}
                                 {maintenanceConfig.contact_info.phone && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-                                        <Phone size={18} />
-                                        <a href={`tel:${maintenanceConfig.contact_info.phone}`} style={{ color: 'var(--primary)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <Phone size={16} />
+                                        <a href={`tel:${maintenanceConfig.contact_info.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             {maintenanceConfig.contact_info.phone}
                                         </a>
                                     </div>
@@ -270,6 +319,46 @@ const StudentDashboard: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Subscription Section */}
+                    {
+                        !isSubscribed ? (
+                            <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e2e8f0' }}>
+                                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-muted)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Get Notified
+                                </h4>
+                                <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '400px', margin: '0 auto' }}>
+                                    <input
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        value={subscribeEmail}
+                                        onChange={(e) => setSubscribeEmail(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem',
+                                            borderRadius: '0.5rem',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none'
+                                        }}
+                                    />
+                                    <Button onClick={handleSubscribe} disabled={isSubscribing}>
+                                        {isSubscribing ? '...' : <><Bell size={16} /> Notify Me</>}
+                                    </Button>
+                                </div>
+                                <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                    We'll send a one-time email when the system is back online.
+                                </p>
+                            </div>
+                        ) : (
+                            <div style={{ marginTop: '2rem', padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem', color: '#15803d', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                <CheckCircle size={24} />
+                                <strong>You're subscribed!</strong>
+                                <p style={{ margin: 0, fontSize: '0.9rem' }}>We'll notify you as soon as we're back.</p>
+                            </div>
+                        )
+                    }
+
+
 
                     <div style={{
                         background: '#f8fafc',
@@ -288,13 +377,29 @@ const StudentDashboard: React.FC = () => {
                             Return to Login
                         </Button>
                     </Link>
-                </Card>
-            </div>
+                </Card >
+            </div >
         );
     }
 
     return (
         <div className="container student-dashboard">
+            {maintenanceMode && isExempt && (
+                <div style={{ background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', padding: '0.75rem', textAlign: 'center', color: '#166534', marginBottom: '1rem', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <Shield size={18} />
+                        <span><strong>Maintenance Bypass Active:</strong> You have special access to the system during maintenance.</span>
+                    </div>
+                </div>
+            )}
+            {maintenanceWarning && (
+                <div style={{ background: '#fffbeb', borderBottom: '1px solid #fcd34d', padding: '0.75rem', textAlign: 'center', color: '#92400e', marginBottom: '1rem', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <AlertTriangle size={18} />
+                        <span><strong>System Warning:</strong> {maintenanceWarning.message} (Approx. {maintenanceWarning.minutes_until} mins)</span>
+                    </div>
+                </div>
+            )}
             {showTour && <OnboardingTour role="student" onComplete={() => setShowTour(false)} />}
             <header className="dashboard-header">
                 <div className="header-greeting">

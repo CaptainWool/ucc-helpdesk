@@ -18,6 +18,8 @@ export const UserSchema = z.object({
     revocation_reason: z.string().nullable().optional(),
     plaintext_password: z.string().nullable().optional(),
     phone_number: z.string().nullable().optional(),
+    theme: z.string().optional(),
+    biometrics_enabled: z.boolean().optional(),
     notification_preferences: z.object({
         email: z.boolean().default(true),
         sms: z.boolean().default(false),
@@ -78,5 +80,8 @@ export const FAQSchema = z.object({
     answer: z.string(),
     category: z.string(),
     helpful_count: z.number().optional(),
-    unhelpful_count: z.number().optional()
+    unhelpful_count: z.number().optional(),
+    views: z.number().optional(),
+    helpfulness_score: z.number().optional(),
+    updated_at: z.string().optional()
 });

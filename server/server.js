@@ -93,6 +93,93 @@ const sendResetEmail = async (email, token, fullName) => {
     }
 };
 
+const sendTicketAssignmentEmail = async (email, ticket, agentName) => {
+    try {
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+        const msg = {
+            to: email,
+            from: {
+                email: fromEmail,
+                name: 'UCC CoDE Helpdesk'
+            },
+            subject: `[Ticket #${ticket.id}] Assigned to Agent`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+                    <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h2 style="color: #1e40af; margin-bottom: 20px;">Ticket Assigned</h2>
+                        <p>Hello,</p>
+                        <p>Your ticket <strong>#${ticket.id}</strong> has been assigned to our agent <strong>${agentName}</strong>.</p>
+                        <p>They will be reviewing your request shortly.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                        <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                            UCC CoDE Helpdesk Platform
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+        await sgMail.send(msg);
+        logger.info(`Assignment email sent to ${email}`);
+    } catch (err) {
+        logger.error('SendGrid Error (Assignment): ' + err.message);
+    }
+};
+
+const notifyBackOnline = async () => {
+    try {
+        const result = await pool.query('SELECT email FROM maintenance_subscribers');
+        const subscribers = result.rows.map(row => row.email);
+
+        if (subscribers.length === 0) return;
+
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+        const msg = {
+            to: subscribers, // SendGrid supports array of emails (multiple recipients) - usually best to use BCC or individual sends for privacy, but for simplicity here dealing with potentially small list. 
+            // Better privacy: send individual emails or use BCC. Let's iterate for safety/privacy.
+            from: {
+                email: fromEmail,
+                name: 'UCC CoDE Helpdesk'
+            },
+            subject: 'System Back Online - UCC Helpdesk',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+                    <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid #22c55e;">
+                        <h2 style="color: #15803d; margin-bottom: 20px;">We are back online!</h2>
+                        <p>Hello,</p>
+                        <p>The scheduled maintenance for the UCC CoDE Helpdesk Platform has been completed.</p>
+                        <p>You can now access the system as usual.</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Go to Helpdesk</a>
+                        </div>
+                        <p style="color: #64748b; font-size: 14px;">Thank you for your patience.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                        <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                            UCC CoDE Helpdesk Platform
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        // Send individually to avoid exposing emails to each other
+        // In production, use a bulk email service or queue. 
+        // For this generated code, simple iteration.
+        for (const email of subscribers) {
+            try {
+                await sgMail.send({ ...msg, to: email });
+            } catch (e) {
+                console.error(`Failed to send back-online email to ${email}`, e);
+            }
+        }
+
+        // Clear subscribers list after notification
+        await pool.query('DELETE FROM maintenance_subscribers');
+        logger.info(`Notified ${subscribers.length} users system is back online.`);
+
+    } catch (err) {
+        logger.error('Error in notifyBackOnline: ' + err.message);
+    }
+};
 
 const sendTicketConfirmationEmail = async (email, ticket) => {
     try {
@@ -301,16 +388,28 @@ const initDb = async () => {
         category TEXT NOT NULL,
         helpful_count INTEGER DEFAULT 0,
         unhelpful_count INTEGER DEFAULT 0,
+        views INTEGER DEFAULT 0,
+        helpfulness_score FLOAT DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
     `);
+
+        // Migration: Add views and helpfulness_score to faqs
+        try {
+            await client.query('ALTER TABLE faqs ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0');
+            await client.query('ALTER TABLE faqs ADD COLUMN IF NOT EXISTS helpfulness_score FLOAT DEFAULT 0');
+        } catch (migErr) {
+            logger.warn('FAQ metrics migration warning: ' + migErr.message);
+        }
 
         // Create Audit Logs Table
         await client.query(`
             CREATE TABLE IF NOT EXISTS audit_logs(
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        admin_name TEXT,
+        admin_email TEXT,
         action TEXT NOT NULL,
         target_type TEXT,
         target_id TEXT,
@@ -318,6 +417,14 @@ const initDb = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
     `);
+
+        // Add admin_name and admin_email columns if they don't exist (defensive migration)
+        try {
+            await client.query('ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS admin_name TEXT');
+            await client.query('ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS admin_email TEXT');
+        } catch (migErr) {
+            logger.warn('Audit logs migration warning: ' + migErr.message);
+        }
 
         // Create Password Reset Tokens Table
         await client.query(`
@@ -332,6 +439,15 @@ const initDb = async () => {
     )
         `);
 
+        // Create Maintenance Subscribers Table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS maintenance_subscribers(
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                email TEXT UNIQUE NOT NULL,
+                subscribed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Optimized Indexes for performance
         await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON tickets(user_id)');
         await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_email ON tickets(email)');
@@ -339,6 +455,14 @@ const initDb = async () => {
         await client.query('CREATE INDEX IF NOT EXISTS idx_tickets_assigned_email ON tickets(assigned_to_email)');
         await client.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)');
         await client.query('CREATE INDEX IF NOT EXISTS idx_messages_ticket_id ON messages(ticket_id)');
+
+        // Migration: Add theme and biometrics_enabled to users
+        try {
+            await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT \'light\'');
+            await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS biometrics_enabled BOOLEAN DEFAULT FALSE');
+        } catch (migErr) {
+            logger.warn('User preferences migration warning: ' + migErr.message);
+        }
 
         // Seed Initial Settings
         const settingsToSeed = [
@@ -645,8 +769,8 @@ app.post('/api/auth/register', upload.single('avatar'), async (req, res) => {
         const savedPlainText = isAssigned ? password : null;
 
         const result = await pool.query(
-            'INSERT INTO users (email, password_hash, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise, avatar_url, is_assigned, plaintext_password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, is_assigned, has_completed_tour, plaintext_password',
-            [email, hashedPassword, full_name, student_id || null, staff_id || null, phone_number, level || null, programme || null, finalRole, department || 'general', expertise || null, avatar_url, isAssigned, savedPlainText]
+            'INSERT INTO users (email, password_hash, full_name, student_id, staff_id, phone_number, level, programme, role, department, expertise, avatar_url, is_assigned, plaintext_password, theme, biometrics_enabled) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, is_assigned, has_completed_tour, plaintext_password, theme, biometrics_enabled',
+            [email, hashedPassword, full_name, student_id || null, staff_id || null, phone_number, level || null, programme || null, finalRole, department || 'general', expertise || null, avatar_url, isAssigned, savedPlainText, 'light', false]
         );
         const user = result.rows[0];
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET);
@@ -888,7 +1012,7 @@ app.get('/api/system/diagnose-email', async (req, res) => {
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, has_completed_tour FROM users WHERE id = $1', [req.user.id]);
+        const result = await pool.query('SELECT id, email, role, full_name, student_id, staff_id, phone_number, level, programme, department, expertise, avatar_url, has_completed_tour, theme, biometrics_enabled FROM users WHERE id = $1', [req.user.id]);
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch user' });
@@ -945,7 +1069,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
 
     try {
         const fields = Object.keys(updates);
-        const allowedColumns = ['full_name', 'student_id', 'staff_id', 'phone_number', 'level', 'programme', 'department', 'expertise', 'avatar_url', 'has_completed_tour', 'role', 'is_banned', 'ban_expires_at', 'revoked_at', 'revocation_reason'];
+        const allowedColumns = ['full_name', 'student_id', 'staff_id', 'phone_number', 'level', 'programme', 'department', 'expertise', 'avatar_url', 'has_completed_tour', 'role', 'is_banned', 'ban_expires_at', 'revoked_at', 'revocation_reason', 'theme', 'biometrics_enabled'];
 
         // Filter out any keys that are not allowed columns
         const validFields = fields.filter(f => allowedColumns.includes(f));
@@ -984,6 +1108,18 @@ app.post('/api/users/:id/avatar', authenticateToken, upload.single('avatar'), as
 });
 
 // 1c. Command Center Routes (Admin Only)
+// Helper for logging maintenance events with full admin details
+async function logMaintenanceEvent(adminUser, action, details) {
+    try {
+        await pool.query(
+            'INSERT INTO audit_logs (admin_id, admin_name, admin_email, action, target_type, target_id, details) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [adminUser.id, adminUser.full_name, adminUser.email, action, 'system_settings', 'maintenance', JSON.stringify(details)]
+        );
+    } catch (err) {
+        console.error('Failed to log maintenance event:', err);
+    }
+}
+
 app.get('/api/settings', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM system_settings');
@@ -991,8 +1127,28 @@ app.get('/api/settings', authenticateToken, async (req, res) => {
         result.rows.forEach(row => {
             settings[row.key] = row.value;
         });
+
+        // Check for maintenance exemption
+        if (settings.maintenance_mode === true || settings.maintenance_mode === 'true') {
+            const config = settings.maintenance_config || {};
+            const exemptions = config.exemptions || { roles: [], emails: [] };
+
+            const userRole = req.user.role;
+            const userEmail = req.user.email;
+
+            const isRoleExempt = exemptions.roles && exemptions.roles.includes(userRole);
+            const isEmailExempt = exemptions.emails && exemptions.emails.includes(userEmail);
+
+            if (isRoleExempt || isEmailExempt || req.user.role === 'super_admin') {
+                settings.is_exempt = true;
+                // We keep maintenance_mode = true so the frontend knows it's active
+                // but the is_exempt flag tells it to bypass the blocker.
+            }
+        }
+
         res.json(settings);
     } catch (err) {
+        console.error('Failed to fetch settings:', err);
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 });
@@ -1003,13 +1159,128 @@ app.post('/api/settings', authenticateToken, async (req, res) => {
     try {
         await pool.query('INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()', [key, JSON.stringify(value)]);
 
-        await logAudit(req.user.id, 'update_setting', 'system_settings', key, { new_value: value });
+        // Special logging for maintenance events
+        if (key === 'maintenance_mode') {
+            await logMaintenanceEvent(req.user, value ? 'maintenance_enabled' : 'maintenance_disabled', { mode: value });
+
+            // Trigger notifications when maintenance is disabled (back online)
+            // Value comes in as boolean or string 'true'/'false'
+            if (value === false || value === 'false') {
+                notifyBackOnline(); // Async, don't await/block response
+            }
+        } else if (key === 'maintenance_config') {
+            await logMaintenanceEvent(req.user, 'maintenance_config_updated', { config: value });
+        } else {
+            // Fallback to standard audit logging for other settings
+            await logAudit(req.user.id, 'update_setting', 'system_settings', key, { new_value: value });
+        }
 
         res.json({ success: true });
     } catch (err) {
+        console.error('Settings update error:', err);
         res.status(500).json({ error: 'Failed to update settings' });
     }
 });
+
+app.post('/api/maintenance/activate-with-warning', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'super_admin') return res.status(403).json({ error: 'Unauthorized' });
+    const { warning_minutes } = req.body;
+
+    try {
+        // Broadcast warning to all connected users
+        io.emit('maintenance-warning', {
+            minutes_until: warning_minutes,
+            message: 'System will enter maintenance mode shortly. Please save your work.',
+            scheduled_time: Date.now() + (warning_minutes * 60 * 1000)
+        });
+
+        await logMaintenanceEvent(req.user, 'maintenance_warning_sent', { warning_minutes });
+
+        // Schedule actual activation
+        setTimeout(async () => {
+            try {
+                // Check if we should still activate (e.g. might have been cancelled)
+                // For simplicity in this implementation, we assume yes unless manually cancelled (which we don't track here yet)
+                // But let's check if maintenance is ALREADY on
+                const currentSettings = await pool.query("SELECT value FROM system_settings WHERE key = 'maintenance_mode'");
+                const isAlreadyOn = currentSettings.rows[0]?.value === true || currentSettings.rows[0]?.value === 'true';
+
+                if (!isAlreadyOn) {
+                    await pool.query("INSERT INTO system_settings (key, value) VALUES ('maintenance_mode', 'true') ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW()");
+                    io.emit('maintenance-activated');
+                    // We can't easily log the "user" here since it's a timeout, but we can log as 'system'
+                    await pool.query(
+                        'INSERT INTO audit_logs (action, target_type, target_id, details) VALUES ($1, $2, $3, $4)',
+                        ['maintenance_auto_activated', 'system_settings', 'maintenance', JSON.stringify({ reason: 'warning_period_ended' })]
+                    );
+                }
+            } catch (err) {
+                console.error('Error in delayed maintenance activation:', err);
+            }
+        }, warning_minutes * 60 * 1000);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Warning broadcast error:', err);
+        res.status(500).json({ error: 'Failed to broadcast warning' });
+    }
+});
+
+// Subscribe to maintenance updates
+app.post('/api/maintenance/subscribe', async (req, res) => {
+    const { email } = req.body;
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email required' });
+    }
+
+    try {
+        await pool.query('INSERT INTO maintenance_subscribers (email) VALUES ($1) ON CONFLICT (email) DO NOTHING', [email]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Subscription error:', err);
+        res.status(500).json({ error: 'Failed to subscribe' });
+    }
+});
+
+// Maintenance Task Scheduler (Runs every minute)
+setInterval(async () => {
+    try {
+        const settingsRes = await pool.query("SELECT * FROM system_settings");
+        const settings = {};
+        settingsRes.rows.forEach(r => settings[r.key] = r.value);
+
+        if (settings.maintenance_config?.scheduled?.enabled) {
+            const { start_time, end_time, auto_enable, auto_disable } = settings.maintenance_config.scheduled;
+            const now = Date.now();
+            const startMs = new Date(start_time).getTime();
+            const endMs = new Date(end_time).getTime();
+
+            // Auto-enable
+            if (auto_enable && !settings.maintenance_mode && now >= startMs && now < endMs) {
+                await pool.query("INSERT INTO system_settings (key, value) VALUES ('maintenance_mode', 'true') ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW()");
+                io.emit('maintenance-activated');
+                await pool.query(
+                    'INSERT INTO audit_logs (action, target_type, target_id, details) VALUES ($1, $2, $3, $4)',
+                    ['maintenance_scheduled_start', 'system_settings', 'maintenance', JSON.stringify({ scheduled_start: start_time })]
+                );
+                console.log('Maintenance mode auto-enabled via schedule');
+            }
+
+            // Auto-disable
+            if (auto_disable && settings.maintenance_mode && now >= endMs) {
+                await pool.query("INSERT INTO system_settings (key, value) VALUES ('maintenance_mode', 'false') ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()");
+                io.emit('maintenance-deactivated');
+                await pool.query(
+                    'INSERT INTO audit_logs (action, target_type, target_id, details) VALUES ($1, $2, $3, $4)',
+                    ['maintenance_scheduled_end', 'system_settings', 'maintenance', JSON.stringify({ scheduled_end: end_time })]
+                );
+                console.log('Maintenance mode auto-disabled via schedule');
+            }
+        }
+    } catch (err) {
+        console.error('Maintenance scheduler error:', err);
+    }
+}, 60000); // Check every minute
 
 app.post('/api/users/:id/moderate', authenticateToken, async (req, res) => {
     if (req.user.role !== 'super_admin') return res.status(403).json({ error: 'Unauthorized' });

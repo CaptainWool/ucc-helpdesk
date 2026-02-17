@@ -1,5 +1,5 @@
-import React, { useState, useEffect, KeyboardEvent } from 'react';
-import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles, Activity, Zap, Cpu, Server, Database, Globe, Clock, Mail, Phone, Settings } from 'lucide-react';
+﻿import React, { useState, useEffect, KeyboardEvent } from 'react';
+import { Lock, Unlock, ShieldAlert, Search, Ban, History, Info, Bell, Users, Sparkles, Activity, Zap, Cpu, Server, Database, Globe, Clock, Mail, Phone, Settings, Calendar, PlayCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -18,6 +18,18 @@ interface MaintenanceConfig {
         email: string;
         phone: string;
         show_contact: boolean;
+    };
+    scheduled?: {
+        enabled: boolean;
+        start_time: string;
+        end_time: string;
+        auto_enable: boolean;
+        auto_disable: boolean;
+    };
+    exemptions?: {
+        enabled: boolean;
+        roles: string[];
+        emails: string[];
     };
 }
 
@@ -76,8 +88,22 @@ const CommandCenter: React.FC = () => {
             email: 'helpdesk@ucc.edu.gh',
             phone: '+233 XX XXX XXXX',
             show_contact: true
+        },
+        scheduled: {
+            enabled: false,
+            start_time: '',
+            end_time: '',
+            auto_enable: true,
+            auto_disable: true
+        },
+        exemptions: {
+            enabled: true,
+            roles: ['super_admin'],
+            emails: []
         }
     });
+    const [warningMinutes, setWarningMinutes] = useState(15);
+    const [maintenanceTab, setMaintenanceTab] = useState<'config' | 'schedule' | 'exemptions'>('config');
     const [activeTab, setActiveTab] = useState<'controls' | 'moderation' | 'audit'>('controls');
     const [showMaintenanceConfig, setShowMaintenanceConfig] = useState(false);
     const [passwordAttempt, setPasswordAttempt] = useState('');
@@ -176,6 +202,17 @@ const CommandCenter: React.FC = () => {
     const saveResourceLimits = () => updateSetting('resource_limits', resourceDraft);
 
     const saveMaintenanceConfig = () => updateSetting('maintenance_config', maintenanceDraft);
+
+    const activateWithWarning = async () => {
+        try {
+            await api.system.activateMaintenanceWithWarning(warningMinutes);
+            showSuccess(`Maintenance warning broadcasted. Mode will activate in ${warningMinutes} minutes.`);
+            await fetchData();
+            setShowMaintenanceConfig(false);
+        } catch (err) {
+            showError('Failed to activate maintenance warning');
+        }
+    };
 
     const handleModerate = async (userId: string, data: any) => {
         setModifying(userId);
@@ -475,11 +512,11 @@ const CommandCenter: React.FC = () => {
 
                     <div className="announcement-presets" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {[
-                            { label: 'Fee Deadline', msg: '⚠️ Fee Deadline: Final date for Semester 1 fee clearance is Friday, Feb 20th.', type: 'warning' },
-                            { label: 'Registration', msg: '📅 Course Registration: Undergraduate registration closes this Sunday at midnight.', type: 'info' },
-                            { label: 'Security', msg: '🔒 Security Alert: UCC will never ask for your password. Stay alert to phishing scams.', type: 'danger' },
-                            { label: 'Results', msg: '📄 Results Out: First-semester results for Level 400 students are now live on the portal.', type: 'info' },
-                            { label: 'General', msg: '🎓 Welcome Back: We wish all CoDE students a successful and productive semester!', type: 'info' }
+                            { label: 'Fee Deadline', msg: 'âš ï¸ Fee Deadline: Final date for Semester 1 fee clearance is Friday, Feb 20th.', type: 'warning' },
+                            { label: 'Registration', msg: 'ðŸ“… Course Registration: Undergraduate registration closes this Sunday at midnight.', type: 'info' },
+                            { label: 'Security', msg: 'ðŸ”’ Security Alert: UCC will never ask for your password. Stay alert to phishing scams.', type: 'danger' },
+                            { label: 'Results', msg: 'ðŸ“„ Results Out: First-semester results for Level 400 students are now live on the portal.', type: 'info' },
+                            { label: 'General', msg: 'ðŸŽ“ Welcome Back: We wish all CoDE students a successful and productive semester!', type: 'info' }
                         ].map((p, i) => (
                             <button
                                 key={i}
@@ -732,37 +769,40 @@ const CommandCenter: React.FC = () => {
         </Card>
     );
 
-    return (
-        <div className="command-center fade-in">
-            <div className="cc-tabs">
-                <button className={`cc-tab ${activeTab === 'controls' ? 'active' : ''}`} onClick={() => setActiveTab('controls')}>Controls</button>
-                <button className={`cc-tab ${activeTab === 'moderation' ? 'active' : ''}`} onClick={() => setActiveTab('moderation')}>Moderation</button>
-                <button className={`cc-tab ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => setActiveTab('audit')}>Audit Logs</button>
-            </div>
-
-            <div className="cc-tab-content">
-                {activeTab === 'controls' && (
-                    <div className="fade-in">
-                        {renderHealthMonitor()}
-                        {renderControls()}
+    const renderMaintenanceModal = () => (
+        showMaintenanceConfig && (
+            <div className="modal-overlay" onClick={() => setShowMaintenanceConfig(false)}>
+                <Card className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflow: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h3 style={{ margin: 0 }}>
+                            <Settings size={24} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                            Maintenance Configuration
+                        </h3>
+                        <Button variant="ghost" onClick={() => setShowMaintenanceConfig(false)} size="sm">Ã—</Button>
                     </div>
-                )}
-                {activeTab === 'moderation' && renderModeration()}
-                {activeTab === 'audit' && renderAuditLogs()}
-            </div>
 
-            {/* Maintenance Configuration Modal */}
-            {showMaintenanceConfig && (
-                <div className="modal-overlay" onClick={() => setShowMaintenanceConfig(false)}>
-                    <Card className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflow: 'auto' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 style={{ margin: 0 }}>
-                                <Settings size={24} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
-                                Maintenance Configuration
-                            </h3>
-                            <Button variant="ghost" onClick={() => setShowMaintenanceConfig(false)} size="sm">×</Button>
-                        </div>
+                    <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', gap: '1rem' }}>
+                        <button
+                            style={{ padding: '0.75rem 0.5rem', borderBottom: maintenanceTab === 'config' ? '2px solid var(--primary)' : 'none', color: maintenanceTab === 'config' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={() => setMaintenanceTab('config')}
+                        >
+                            General
+                        </button>
+                        <button
+                            style={{ padding: '0.75rem 0.5rem', borderBottom: maintenanceTab === 'schedule' ? '2px solid var(--primary)' : 'none', color: maintenanceTab === 'schedule' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={() => setMaintenanceTab('schedule')}
+                        >
+                            Schedule & Activation
+                        </button>
+                        <button
+                            style={{ padding: '0.75rem 0.5rem', borderBottom: maintenanceTab === 'exemptions' ? '2px solid var(--primary)' : 'none', color: maintenanceTab === 'exemptions' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={() => setMaintenanceTab('exemptions')}
+                        >
+                            Exemptions
+                        </button>
+                    </div>
 
+                    {maintenanceTab === 'config' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {/* Custom Title */}
                             <div>
@@ -868,20 +908,202 @@ const CommandCenter: React.FC = () => {
                                     </div>
                                 )}
                             </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                                <Button variant="outline" onClick={() => setShowMaintenanceConfig(false)}>Cancel</Button>
+                                <Button onClick={() => { saveMaintenanceConfig(); setShowMaintenanceConfig(false); }}>Save Configuration</Button>
+                            </div>
+                        </div>
+                    )}
 
-                            {/* Action Buttons */}
+                    {maintenanceTab === 'schedule' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            {/* Schedule Section */}
+                            <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
+                                <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Calendar size={18} /> Scheduled Maintenance
+                                </h4>
+
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={maintenanceDraft.scheduled?.enabled}
+                                        onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, scheduled: { ...prev.scheduled!, enabled: e.target.checked } }))}
+                                    />
+                                    <span style={{ fontWeight: '600' }}>Enable Schedule</span>
+                                </label>
+
+                                {maintenanceDraft.scheduled?.enabled && (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Start Time</label>
+                                            <input
+                                                type="datetime-local"
+                                                className="input-field"
+                                                value={maintenanceDraft.scheduled.start_time}
+                                                onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, scheduled: { ...prev.scheduled!, start_time: e.target.value } }))}
+                                                style={{ width: '100%', padding: '0.5rem' }}
+                                            />
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={maintenanceDraft.scheduled.auto_enable}
+                                                    onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, scheduled: { ...prev.scheduled!, auto_enable: e.target.checked } }))}
+                                                />
+                                                Auto-activate at start
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>End Time</label>
+                                            <input
+                                                type="datetime-local"
+                                                className="input-field"
+                                                value={maintenanceDraft.scheduled.end_time}
+                                                onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, scheduled: { ...prev.scheduled!, end_time: e.target.value } }))}
+                                                style={{ width: '100%', padding: '0.5rem' }}
+                                            />
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={maintenanceDraft.scheduled.auto_disable}
+                                                    onChange={(e) => setMaintenanceDraft(prev => ({ ...prev, scheduled: { ...prev.scheduled!, auto_disable: e.target.checked } }))}
+                                                />
+                                                Auto-disable at end
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Warning Activation Section */}
+                            {!settings.maintenance_mode && (
+                                <div style={{ background: '#fff0f0', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #fecaca' }}>
+                                    <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#dc2626' }}>
+                                        <Bell size={18} /> Broadcast Warning & Activate
+                                    </h4>
+                                    <p style={{ fontSize: '0.9rem', color: '#b91c1c', marginBottom: '1rem' }}>
+                                        Send a warning to all active users before activating maintenance mode.
+                                    </p>
+
+                                    <div style={{ display: 'flex', alignItems: 'end', gap: '1rem' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Warning Period (Minutes)</label>
+                                            <Input
+                                                type="number"
+                                                value={warningMinutes}
+                                                onChange={(e) => setWarningMinutes(parseInt(e.target.value) || 0)}
+                                                min="1"
+                                            />
+                                        </div>
+                                        <Button onClick={activateWithWarning} style={{ background: '#dc2626', color: 'white', border: 'none' }}>
+                                            <PlayCircle size={16} /> Activate with Warning
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
                                 <Button variant="outline" onClick={() => setShowMaintenanceConfig(false)}>
-                                    Cancel
+                                    Close
                                 </Button>
                                 <Button onClick={() => { saveMaintenanceConfig(); setShowMaintenanceConfig(false); }}>
-                                    Save Configuration
+                                    Save Schedule Only
                                 </Button>
                             </div>
                         </div>
-                    </Card>
-                </div>
-            )}
+                    )}
+
+                    {maintenanceTab === 'exemptions' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div style={{ background: '#f0fdf4', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #bbf7d0', color: '#166534' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                                    <ShieldAlert size={18} /> Bypass Access
+                                </div>
+                                <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                                    Configure who can access the system while maintenance mode is active. Super Admins are always exempt.
+                                </p>
+                            </div>
+
+                            {/* Roles Selection */}
+                            <div>
+                                <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem' }}>Exempt Roles</h4>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={true}
+                                            disabled
+                                        />
+                                        Super Admin (Always)
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={maintenanceDraft.exemptions?.roles.includes('agent')}
+                                            onChange={(e) => {
+                                                const newRoles = e.target.checked
+                                                    ? [...(maintenanceDraft.exemptions?.roles || []), 'agent']
+                                                    : (maintenanceDraft.exemptions?.roles || []).filter(r => r !== 'agent');
+                                                setMaintenanceDraft(prev => ({ ...prev, exemptions: { ...prev.exemptions!, roles: newRoles } }));
+                                            }}
+                                        />
+                                        support_agent
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Emails */}
+                            <div>
+                                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Specific User Emails</h4>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                    Enter email addresses separated by commas to allow specific users access.
+                                </p>
+                                <textarea
+                                    className="input-field"
+                                    value={maintenanceDraft.exemptions?.emails.join(', ')}
+                                    onChange={(e) => {
+                                        const emails = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                        setMaintenanceDraft(prev => ({ ...prev, exemptions: { ...prev.exemptions!, emails } }));
+                                    }}
+                                    placeholder="student@ucc.edu.gh, another.user@example.com"
+                                    rows={4}
+                                    style={{ width: '100%', padding: '0.5rem', fontFamily: 'monospace' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                                <Button variant="outline" onClick={() => setShowMaintenanceConfig(false)}>Cancel</Button>
+                                <Button onClick={() => { saveMaintenanceConfig(); setShowMaintenanceConfig(false); }}>
+                                    Save Rules
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </Card>
+            </div>
+        )
+    );
+
+    return (
+        <div className="command-center fade-in">
+            <div className="cc-tabs">
+                <button className={`cc-tab ${activeTab === 'controls' ? 'active' : ''}`} onClick={() => setActiveTab('controls')}>Controls</button>
+                <button className={`cc-tab ${activeTab === 'moderation' ? 'active' : ''}`} onClick={() => setActiveTab('moderation')}>Moderation</button>
+                <button className={`cc-tab ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => setActiveTab('audit')}>Audit Logs</button>
+            </div>
+
+            <div className="cc-tab-content">
+                {activeTab === 'controls' && (
+                    <div className="fade-in">
+                        {renderHealthMonitor()}
+                        {renderControls()}
+                    </div>
+                )}
+                {activeTab === 'moderation' && renderModeration()}
+                {activeTab === 'audit' && renderAuditLogs()}
+            </div>
+
+            {/* Maintenance Configuration Modal */}
+            {renderMaintenanceModal()}
         </div>
     );
 };
