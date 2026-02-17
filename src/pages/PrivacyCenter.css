@@ -1,0 +1,76 @@
+.privacy-center {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.privacy-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.privacy-header h1 {
+    font-size: 2.5rem;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+
+.privacy-header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.privacy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.privacy-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.privacy-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.privacy-card p {
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    flex-grow: 1;
+}
+
+.erasure-card {
+    border-color: #fee2e2 !important;
+}
+
+.erasure-card:hover {
+    border-color: #ef4444 !important;
+}
+
+.legal-notice {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: var(--bg-surface-alt);
+    border-radius: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.legal-notice h4 {
+    color: var(--text-main);
+    margin-bottom: 0.75rem;
+}
+
+@media (max-width: 640px) {
+    .privacy-header h1 {
+        font-size: 2rem;
+    }
+}

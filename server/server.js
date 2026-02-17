@@ -1804,6 +1804,67 @@ app.get('/api/public/settings', async (req, res) => {
     }
 });
 
+// Compliance & GDPR Endpoints
+app.get('/api/compliance/export', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Fetch user profile
+        const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+        const userProfile = userRes.rows[0];
+
+        // Fetch user tickets
+        const ticketsRes = await pool.query('SELECT * FROM tickets WHERE user_id = $1', [userId]);
+        const tickets = ticketsRes.rows;
+
+        // Fetch messages for those tickets
+        const ticketIds = tickets.map(t => t.id);
+        let messages = [];
+        if (ticketIds.length > 0) {
+            const messagesRes = await pool.query('SELECT * FROM messages WHERE ticket_id = ANY($1)', [ticketIds]);
+            messages = messagesRes.rows;
+        }
+
+        res.json({
+            profile: userProfile,
+            tickets: tickets,
+            messages: messages
+        });
+    } catch (err) {
+        console.error('GDPR Export Error:', err);
+        res.status(500).json({ error: 'Failed to generate data export' });
+    }
+});
+
+app.post('/api/compliance/erase', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { reason } = req.body;
+
+        // GDPR Right to Erasure: We anonymize sensitive fields instead of hard deletion 
+        // to maintain system integrity for audit logs, while removing PII.
+        await pool.query(`
+            UPDATE users 
+            SET 
+                email = 'erased-' || id || '@deleted.local',
+                full_name = 'Anonymized User',
+                student_id = 'ERASED',
+                staff_id = 'ERASED',
+                phone_number = 'ERASED',
+                avatar_url = NULL,
+                is_banned = true,
+                revoked_at = CURRENT_TIMESTAMP,
+                revocation_reason = $1
+            WHERE id = $2
+        `, [reason || 'GDPR Right to Erasure', userId]);
+
+        res.json({ success: true, message: 'Your personal data has been marked for erasure/anonymization.' });
+    } catch (err) {
+        console.error('GDPR Erasure Error:', err);
+        res.status(500).json({ error: 'Failed to process erasure request' });
+    }
+});
+
 app.get('/api/system/health', async (req, res) => {
     try {
         const ticketCount = await pool.query('SELECT COUNT(*) FROM tickets');

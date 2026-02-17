@@ -10,6 +10,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import Loader from '@/components/common/Loader';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
+import ComplianceAuditTool from '@/components/common/ComplianceAuditTool';
 
 // Utility to retry lazy imports (fixes ChunkLoadError after deployments)
 const lazyRetry = (componentImport: any) => {
@@ -45,6 +46,7 @@ const StudentSignUp = lazyRetry(() => import('@/pages/StudentSignUp'));
 const ForgotPassword = lazyRetry(() => import('@/pages/ForgotPassword'));
 const AdminSignUp = lazyRetry(() => import('@/pages/AdminSignUp'));
 const Home = lazyRetry(() => import('@/pages/Home'));
+const PrivacyPortal = lazyRetry(() => import('@/pages/PrivacyCenter'));
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -85,6 +87,7 @@ const App: React.FC = () => {
                         <SettingsProvider>
                             <ToastProvider>
                                 <AuthProvider>
+                                    <ComplianceAuditTool />
                                     <Layout>
                                         <Suspense fallback={<Loader fullPage />}>
                                             <Routes>
@@ -110,6 +113,11 @@ const App: React.FC = () => {
                                                     </ProtectedRoute>
                                                 } />
                                                 <Route path="/track-ticket" element={<TrackTicket />} />
+                                                <Route path="/privacy-portal" element={
+                                                    <ProtectedRoute roles={['student', 'agent', 'super_admin']}>
+                                                        <PrivacyPortal />
+                                                    </ProtectedRoute>
+                                                } />
 
                                                 {/* Admin Routes */}
                                                 <Route path="/admin" element={

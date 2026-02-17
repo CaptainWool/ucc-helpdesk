@@ -6,7 +6,8 @@ import { useToast } from '../contexts/ToastContext';
 import Button from './common/Button';
 import Card from './common/Card';
 import Input from './common/Input';
-import { User } from '../types';
+import { User, Ticket } from '../types';
+import ComplianceOverview from './ComplianceOverview';
 import './CommandCenter.css';
 
 interface MaintenanceConfig {
@@ -73,6 +74,7 @@ const CommandCenter: React.FC = () => {
         command_center_password: 'israel@40'
     });
     const [users, setUsers] = useState<User[]>([]);
+    const [tickets, setTickets] = useState<Ticket[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ const CommandCenter: React.FC = () => {
     });
     const [warningMinutes, setWarningMinutes] = useState(15);
     const [maintenanceTab, setMaintenanceTab] = useState<'config' | 'schedule' | 'exemptions'>('config');
-    const [activeTab, setActiveTab] = useState<'controls' | 'moderation' | 'audit'>('controls');
+    const [activeTab, setActiveTab] = useState<'controls' | 'moderation' | 'audit' | 'compliance'>('controls');
     const [showMaintenanceConfig, setShowMaintenanceConfig] = useState(false);
     const [passwordAttempt, setPasswordAttempt] = useState('');
     const [systemHealth, setSystemHealth] = useState({
@@ -137,13 +139,16 @@ const CommandCenter: React.FC = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [s, u, logs] = await Promise.all([
+            const [s, u, logs, t] = await Promise.all([
                 api.system.getSettings(),
                 api.auth.getUsers(),
-                api.system.getAuditLogs()
+                api.system.getAuditLogs(),
+                api.tickets.list()
             ]);
             setSettings(s);
+            setUsers(u);
             setAuditLogs(logs);
+            setTickets(t);
             setAnnouncementDraft(s.global_announcement || { enabled: false, message: '', type: 'info' });
             setResourceDraft(s.resource_limits || { max_size_mb: 5, allowed_types: ['image/jpeg', 'image/png', 'application/pdf'] });
             if (s.maintenance_config) {
@@ -1089,6 +1094,7 @@ const CommandCenter: React.FC = () => {
                 <button className={`cc-tab ${activeTab === 'controls' ? 'active' : ''}`} onClick={() => setActiveTab('controls')}>Controls</button>
                 <button className={`cc-tab ${activeTab === 'moderation' ? 'active' : ''}`} onClick={() => setActiveTab('moderation')}>Moderation</button>
                 <button className={`cc-tab ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => setActiveTab('audit')}>Audit Logs</button>
+                <button className={`cc-tab ${activeTab === 'compliance' ? 'active' : ''}`} onClick={() => setActiveTab('compliance')}>Compliance</button>
             </div>
 
             <div className="cc-tab-content">
@@ -1100,6 +1106,11 @@ const CommandCenter: React.FC = () => {
                 )}
                 {activeTab === 'moderation' && renderModeration()}
                 {activeTab === 'audit' && renderAuditLogs()}
+                {activeTab === 'compliance' && (
+                    <div className="fade-in">
+                        <ComplianceOverview tickets={tickets} />
+                    </div>
+                )}
             </div>
 
             {/* Maintenance Configuration Modal */}

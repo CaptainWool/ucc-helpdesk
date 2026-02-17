@@ -145,6 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="container footer-container">
                         <p className="footer-text">&copy; {new Date().getFullYear()} U.C.C College of Distance Education. All rights reserved.</p>
                         <div className="footer-links">
+                            <Link to="/privacy-portal" className="footer-link">Privacy Portal</Link>
                             <Link to="/privacy" className="footer-link">Privacy Policy</Link>
                             <Link to="/terms" className="footer-link">Terms of Service</Link>
                             <Link to="/faq" className="footer-link">FAQ</Link>

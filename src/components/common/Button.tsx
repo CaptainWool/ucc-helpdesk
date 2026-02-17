@@ -4,6 +4,7 @@ import './Button.css';
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
     size?: 'sm' | 'md' | 'lg';
+    loading?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -11,14 +12,17 @@ const Button: React.FC<ButtonProps> = ({
     variant = 'primary',
     size = 'md',
     className = '',
+    loading = false,
+    disabled,
     ...props
 }) => {
     return (
         <button
-            className={`btn btn-${variant} btn-${size} ${className}`}
+            className={`btn btn-${variant} btn-${size} ${loading ? 'loading' : ''} ${className}`}
+            disabled={disabled || loading}
             {...props}
         >
-            {children}
+            {loading ? <span className="spinner"></span> : children}
         </button>
     );
 };

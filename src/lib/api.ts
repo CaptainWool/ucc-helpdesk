@@ -278,5 +278,19 @@ export const api = {
             });
             return handleResponse(res);
         }
+    },
+    compliance: {
+        exportData: async (): Promise<any> => {
+            const res = await fetch(`${API_URL}/compliance/export`, { headers: getHeaders() });
+            return handleResponse(res);
+        },
+        eraseAccount: async (reason: string): Promise<any> => {
+            const res = await fetch(`${API_URL}/compliance/erase`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ reason })
+            });
+            return handleResponse(res);
+        }
     }
 };

@@ -1,0 +1,132 @@
+.compliance-audit-trigger {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 9999;
+    border: none;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.compliance-audit-trigger:hover {
+    transform: scale(1.1);
+    background: var(--primary-dark);
+}
+
+.audit-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.audit-modal {
+    width: 500px;
+    max-width: 95vw;
+    background: var(--bg-surface);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.audit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.audit-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.audit-results {
+    margin-top: 1rem;
+}
+
+.audit-score-section {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-surface-alt);
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.audit-score-circle {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.audit-score-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.issue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.issue-item {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.issue-item.high {
+    border-color: #ef4444;
+}
+
+.issue-item.medium {
+    border-color: #f59e0b;
+}
+
+.issue-item strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.issue-item p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.no-issues {
+    text-align: center;
+    padding: 2rem;
+    color: #10b981;
+}
