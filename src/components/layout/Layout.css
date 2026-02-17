@@ -261,20 +261,33 @@
 
 /* Impersonation Banner */
 .impersonation-banner {
-    background: #ef4444;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
     color: white;
-    padding: 0.5rem 0;
+    padding: 0.65rem 0;
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 600;
     z-index: 100;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 .banner-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
+}
+
+.banner-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .banner-content strong {
-    text-decoration: underline;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-decoration: none;
 }

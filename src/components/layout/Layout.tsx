@@ -48,11 +48,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {impersonating && (
                 <div className="impersonation-banner">
                     <div className="container banner-content">
-                        <span>Viewing as <strong>{profile?.full_name}</strong> ({profile?.role})</span>
+                        <div className="banner-message">
+                            <ShieldAlert size={18} />
+                            <span>System Admin: Viewing as <strong>{profile?.full_name}</strong></span>
+                        </div>
                         <Button variant="danger" size="sm" onClick={() => {
                             stopImpersonating();
                             navigate('/admin');
-                        }}>Stop Impersonating</Button>
+                        }}>Stop Impersonation</Button>
                     </div>
                 </div>
             )}
