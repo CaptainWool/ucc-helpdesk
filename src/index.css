@@ -1,8 +1,8 @@
 /* Global Design Tokens & Reset */
 :root {
   /* Brand Colors - HSL for easy opacity manipulation */
-  --primary-hue: 220;
-  /* Radiant Royal Blue */
+  --primary-hue: 246;
+  /* Vibrant Indigo / Purple */
   --primary: hsl(var(--primary-hue), 85%, 50%);
   --primary-dark: hsl(var(--primary-hue), 70%, 40%);
   --primary-light: hsl(var(--primary-hue), 70%, 96%);

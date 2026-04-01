@@ -1,6 +1,6 @@
 :root {
-    --hero-bg: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
+    --hero-bg: radial-gradient(circle at 0% 0%, #fef2f8 0%, rgba(255, 255, 255, 0) 40%),
+               radial-gradient(circle at 100% 100%, #eff6ff 0%, rgba(255, 255, 255, 0) 60%);
 }
 
 .home-page {
@@ -36,7 +36,7 @@
 }
 
 .text-highlight {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-vibrant) 100%);
+    background: linear-gradient(to right, var(--primary) 0%, #db2777 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -60,11 +60,12 @@
 }
 
 .hero-cta {
-    padding: 1.25rem 2.5rem !important;
-    font-size: 1.1rem !important;
-    font-weight: 800 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 15px 30px rgba(99, 102, 241, 0.25) !important;
+    padding: 1rem 1.75rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    background: var(--primary) !important;
+    box-shadow: 0 10px 25px rgba(59, 40, 204, 0.3) !important;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 
@@ -137,23 +138,23 @@
 }
 
 .card-1 {
-    width: 340px;
-    padding: 2rem;
-    top: 40px;
-    right: 0;
+    width: 320px;
+    padding: 1.75rem;
+    top: 20px;
+    right: 10px;
     z-index: 2;
-    transform: rotate3d(1, -1, 0, 15deg);
-    animation: float 8s ease-in-out infinite;
+    transform: rotate(5deg);
+    animation: float1 6s ease-in-out infinite;
 }
 
 .card-2 {
     width: 300px;
-    padding: 1.75rem;
-    bottom: 40px;
-    left: 0;
+    padding: 1.5rem;
+    bottom: 20px;
+    left: -20px;
     z-index: 3;
-    transform: rotate3d(-1, 1, 0, -10deg);
-    animation: float 8s ease-in-out infinite 2s;
+    transform: rotate(-3deg);
+    animation: float2 7s ease-in-out infinite 1s;
 }
 
 .avatar {
@@ -261,15 +262,21 @@
     background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
 }
 
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0) rotate3d(1, -1, 0, 15deg);
+@keyframes float1 {
+    0%, 100% {
+        transform: translateY(0) rotate(5deg);
     }
-
     50% {
-        transform: translateY(-20px) rotate3d(1, -1, 0, 12deg);
+        transform: translateY(-10px) rotate(6deg);
+    }
+}
+
+@keyframes float2 {
+    0%, 100% {
+        transform: translateY(0) rotate(-3deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(-4deg);
     }
 }
 

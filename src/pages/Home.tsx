@@ -36,11 +36,13 @@ const Home: React.FC = () => {
                 <div className="container hero-container">
                     <div className="hero-content fade-in-up">
                         <h1 className="hero-title">
-                            {t('hero_title')} <br />
+                            Student Support <br />
+                            Helpdesk <br />
                             <span className="text-highlight">U.C.C (CoDE)</span>
                         </h1>
                         <p className="hero-subtitle">
-                            {t('hero_subtitle')}
+                            Fast, efficient support for all your academic and<br/>
+                            administrative needs.
                         </p>
                         <div className="hero-actions">
                             {isAdmin ? (
@@ -84,8 +86,8 @@ const Home: React.FC = () => {
                             </div>
                             <div className="visual-card card-2">
                                 <div className="card-header" style={{ marginBottom: '1.5rem' }}>
-                                    <div className="avatar" style={{ background: '#f59e0b', color: 'white' }}>
-                                        <LifeBuoy size={20} />
+                                    <div className="avatar" style={{ background: '#e0f2fe', color: '#0f172a' }}>
+                                        <LifeBuoy size={20} strokeWidth={2.5}/>
                                     </div>
                                     <div>
                                         <div className="card-name" style={{ color: '#1e293b' }}>Ticket #2938</div>
@@ -94,7 +96,7 @@ const Home: React.FC = () => {
                                 </div>
                                 <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>Fee clarification regarding semester 2...</p>
                                 <div className="progress-bar" style={{ height: '6px', background: 'rgba(0,0,0,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                                    <div className="progress-fill" style={{ width: '75%', height: '100%', background: '#f59e0b' }}></div>
+                                    <div className="progress-fill" style={{ width: '75%', height: '100%', background: '#06b6d4' }}></div>
                                 </div>
                             </div>
                         </div>
@@ -105,9 +107,9 @@ const Home: React.FC = () => {
             {/* Categories Section */}
             <section className="categories-section" id="how-it-works">
                 <div className="container">
-                    <div className="section-header fade-in-up">
-                        <h2>How can we assist you?</h2>
-                        <p>Select a category to get started with your inquiry</p>
+                    <div className="section-header fade-in-up" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                        <h2 style={{ fontSize: '2.25rem', fontWeight: 800 }}>How can we assist you?</h2>
+                        <p style={{ color: '#64748b' }}>Select a category to get started with your inquiry</p>
                     </div>
 
                     <div className="grid-3">

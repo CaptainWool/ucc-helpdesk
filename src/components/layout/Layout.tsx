@@ -1,6 +1,6 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { GraduationCap, LifeBuoy, Sun, Moon, ArrowLeft, Menu, X } from 'lucide-react';
+import { GraduationCap, LifeBuoy, Sun, Moon, ArrowLeft, Menu, X, ChevronRight } from 'lucide-react';
 import './Layout.css';
 import Button from '../common/Button';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -72,9 +72,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <ArrowLeft size={20} />
                                 </button>
                             )}
-                            <Link to="/" className="logo">
-                                <GraduationCap className="logo-icon" size={28} />
-                                <span className="logo-text">U.C.C (CoDE) Helpdesk</span>
+                            <Link to="/" className="logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ border: '1.5px solid var(--primary)', borderRadius: '50%', color: 'var(--primary)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <GraduationCap size={18} strokeWidth={2.5} />
+                                </div>
+                                <span className="logo-text" style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.15rem' }}>U.C.C (CoDE) Helpdesk</span>
                             </Link>
                         </div>
                         <nav className={`nav-links ${isMenuOpen ? 'mobile-open' : ''}`}>
@@ -97,19 +99,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             )}
 
                             {/* Settings Row */}
-                            <div className="nav-settings">
-                                <select
-                                    value={language}
-                                    onChange={(e) => setLanguage(e.target.value as any)}
-                                    className="lang-select"
-                                >
-                                    <option value="en">EN</option>
-                                    <option value="fr">FR</option>
-                                    <option value="tw">TW</option>
-                                </select>
+                            <div className="nav-settings" style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#64748b' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
+                                    <span>EN</span> <ChevronRight size={14} style={{ transform: 'rotate(90deg)' }} />
+                                </div>
 
-                                <button onClick={toggleTheme} className="theme-toggle" title="Toggle Theme">
-                                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                                <button onClick={toggleTheme} className="theme-toggle" title="Toggle Theme" style={{ color: '#64748b' }}>
+                                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                                 </button>
                             </div>
 
@@ -123,7 +119,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </div>
                                 ) : (
                                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                                        <Button variant="primary" size="sm">Student Login</Button>
+                                        <Button variant="primary" size="sm" style={{ borderRadius: '100px', fontWeight: 700, padding: '0.6rem 1.25rem' }}>Student Login</Button>
                                     </Link>
                                 )
                             )}

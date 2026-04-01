@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, AlertTriangle, User, Hash, Phone, ChevronRight, ChevronLeft, Check, CheckCircle2, X } from 'lucide-react';
+import { Lock, Mail, AlertTriangle, User, Hash, Phone, CheckCircle2, UploadCloud, GraduationCap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import Button from '../components/common/Button';
@@ -8,20 +8,18 @@ import Input from '../components/common/Input';
 import './StudentSignUp.css';
 
 const StudentSignUp: React.FC = () => {
-    const [currentStep, setCurrentStep] = useState(1);
-    const totalSteps = 3;
-    
     const [formData, setFormData] = useState({
-        email: '',
-        password: '',
         fullName: '',
+        email: '',
         studentId: '',
         phoneNumber: '',
-        level: '',
         programme: '',
+        level: '',
+        college: '',
+        password: '',
         confirmPassword: ''
     });
-    
+
     const [avatar, setAvatar] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [error, setError] = useState('');
@@ -54,110 +52,16 @@ const StudentSignUp: React.FC = () => {
         }
     };
 
-    // Password strength calculation
-    const calculatePasswordStrength = () => {
-        const password = formData.password;
-        let strength = 0;
-        
-        if (password.length >= 8) strength += 20;
-        if (/[A-Z]/.test(password)) strength += 20;
-        if (/[a-z]/.test(password)) strength += 20;
-        if (/[0-9]/.test(password)) strength += 20;
-        if (/[@$!%*?&#]/.test(password)) strength += 20;
-        
-        return strength;
-    };
-
-    const getPasswordStrengthColor = () => {
-        const strength = calculatePasswordStrength();
-        if (strength < 60) return 'weak';
-        if (strength < 100) return 'medium';
-        return 'strong';
-    };
-
-    const passwordRequirements = [
-        { label: 'At least 8 characters', met: formData.password.length >= 8 },
-        { label: 'One uppercase letter', met: /[A-Z]/.test(formData.password) },
-        { label: 'One lowercase letter', met: /[a-z]/.test(formData.password) },
-        { label: 'One special character', met: /[@$!%*?&#]/.test(formData.password) },
-        { label: 'Passwords match', met: formData.password && formData.password === formData.confirmPassword }
-    ];
-
-    // Step validation
-    const validateStep = (step: number): boolean => {
-        switch (step) {
-            case 1:
-                if (!avatar) {
-                    setError('Please upload a profile picture');
-                    return false;
-                }
-                if (!formData.fullName || !formData.studentId || !formData.phoneNumber) {
-                    setError('All fields are required');
-                    return false;
-                }
-                return true;
-                
-            case 2:
-                if (!formData.level || !formData.programme || !formData.email) {
-                    setError('All fields are required');
-                    return false;
-                }
-                
-                const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-                if (!emailRegex.test(formData.email)) {
-                    setError('Please enter a valid email address');
-                    return false;
-                }
-                
-                const suspiciousDomains = ['test.com', 'example.com', 'asdf.com', 'tempmail.com', 'mailinator.com', 'fake.com', 'test.io'];
-                const domain = formData.email.split('@')[1]?.toLowerCase();
-                if (suspiciousDomains.includes(domain)) {
-                    setError('Please use a valid institutional or personal email');
-                    return false;
-                }
-                return true;
-                
-            case 3:
-                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-                if (!passwordRegex.test(formData.password)) {
-                    setError('Password must meet all requirements');
-                    return false;
-                }
-                
-                if (formData.password !== formData.confirmPassword) {
-                    setError('Passwords do not match');
-                    return false;
-                }
-                return true;
-                
-            default:
-                return false;
-        }
-    };
-
-    const nextStep = () => {
-        if (validateStep(currentStep)) {
-            setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-            setError('');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-
-    const prevStep = () => {
-        setCurrentStep(prev => Math.max(prev - 1, 1));
-        setError('');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-
-        if (currentStep < totalSteps) {
-            nextStep();
+        
+        if (!avatar) {
+            setError('Profile photo is required');
             return;
         }
 
-        if (!validateStep(3)) {
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
             return;
         }
 
@@ -172,7 +76,7 @@ const StudentSignUp: React.FC = () => {
                 phoneNumber: formData.phoneNumber,
                 level: formData.level,
                 programme: formData.programme,
-                avatar: avatar!
+                avatar: avatar
             });
 
             if (signUpError) {
@@ -190,361 +94,145 @@ const StudentSignUp: React.FC = () => {
         }
     };
 
-    // Success Screen
     if (isSubmitted) {
         return (
-            <div className="signup-wizard-container">
-                <div className="signup-wizard-card">
-                    <div className="signup-success-screen">
-                        <div className="success-icon">
-                            <CheckCircle2 size={40} />
-                        </div>
-                        
-                        <h2>Account Created!</h2>
-                        <p>Welcome to UCC Helpdesk. Your account is ready.</p>
-                        
-                        <div className="success-profile">
-                            {avatarPreview && (
-                                <div className="success-avatar">
-                                    <img src={avatarPreview} alt="Profile" />
-                                </div>
-                            )}
-                            <div className="success-name">{formData.fullName}</div>
-                        </div>
-                        
-                        <div className="success-actions">
-                            <button 
-                                className="success-btn-primary"
-                                onClick={() => navigate('/login')}
-                            >
-                                Go to Login
-                            </button>
-                            <button 
-                                className="success-btn-secondary"
-                                onClick={() => navigate('/faq')}
-                            >
-                                Learn About the Platform
-                            </button>
-                        </div>
-                    </div>
+            <div className="signup-container">
+                <div className="signup-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                    <CheckCircle2 size={64} color="#10b981" style={{ margin: '0 auto 1.5rem' }} />
+                    <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#0f172a' }}>Account Created!</h2>
+                    <p style={{ color: '#64748b', marginBottom: '2rem' }}>Your account is ready to use.</p>
+                    <Button onClick={() => navigate('/login')} size="lg" style={{ width: '100%', maxWidth: '300px' }}>
+                        Go to Login
+                    </Button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="signup-wizard-container">
-            <div className="signup-wizard-card">
-                {/* Header */}
-                <div className="signup-wizard-header">
+        <div className="signup-container">
+            <div className="signup-card fade-in-up">
+                <div className="signup-header">
+                    <div style={{ display: 'flex', justifySelf: 'center', margin: '0 auto 1.5rem', width: '68px', height: '68px', borderRadius: '50%', background: '#e0f2fe', color: '#0284c7', alignItems: 'center', justifyContent: 'center' }}>
+                        <GraduationCap size={32} />
+                    </div>
                     <h1>Create Account</h1>
-                    <p>Join UCC Helpdesk to submit and track support tickets</p>
+                    <p>Register to submit support tickets.</p>
                 </div>
 
-                {/* Progress Indicators */}
-                <div className="wizard-progress">
-                    <div 
-                        className="wizard-progress-fill" 
-                        style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
-                    />
-                    
-                    {[1, 2, 3].map(step => (
-                        <div 
-                            key={step}
-                            className={`wizard-step-indicator ${
-                                step === currentStep ? 'active' : ''
-                            } ${step < currentStep ? 'completed' : ''}`}
-                        >
-                            <div className="wizard-step-circle">
-                                {step < currentStep ? <Check size={18} /> : step}
-                            </div>
-                            <span className="wizard-step-label">
-                                {step === 1 && 'Profile'}
-                                {step === 2 && 'Details'}
-                                {step === 3 && 'Security'}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Error Display */}
                 {error && (
-                    <div className="wizard-error">
+                    <div className="error-alert" style={{ background: '#fef2f2', color: '#dc2626', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
                         <AlertTriangle size={18} />
                         <span>{error}</span>
                     </div>
                 )}
 
-                {/* Wizard Content */}
-                <form onSubmit={handleSubmit}>
-                    <div className="wizard-content">
-                        {/* Step 1: Profile Setup */}
-                        <div className={`wizard-step ${currentStep === 1 ? 'active' : ''}`}>
-                            <h2 className="step-title">Profile Setup</h2>
-                            <p className="step-description">Let's start with your basic information</p>
-
-                            <div className="avatar-upload-zone">
-                                <div 
-                                    className="avatar-preview-large"
-                                    onClick={() => document.getElementById('avatar-input')?.click()}
-                                >
-                                    {avatarPreview ? (
-                                        <img src={avatarPreview} alt="Preview" />
-                                    ) : (
-                                        <User size={60} style={{ color: '#94a3b8' }} />
-                                    )}
-                                </div>
-                                
-                                <input
-                                    id="avatar-input"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleAvatarChange}
-                                    style={{ display: 'none' }}
-                                />
-                                
-                                <div className="avatar-upload-prompt">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => document.getElementById('avatar-input')?.click()}
-                                    >
-                                        {avatarPreview ? 'Change Photo' : 'Upload Profile Picture'}
-                                    </Button>
-                                    <p>JPG, PNG or GIF (max 5MB)</p>
-                                    {avatar && (
-                                        <span className="avatar-file-badge">
-                                            {avatar.name}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <Input
-                                id="fullName"
-                                name="fullName"
-                                type="text"
-                                label="Full Name"
-                                placeholder="John Doe"
-                                value={formData.fullName}
-                                onChange={handleChange}
-                                icon={<User size={18} />}
-                                required
-                            />
-
-                            <div className="wizard-form-grid">
-                                <Input
-                                    id="studentId"
-                                    name="studentId"
-                                    type="text"
-                                    label="Student ID"
-                                    placeholder="10223..."
-                                    value={formData.studentId}
-                                    onChange={handleChange}
-                                    icon={<Hash size={18} />}
-                                    required
-                                />
-
-                                <Input
-                                    id="phoneNumber"
-                                    name="phoneNumber"
-                                    type="tel"
-                                    label="Phone Number"
-                                    placeholder="+233 24 000 0000"
-                                    value={formData.phoneNumber}
-                                    onChange={handleChange}
-                                    icon={<Phone size={18} />}
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        {/* Step 2: Academic Details */}
-                        <div className={`wizard-step ${currentStep === 2 ? 'active' : ''}`}>
-                            <h2 className="step-title">Academic Details</h2>
-                            <p className="step-description">Tell us about your academic background</p>
-
-                            <div className="wizard-form-grid">
-                                <div className="wizard-form-group">
-                                    <label className="input-label" htmlFor="level">Level</label>
-                                    <select
-                                        id="level"
-                                        name="level"
-                                        className="input-field"
-                                        value={formData.level}
-                                        onChange={handleChange}
-                                        required
-                                    >
-                                        <option value="">Select Level</option>
-                                        <option value="100">Level 100</option>
-                                        <option value="200">Level 200</option>
-                                        <option value="300">Level 300</option>
-                                        <option value="400">Level 400</option>
-                                        <option value="Post-Grad">Post-Graduate</option>
-                                    </select>
-                                </div>
-
-                                <Input
-                                    id="programme"
-                                    name="programme"
-                                    type="text"
-                                    label="Programme"
-                                    placeholder="e.g. B.Ed IT"
-                                    value={formData.programme}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                label="Email Address"
-                                placeholder="student@ucc.edu.gh"
-                                value={formData.email}
-                                onChange={handleChange}
-                                icon={<Mail size={18} />}
-                                required
-                            />
-                        </div>
-
-                        {/* Step 3: Account Security */}
-                        <div className={`wizard-step ${currentStep === 3 ? 'active' : ''}`}>
-                            <h2 className="step-title">Account Security</h2>
-                            <p className="step-description">Create a strong password to protect your account</p>
-
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                label="Create Password"
-                                placeholder="••••••••"
-                                value={formData.password}
-                                onChange={handleChange}
-                                icon={<Lock size={18} />}
-                                required
-                            />
-
-                            <Input
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                type="password"
-                                label="Confirm Password"
-                                placeholder="••••••••"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                icon={<Lock size={18} />}
-                                required
-                            />
-
-                            {formData.password && (
-                                <div className="password-strength-container">
-                                    <div className="strength-requirements">
-                                        <h4>Password Requirements</h4>
-                                        {passwordRequirements.map((req, index) => (
-                                            <div key={index} className={`requirement-item ${req.met ? 'met' : ''}`}>
-                                                <span className="icon">
-                                                    {req.met ? <Check size={16} /> : <X size={16} />}
-                                                </span>
-                                                <span>{req.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="strength-meter">
-                                        <div className="strength-bar-bg">
-                                            <div 
-                                                className={`strength-bar-fill ${getPasswordStrengthColor()}`}
-                                                style={{ width: `${calculatePasswordStrength()}%` }}
-                                            />
-                                        </div>
-                                        <div className={`strength-label ${getPasswordStrengthColor()}`}>
-                                            {calculatePasswordStrength() < 60 && 'Weak Password'}
-                                            {calculatePasswordStrength() >= 60 && calculatePasswordStrength() < 100 && 'Medium Strength'}
-                                            {calculatePasswordStrength() === 100 && 'Strong Password'}
-                                        </div>
-                                    </div>
+                <form onSubmit={handleSubmit} className="signup-form">
+                    <div className="avatar-upload-section">
+                        <div 
+                            className="avatar-preview-circle"
+                            onClick={() => document.getElementById('avatar-input')?.click()}
+                        >
+                            {avatarPreview ? (
+                                <img src={avatarPreview} alt="Preview" />
+                            ) : (
+                                <div className="avatar-placeholder">
+                                    <UploadCloud size={28} />
+                                    <span>Add Photo</span>
                                 </div>
                             )}
+                        </div>
+                        <input
+                            id="avatar-input"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            style={{ display: 'none' }}
+                        />
+                        {!avatar && <div className="avatar-error">* Profile photo required</div>}
+                    </div>
 
-                            {/* Review Summary */}
-                            {formData.password && formData.confirmPassword && (
-                                <div className="review-summary">
-                                    <h3>Review Your Information</h3>
-                                    
-                                    {avatarPreview && (
-                                        <div className="review-avatar-row">
-                                            <div className="review-avatar-small">
-                                                <img src={avatarPreview} alt="Profile" />
-                                            </div>
-                                            <div>
-                                                <div className="review-value">{formData.fullName}</div>
-                                                <div className="review-label">Profile Picture & Name</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="review-item">
-                                        <span className="review-label">Student ID</span>
-                                        <span className="review-value">{formData.studentId}</span>
-                                    </div>
-                                    
-                                    <div className="review-item">
-                                        <span className="review-label">Email</span>
-                                        <span className="review-value">{formData.email}</span>
-                                    </div>
-                                    
-                                    <div className="review-item">
-                                        <span className="review-label">Level & Programme</span>
-                                        <span className="review-value">
-                                            Level {formData.level} • {formData.programme}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
+                    <div className="form-grid-2">
+                        <Input
+                            id="fullName" name="fullName" type="text" label="Full Name"
+                            placeholder="John Doe" value={formData.fullName} onChange={handleChange}
+                            icon={<User size={18} />} required
+                        />
+                        <Input
+                            id="email" name="email" type="email" label="Email Address"
+                            placeholder="student@ucc.edu.gh" value={formData.email} onChange={handleChange}
+                            icon={<Mail size={18} />} required
+                        />
+                    </div>
+
+                    <div className="form-grid-2">
+                        <div className="input-group-with-help">
+                            <Input
+                                id="studentId" name="studentId" type="text" label="Student ID"
+                                placeholder="# CS/22/00123" value={formData.studentId} onChange={handleChange}
+                                icon={<Hash size={18} />} required
+                            />
+                            <div className="help-text">Format: PROG/YY/SEQUENCE — e.g. CS/22/00123 or PG/2022/001</div>
+                        </div>
+                        <Input
+                            id="phoneNumber" name="phoneNumber" type="tel" label="Phone Number"
+                            placeholder="+233..." value={formData.phoneNumber} onChange={handleChange}
+                            icon={<Phone size={18} />} required
+                        />
+                    </div>
+
+                    <div className="form-grid-2">
+                        <div className="wizard-form-group">
+                            <label className="input-label" htmlFor="programme">Programme</label>
+                            <select id="programme" name="programme" className="input-field" value={formData.programme} onChange={handleChange} required>
+                                <option value="">Select Programme</option>
+                                <option value="B.Ed IT">B.Ed IT</option>
+                                <option value="B.Com">B.Com</option>
+                                <option value="B.Sc CS">B.Sc CS</option>
+                            </select>
+                        </div>
+                        <div className="wizard-form-group">
+                            <label className="input-label" htmlFor="level">Level / Year</label>
+                            <select id="level" name="level" className="input-field" value={formData.level} onChange={handleChange} required>
+                                <option value="">Select Level</option>
+                                <option value="100">Level 100</option>
+                                <option value="200">Level 200</option>
+                                <option value="300">Level 300</option>
+                                <option value="400">Level 400</option>
+                            </select>
                         </div>
                     </div>
 
-                    {/* Footer Navigation */}
-                    <div className="wizard-footer">
-                        {currentStep > 1 && (
-                            <button 
-                                type="button" 
-                                className="wizard-btn wizard-btn-back"
-                                onClick={prevStep}
-                            >
-                                <ChevronLeft size={18} />
-                                Back
-                            </button>
-                        )}
+                    <div className="wizard-form-group full-width">
+                        <label className="input-label" htmlFor="college">College / Faculty</label>
+                        <select id="college" name="college" className="input-field" value={formData.college} onChange={handleChange} required>
+                            <option value="">Select College / Faculty</option>
+                            <option value="CoDE">College of Distance Education</option>
+                            <option value="CoLT">College of Agriculture...</option>
+                        </select>
+                    </div>
 
-                        {currentStep < totalSteps ? (
-                            <button 
-                                type="button"
-                                className="wizard-btn wizard-btn-next"
-                                onClick={nextStep}
-                            >
-                                Next Step
-                                <ChevronRight size={18} />
-                            </button>
-                        ) : (
-                            <button 
-                                type="submit"
-                                className="wizard-btn wizard-btn-submit"
-                                disabled={loading}
-                            >
-                                {loading ? 'Creating Account...' : 'Create Account'}
-                            </button>
-                        )}
+                    <div className="form-grid-2">
+                        <Input
+                            id="password" name="password" type="password" label="Password"
+                            placeholder="••••••••" value={formData.password} onChange={handleChange}
+                            icon={<Lock size={18} />} required
+                        />
+                        <Input
+                            id="confirmPassword" name="confirmPassword" type="password" label="Confirm Password"
+                            placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange}
+                            icon={<Lock size={18} />} required
+                        />
+                    </div>
+
+                    <Button type="submit" className="signup-btn" disabled={loading} size="lg">
+                        {loading ? 'Creating...' : 'Sign Up'}
+                    </Button>
+
+                    <div className="signup-footer text-left">
+                        <p>Already have an account? <Link to="/login">Sign In</Link></p>
                     </div>
                 </form>
-
-                {/* Footer */}
-                <div className="login-footer" style={{ textAlign: 'center', padding: '1rem 2rem 2rem' }}>
-                    <p>Already have an account? <Link to="/login">Sign In</Link></p>
-                </div>
             </div>
         </div>
     );

@@ -1,6 +1,4 @@
-/* StudentSignUp.css - Premium Glassmorphic Wizard */
-
-.signup-wizard-container {
+.signup-container {
     min-height: 100vh;
     background: radial-gradient(circle at top left, #eff6ff 0%, #ffffff 40%, #fdf2f8 100%);
     display: flex;
@@ -11,246 +9,199 @@
     overflow: hidden;
 }
 
-.signup-wizard-container::before {
+.signup-container::before {
     content: '';
     position: absolute;
-    width: 800px;
-    height: 800px;
+    width: 600px;
+    height: 600px;
     background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-    top: -300px;
-    left: -200px;
-    animation: float-slow 12s infinite alternate-reverse;
+    top: -200px;
+    right: -100px;
+    animation: float-slow 10s infinite alternate;
 }
 
 @keyframes float-slow {
     from {
         transform: translate(0, 0);
     }
-
     to {
-        transform: translate(60px, -40px);
+        transform: translate(-50px, 50px);
     }
 }
 
-.signup-wizard-card {
+.signup-card {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(25px);
-    border-radius: 40px;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
     max-width: 680px;
     width: 100%;
-    overflow: hidden;
+    padding: 3.5rem 4rem;
     border: 1px solid rgba(255, 255, 255, 0.5);
     animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    position: relative;
+    z-index: 10;
 }
 
-/* Wizard Header */
-.signup-wizard-header {
-    background: #0f172a;
-    color: white;
-    padding: 3rem;
+.signup-header {
     text-align: center;
-    position: relative;
+    margin-bottom: 2.5rem;
 }
 
-.signup-wizard-header h1 {
+.signup-header h1 {
     font-size: 2.25rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    margin: 0 0 0.75rem 0;
+    color: #0f172a;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
 }
 
-.signup-wizard-header p {
-    font-size: 1rem;
-    opacity: 0.8;
-    font-weight: 500;
+.signup-header p {
+    color: #475569;
+    font-size: 1.05rem;
 }
 
-/* Progress Indicators */
-.wizard-progress {
+.avatar-upload-section {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    padding: 2.5rem 3.5rem 1.5rem 3.5rem;
-    position: relative;
+    margin-bottom: 2.5rem;
 }
 
-.wizard-progress::before {
-    content: '';
-    position: absolute;
-    top: 3.25rem;
-    left: 4rem;
-    right: 4rem;
-    height: 4px;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 10px;
-    z-index: 0;
-}
-
-.wizard-progress-fill {
-    position: absolute;
-    top: 3.25rem;
-    left: 4rem;
-    height: 4px;
-    background: var(--primary);
-    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 1;
-    border-radius: 10px;
-    box-shadow: 0 0 15px var(--accent-glow);
-}
-
-.wizard-step-circle {
-    width: 44px;
-    height: 44px;
-    border-radius: 16px;
-    background: white;
-    border: 2px solid rgba(0, 0, 0, 0.05);
+.avatar-preview-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px dashed #cbd5e1;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 0.95rem;
-    color: #94a3b8;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    overflow: hidden;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
 }
 
-.active .wizard-step-circle {
-    background: #0f172a;
-    border-color: #0f172a;
-    color: white;
-    transform: scale(1.15) rotate(5deg);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+.avatar-preview-circle:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
 }
 
-.completed .wizard-step-circle {
-    background: #10b981;
-    border-color: #10b981;
-    color: white;
-}
-
-.wizard-step-label {
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 0.75rem;
-}
-
-/* Wizard Content */
-.wizard-content {
-    padding: 3rem;
-    min-height: 400px;
-}
-
-.step-title {
-    font-size: 2rem;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-    margin-bottom: 0.75rem;
-}
-
-.step-description {
-    font-size: 1rem;
-    color: #64748b;
-    font-weight: 500;
-    margin-bottom: 3rem;
-}
-
-/* Avatar - squircle design */
-.avatar-preview-large {
-    width: 160px;
-    height: 160px;
-    border-radius: 40px;
-    border: 4px solid white;
-    background: white;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-    margin-bottom: 2rem;
-    transition: transform 0.4s;
-}
-
-.avatar-preview-large:hover {
-    transform: scale(1.05) rotate(-2deg);
-}
-
-/* Form Styling */
-.wizard-form-group {
-    margin-bottom: 2rem;
-}
-
-.wizard-form-group label {
-    font-weight: 800;
-    font-size: 0.85rem;
-    color: #475569;
-    margin-bottom: 1rem;
-    display: block;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.wizard-form-group input {
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 16px;
-    padding: 1.15rem 1.25rem;
-    font-size: 1rem;
-    font-weight: 500;
+.avatar-preview-circle img {
     width: 100%;
-    transition: all 0.3s;
+    height: 100%;
+    object-fit: cover;
 }
 
-.wizard-form-group input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 5px var(--accent-glow);
-}
-
-/* Footer Controls */
-.wizard-footer {
-    padding: 2.5rem 3rem 3rem 3rem;
-    background: rgba(255, 255, 255, 0.4);
+.avatar-placeholder {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #94a3b8;
+    gap: 0.25rem;
+}
+
+.avatar-placeholder span {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.avatar-error {
+    color: #ef4444;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-}
-
-.wizard-btn {
-    padding: 1.15rem 2rem;
-    border-radius: 16px;
-    font-weight: 800;
-    font-size: 0.95rem;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.wizard-btn-next,
-.wizard-btn-submit {
-    background: #0f172a;
-    color: white;
-    flex: 2;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-.wizard-btn-back {
-    background: white;
-    color: #64748b;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    flex: 1;
-}
-
-.wizard-btn:hover:not(:disabled) {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
 }
 
 @media (max-width: 640px) {
-    .wizard-content {
-        padding: 2rem;
+    .form-grid-2 {
+        grid-template-columns: 1fr;
     }
+}
 
-    .wizard-progress {
-        padding: 2rem 1.5rem;
-    }
+.wizard-form-group {
+    display: flex;
+    flex-direction: column;
+}
 
-    .wizard-footer {
-        padding: 2rem;
-    }
+.wizard-form-group.full-width {
+    margin-bottom: 1.5rem;
+}
+
+.input-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.wizard-form-group select {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    color: #334155;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.wizard-form-group select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 40, 204, 0.1);
+}
+
+.input-group-with-help {
+    display: flex;
+    flex-direction: column;
+}
+
+.help-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+.signup-btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1.15rem !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
+    background: var(--primary) !important;
+    box-shadow: 0 8px 20px rgba(59, 40, 204, 0.25) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.signup-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(59, 40, 204, 0.35) !important;
+    background: var(--primary-dark) !important;
+}
+
+.signup-footer {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    color: #475569;
+}
+
+.signup-footer a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.signup-footer a:hover {
+    text-decoration: underline;
+}
+
+.text-left {
+    text-align: left;
 }
